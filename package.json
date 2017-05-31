@@ -1,0 +1,40 @@
+{
+  "name": "bynder-js-sdk",
+  "version": "1.0.0",
+  "description": "Bynder Javascript SDK",
+  "main": "bynder-js-sdk.js",
+  "scripts": {
+    "test": "jasmine tests/*"
+  },
+  "author": "Bynder",
+  "license": "MIT",
+  "devDependencies": {
+    "babel": "^6.5.2",
+    "babel-core": "^6.20.0",
+    "babel-loader": "^6.2.9",
+    "babel-polyfill": "^6.20.0",
+    "babel-preset-env": "^1.1.1",
+    "eslint": "~3.7.1",
+    "eslint-config-airbnb": "~12.0.0",
+    "eslint-plugin-import": "~1.16.0",
+    "eslint-plugin-jsx-a11y": "~2.2.3",
+    "eslint-plugin-react": "~6.4.1",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
+    "gulp-connect": "^5.0.0",
+    "gulp-eslint": "^3.0.1",
+    "gulp-jasmine": "^2.4.0",
+    "gulp-jsdoc3": "^0.3.0",
+    "istanbul": "^0.4.5",
+    "jasmine": "^2.6.0",
+    "json-loader": "^0.5.4",
+    "path": "^0.12.7",
+    "webpack": "^1.14.0"
+  },
+  "dependencies": {
+    "axios": "^0.15.3",
+    "node-fetch": "^1.6.0",
+    "oauth-1.0a": "^1.0.1"
+  },
+  "repository": "git@github.com:Bynder/bynder-js-sdk.git"
+}
