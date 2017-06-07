@@ -501,6 +501,7 @@ export default class Bynder {
         );
         return request.send();
     }
+
     /**
      * Get all the tags
      * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-access/retrieve-entry-point|API Call}
@@ -514,6 +515,52 @@ export default class Bynder {
         const request = new APICall(
             this.baseURL,
             'v4/tags/',
+            'GET',
+            this.consumerToken,
+            this.accessToken
+        );
+        return request.send();
+    }
+
+    /**
+     * Get collections according to the parameters provided
+     * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-operations-on-assets/retrieve-collections|API Call}
+     * @return {Promise} Collections - Returns a Promise that, when fulfilled, will either return an Array with the
+     * collections or an Error with the problem.
+     */
+    getCollections(queryObject = {}) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const request = new APICall(
+            this.baseURL,
+            'v4/collections/',
+            'GET',
+            this.consumerToken,
+            this.accessToken,
+            queryObject
+        );
+        return request.send();
+    }
+
+    /**
+     * Get the collection information according to the id provided.
+     * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-operations-on-assets/retrieve-specific-collection|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired collection.
+     * @param {String} queryObject.id - The id of the desired collection.
+     * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
+     * collection or an Error with the problem.
+     */
+    getCollection(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id) {
+            return rejectValidation('collection', 'id');
+        }
+        const request = new APICall(
+            this.baseURL,
+            `v4/collections/${queryObject.id}/`,
             'GET',
             this.consumerToken,
             this.accessToken

@@ -82,6 +82,10 @@ Here's a list of all the methods available, separated by module:
 * `saveNewMetaproperty(object)`
 * `deleteMetaproperty(object)`
 
+### Collections
+* `getCollections(queryObject)`
+* `getCollection(queryObject)`
+
 ### Tags
 * `getTags()`
 

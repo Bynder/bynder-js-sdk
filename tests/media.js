@@ -221,29 +221,30 @@ describe('Media batch testing 1', () => {
 
     beforeAll((done) => {
         bynder = new Bynder(configs);
-        bynder.getAllMediaItems()
-        .then((data) => {
-            getAllAssetsResponse = data;
-            return bynder.getMediaList();
-        })
-        .then((data) => {
-            getAssetsResponse = data;
-            return bynder.getMediaTotal();
-        })
-        .then((data) => {
-            getAssetsTotal = data;
-            testAssetRandomIndex = Math.floor(Math.random() * getAllAssetsResponse.length);
-            testAssetId = getAllAssetsResponse[testAssetRandomIndex].id;
-            testAssetDescriptionBackup = getAllAssetsResponse[testAssetRandomIndex].description;
-            return bynder.editMedia({
-                id: testAssetId,
-                description: testDescriptionString
+        bynder
+            .getAllMediaItems()
+            .then((data) => {
+                getAllAssetsResponse = data;
+                return bynder.getMediaList();
+            })
+            .then((data) => {
+                getAssetsResponse = data;
+                return bynder.getMediaTotal();
+            })
+            .then((data) => {
+                getAssetsTotal = data;
+                testAssetRandomIndex = 2;// Math.floor(Math.random() * getAllAssetsResponse.length);
+                testAssetId = getAllAssetsResponse[testAssetRandomIndex].id;
+                testAssetDescriptionBackup = getAllAssetsResponse[testAssetRandomIndex].description;
+                return bynder.editMedia({
+                    id: testAssetId,
+                    description: testDescriptionString
+                });
+            })
+            .then((data) => {
+                editMediaResult = data;
+                done();
             });
-        })
-        .then((data) => {
-            editMediaResult = data;
-            done();
-        });
     });
 
     it('The variable getAllAssets should be defined', () => {
@@ -284,7 +285,7 @@ describe('Media batch testing 2', () => {
                     getAssetResponse = data;
                     done();
                 });
-        }, 5000);
+        }, 5000); // Sometimes the API returns the old value if the query call is made immediately after the edit call
     });
 
     it('Description was edited successfully', () => {
