@@ -12,14 +12,20 @@ Node installation will include NPM, which is responsible for the dependencies ma
 ## Installation
 
 ### Node.js
-TBD
 
-`npm install bynder-js-sdk`
+`npm install @bynder/bynder-js-sdk`
+
+`import Bynder from '@bynder/bynder-js-sdk';`
 
 ### Browser
-TBD
 
-`<script src="path/to/bynder-js-sdk.js"></script>`
+1. Checkout the repository `git clone git@github.com:Bynder/bynder-js-sdk.git`.
+2. Go to the `bynder-js-sdk` directory.
+3. Run `yarn install`.
+4. Run `gulp build`.
+5. Use the `bundle.js` file generated in `dist` folder to use the SDK in the browser.
+6. Include it in your page like this: `<script src="path/to/bynder-js-sdk.js"></script>` .
+7. Define the constructor like this: `const Bynder = Bynder.default;`
 
 ## Usage
 As said before, this SDK relies heavily on [Promises](https://developers.google.com/web/fundamentals/getting-started/primers/promises), making it easier to handle the asynchronous requests made to the API.
@@ -87,10 +93,11 @@ Here's a list of all the methods available, separated by module:
 * `getCollection(queryObject)`
 
 ### Tags
-* `getTags()`
+* `getTags(queryObject)`
 
 ### Categories
-* `getCategories()`
+* `getCategories(queryObject)`
+* `getCategory(queryObject)`
 
 ## Contribute to the SDK
 If you wish to contribute to this repository and further extend the API coverage of the SDK, here are the steps necessary to prepare your environment:
@@ -108,7 +115,7 @@ If you wish to contribute to this repository and further extend the API coverage
         "public": "<public_access_key>",
         "secret": "<secret_access_key>"
     },
-    "baseURL": "http://api-url.bynder.io/api/"
+    "baseURL": "http://api-url.bynder.com/api/"
 }
 ```
 4. Use any of these gulp tasks to:

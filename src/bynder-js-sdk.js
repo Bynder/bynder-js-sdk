@@ -151,7 +151,7 @@ export default class Bynder {
 
     /**
      * Get all the categories.
-     * @see {@link http://docs.bynder.apiary.io/#reference/general/categories/list-categories|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/categories/retrieve-categories/retrieve-categories|API Call}
      * @return {Promise} Categories - Returns a Promise that, when fulfilled, will either return an Array with the
      * categories or an Error with the problem.
      */
@@ -171,7 +171,7 @@ export default class Bynder {
 
     /**
      * Login to retrieve OAuth credentials.
-     * @see {@link http://docs.bynder.apiary.io/#reference/users/-deprecated-login-a-user-retrieve-coupled-oauth-credentials|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/users/-deprecated-login-a-user-retrieve-coupled-oauth-credentials/login-a-user|API Call}
      * @param {Object} queryObject={} - An object containing the credentials with which the user intends to login.
      * @param {String} queryObject.username - The username of the user.
      * @param {String} queryObject.password - The password of the user.
@@ -199,7 +199,7 @@ export default class Bynder {
 
     /**
      * Get the request token and secret.
-     * @see {@link http://docs.bynder.apiary.io/#reference/consumers-and-access-tokens/1-obtain-a-request-token-pair|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/consumers-and-access-tokens/1-obtain-a-request-token-pair/obtain-a-request-token-pair|API Call}
      * @return {Promise} Credentials - Returns a Promise that, when fulfilled, will either return an string with the
      * couple of consumer token/secret or an Error with the problem.
      */
@@ -222,6 +222,7 @@ export default class Bynder {
 
     /**
      * Get the URL to authorise the token.
+     * @see {@link http://docs.bynder.apiary.io/#reference/consumers-and-access-tokens/2-authorise-authenticate/authorise-&-authenticate|API Call}
      * @param {String} token - The token to be authorised.
      * @param {String} [callback] - The callback to which the page will be redirected after authenticating the token.
      * @return {String} URL - Returns a String with the URL to the token authorisation page.
@@ -239,7 +240,7 @@ export default class Bynder {
 
     /**
      * Get the access token and secret.
-     * @see {@link http://docs.bynder.apiary.io/#reference/consumers-and-access-tokens/3-exchange-the-request-token-pair-for-an-access-token-pair|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/consumers-and-access-tokens/3-exchange-the-request-token-pair-for-an-access-token-pair/exchange-the-request-token-pair-for-an-access-token-pair|API Call}
      * @param {string} token - A string containing the authorised token provided by the API.
      * @param {string} secret - A string containing the authorised secret provided by the API.
      * @return {Promise} Credentials - Returns a Promise that, when fulfilled, will either return an Object with the
@@ -264,7 +265,7 @@ export default class Bynder {
 
     /**
      * Get the assets according to the parameters provided.
-     * @see {@link http://docs.bynder.apiary.io/#reference/media/media-access/retrieve-entry-point|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/assets/asset-operations/retrieve-assets|API Call}
      * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Assets - Returns a Promise that, when fulfilled, will either return an Array with the assets or
      * an Error with the problem.
@@ -291,7 +292,7 @@ export default class Bynder {
 
     /**
      * Get the assets information according to the id provided.
-     * @see {@link http://docs.bynder.apiary.io/#reference/media/retrieve-specific-media-info/retrieve-entry-point|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/assets/specific-asset-operations/retrieve-specific-asset|API Call}
      * @param {Object} queryObject - An object containing the id and the version of the desired asset.
      * @param {String} queryObject.id - The id of the desired asset.
      * @param {Number} [queryObject.version] - The version of the desired asset.
@@ -318,7 +319,7 @@ export default class Bynder {
 
     /**
      * Get all the assets starting from the page provided (1 by default) and incrementing according to the offset given.
-     * @see {@link http://docs.bynder.apiary.io/#reference/media/media-access/retrieve-entry-point|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/assets/asset-operations/retrieve-assets|API Call}
      * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Assets - Returns a Promise that, when fulfilled, will either return an Array with all the
      * assets or an Error with the problem.
@@ -349,7 +350,7 @@ export default class Bynder {
 
     /**
      * Get the assets total according to the parameters provided.
-     * @see {@link http://docs.bynder.apiary.io/#reference/media/media-access-with-media-count/retrieve-entry-point|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/assets/asset-operations/retrieve-assets|API Call}
      * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Number - Returns a Promise that, when fulfilled, will either return the number of assets
      * fitting the query or an Error with the problem.
@@ -379,7 +380,7 @@ export default class Bynder {
 
     /**
      * Edit an existing asset with the information provided.
-     * @see {@link http://docs.bynder.apiary.io/#reference/media/edit-media/save-entry-point|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/assets/specific-asset-operations/modify-asset|API Call}
      * @param {Object} object={} - An object containing the parameters accepted by the API to change in the asset.
      * @param {String} object.id - The id of the desired asset.
      * @return {Promise} Object - Returns a Promise that, when fulfilled, will either return an empty Object in
@@ -432,7 +433,7 @@ export default class Bynder {
 
     /**
      * Get the metaproperty information according to the id provided.
-     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/specific-metaproperty-info|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/retrieve-specific-metaproperty|API Call}
      * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
      * @param {String} queryObject.id - The id of the desired metaproperty.
      * @return {Promise} Metaproperty - Returns a Promise that, when fulfilled, will either return an Object with the
@@ -457,7 +458,7 @@ export default class Bynder {
 
     /**
      * Save a new metaproperty in the information provided.
-     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/metaproperty-access/save-new-metaproperty|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/metaproperty-operations/create-metaproperty|API Call}
      * @param {Object} object={} - An object containing the data of the new metaproperty.
      * @return {Promise} Object - Returns a Promise that, when fulfilled, will either return an empty Object in
      * case it's successful or an Error with the problem.
@@ -479,7 +480,7 @@ export default class Bynder {
 
     /**
      * Delete the metaproperty with the provided id.
-     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/remove-metaproperty|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/delete-metaproperty|API Call}
      * @param {Object} object={} - An object containing the id of the metaproperty to be deleted.
      * @param {String} object.id - The id of the metaproperty.
      * @return {Promise} Object - Returns a Promise that, when fulfilled, will either return an empty Object in
@@ -505,10 +506,11 @@ export default class Bynder {
     /**
      * Get all the tags
      * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-access/retrieve-entry-point|API Call}
+     * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Tags - Returns a Promise that, when fulfilled, will either return an Array with the
      * tags or an Error with the problem.
      */
-    getTags() {
+    getTags(queryObject) {
         if (!this.validURL()) {
             return rejectURL();
         }
@@ -517,14 +519,16 @@ export default class Bynder {
             'v4/tags/',
             'GET',
             this.consumerToken,
-            this.accessToken
+            this.accessToken,
+            queryObject
         );
         return request.send();
     }
 
     /**
      * Get collections according to the parameters provided
-     * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-operations-on-assets/retrieve-collections|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/collections/collection-operations/retrieve-collections|API Call}
+     * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Collections - Returns a Promise that, when fulfilled, will either return an Array with the
      * collections or an Error with the problem.
      */
@@ -545,7 +549,7 @@ export default class Bynder {
 
     /**
      * Get the collection information according to the id provided.
-     * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-operations-on-assets/retrieve-specific-collection|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/retrieve-specific-collection|API Call}
      * @param {Object} queryObject={} - An object containing the id of the desired collection.
      * @param {String} queryObject.id - The id of the desired collection.
      * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
