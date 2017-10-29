@@ -1,13 +1,14 @@
 # Bynder JavaScript SDK
-This SDK aims to help the development of integrations with Bynder that use JavaScript, providing an easy interface to communicate with Bynder's REST API and request the information required.
+This SDK aims to help the development of integrations with [Bynder](https://www.bynder.com/en/) that use JavaScript, providing an easy interface to communicate with [Bynder's REST API](https://developer-docs.bynder.com/API/) and request the information required.
 For that purpose, many ES2015 features were used, as well as Promises notation to help dealing with asynchronous code.
 
 ## Requirements
-In order to use this SDK, the only thing needed is an updated version of Node.js:
-* [Node.js v6.3.0 or above](https://nodejs.org/)
+In order to use this SDK, you'll need the following tools:
+
+* [Node.js **v6.3.0 or above**](https://nodejs.org/)
 * [Yarn](https://yarnpkg.com/)
 
-Node installation will include NPM, which is responsible for the dependencies management.
+Node installation will include [NPM](https://www.npmjs.com/), which is responsible for the dependencies management.
 
 ## Installation
 
@@ -29,9 +30,9 @@ Node installation will include NPM, which is responsible for the dependencies ma
 
 ## Usage
 As said before, this SDK relies heavily on [Promises](https://developers.google.com/web/fundamentals/getting-started/primers/promises), making it easier to handle the asynchronous requests made to the API.
-Besides that, it provides a `Bynder` object  containing several methods corresponding to the calls to be performed, which accept the parameters exactly according [Bynder's API documentation](http://docs.bynder.apiary.io/).
+Besides that, it provides a `Bynder` object containing several methods corresponding to the calls to be performed, which accept the parameters exactly according [Bynder's API documentation](http://docs.bynder.apiary.io/).
 
-This is a generic example of how to use the SDK, if you need specific details for a specific module, refer to [samples folder](https://github.com/Bynder/bynder-js-sdk-private/tree/develop/samples).
+This is a generic example of how to use the SDK, if you need specific details for a specific module, refer to [samples folder](https://github.com/Bynder/bynder-js-sdk/tree/master/samples).
 
 Before executing any request, you need to call the constructor passing your credentials as parameters, making it possible to authorize the calls to the API:
 
@@ -49,7 +50,8 @@ const bynder = new Bynder({
 });
 ```
 
-From this point on, you just need to call the methods made available to call the API and retrieve the data your looking for. Following the Promises notation, you should use `.then()/.catch()` to handle respectively the successful and failed requests.
+From this point on, you just need to call the methods made available to call the API and retrieve the data you're looking for. Following the Promises notation, you should use `.then()`/`.catch()` to handle respectively the successful and failed requests.
+
 Except for some special cases, most of the calls only take an object as parameter. After that, you'll need to refer to the API to tune the query as intended.
 
 ```js
@@ -104,7 +106,7 @@ If you wish to contribute to this repository and further extend the API coverage
 
 1. Clone the repository
 2. In the root folder, run `npm install` to install all the dependencies.
-3. Use the file named 'secret.json' for the tokens with this structure:
+3. Create the file named `secret.json` to provide API tokens following this structure:
 ```json
 {   
     "consumer": {
