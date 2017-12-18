@@ -1,3 +1,4 @@
+
 var Bynder =
 /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -588,7 +589,7 @@ var Bynder =
 	$export.B = 16;  // bind
 	$export.W = 32;  // wrap
 	$export.U = 64;  // safe
-	$export.R = 128; // real proto method for `library` 
+	$export.R = 128; // real proto method for `library`
 	module.exports = $export;
 
 /***/ }),
@@ -2033,7 +2034,7 @@ var Bynder =
 	})), 'Number', {
 	  toPrecision: function toPrecision(precision){
 	    var that = aNumberValue(this, 'Number#toPrecision: incorrect invocation!');
-	    return precision === undefined ? $toPrecision.call(that) : $toPrecision.call(that, precision); 
+	    return precision === undefined ? $toPrecision.call(that) : $toPrecision.call(that, precision);
 	  }
 	});
 
@@ -2157,7 +2158,7 @@ var Bynder =
 	$export($export.S + $export.F * !($acosh
 	  // V8 bug: https://code.google.com/p/v8/issues/detail?id=3509
 	  && Math.floor($acosh(Number.MAX_VALUE)) == 710
-	  // Tor Browser bug: Math.acosh(Infinity) -> NaN 
+	  // Tor Browser bug: Math.acosh(Infinity) -> NaN
 	  && $acosh(Infinity) == Infinity
 	), 'Math', {
 	  acosh: function acosh(x){
@@ -2188,7 +2189,7 @@ var Bynder =
 	  return !isFinite(x = +x) || x == 0 ? x : x < 0 ? -asinh(-x) : Math.log(x + Math.sqrt(x * x + 1));
 	}
 
-	// Tor Browser bug: Math.asinh(0) -> -0 
+	// Tor Browser bug: Math.asinh(0) -> -0
 	$export($export.S + $export.F * !($asinh && 1 / $asinh(0) > 0), 'Math', {asinh: asinh});
 
 /***/ }),
@@ -2199,7 +2200,7 @@ var Bynder =
 	var $export = __webpack_require__(8)
 	  , $atanh  = Math.atanh;
 
-	// Tor Browser bug: Math.atanh(-0) -> 0 
+	// Tor Browser bug: Math.atanh(-0) -> 0
 	$export($export.S + $export.F * !($atanh && 1 / $atanh(-0) < 0), 'Math', {
 	  atanh: function atanh(x){
 	    return (x = +x) == 0 ? x : Math.log((1 + x) / (1 - x)) / 2;
@@ -4796,7 +4797,7 @@ var Bynder =
 	        while(index--)$instance[ADDER](index, index);
 	        return !$instance.has(-0);
 	      });
-	    if(!ACCEPT_ITERABLES){ 
+	    if(!ACCEPT_ITERABLES){
 	      C = wrapper(function(target, iterable){
 	        anInstance(target, C, NAME);
 	        var that = inheritIfRequired(new Base, target, C);

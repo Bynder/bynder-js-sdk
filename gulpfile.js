@@ -27,10 +27,7 @@ gulp.task('babel', () => {
           ],
           presets: [
             ['env', {
-                modules: 'commonjs',
-                targets: {
-                    browsers: ['ie 11']
-                }
+                modules: 'commonjs'
             }]
           ],
         }))
