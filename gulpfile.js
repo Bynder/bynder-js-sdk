@@ -20,7 +20,16 @@ gulp.task('lint', () => {
 gulp.task('babel', () => {
     gulp.src('src/*.js')
         .pipe(babel({
-            presets: ['env']
+          plugins: [
+            ['transform-es2015-modules-commonjs', {
+              allowTopLevelThis: true
+            }]
+          ],
+          presets: [
+            ['env', {
+                modules: 'commonjs'
+            }]
+          ],
         }))
         .pipe(gulp.dest('dist'));
 });
