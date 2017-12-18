@@ -20,7 +20,19 @@ gulp.task('lint', () => {
 gulp.task('babel', () => {
     gulp.src('src/*.js')
         .pipe(babel({
-            presets: ['env']
+          plugins: [
+            ['transform-es2015-modules-commonjs', {
+              allowTopLevelThis: true
+            }]
+          ],
+          presets: [
+            ['env', {
+                modules: 'commonjs',
+                targets: {
+                    browsers: ['ie 11']
+                }
+            }]
+          ],
         }))
         .pipe(gulp.dest('dist'));
 });
