@@ -1,3 +1,5 @@
+import 'isomorphic-form-data';
+import { basename } from 'path';
 import OAuth from 'oauth-1.0a';
 import axios from 'axios';
 
@@ -112,7 +114,7 @@ class APICall {
                     message: response.statusText
                 });
             }
-            if (response.status === 200) {
+            if (response.status >= 200 && response.status <= 202) {
                 return response.data;
             }
             return {};
@@ -596,5 +598,310 @@ export default class Bynder {
             this.accessToken
         );
         return request.send();
+    }
+
+    /**
+     * Gets the closest Amazon S3 bucket location to upload to.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/1-get-closest-amazons3-upload-endpoint/get-closest-amazons3-upload-endpoint}
+     * @return {Promise} Amazon S3 location url string.
+     */
+    getClosestUploadEndpoint() {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const request = new APICall(
+            this.baseURL,
+            'upload/endpoint',
+            'GET',
+            this.consumerToken,
+            this.accessToken
+        );
+        return request.send();
+    }
+
+    /**
+     * Starts the upload process. Registers a file upload with Bynder and returns authorisation information to allow
+     * uploading to the Amazon S3 bucket-endpoint.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/2-initialise-upload/initialise-upload}
+     * @param {String} filename - filename
+     * @return {Promise} Relevant S3 file information, necessary for the file upload.
+     */
+    initUpload(filename) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!filename || filename.length === 0) {
+            return rejectValidation('upload', 'filename');
+        }
+        const request = new APICall(
+            this.baseURL,
+            'upload/init',
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            { filename },
+        );
+        return request.send();
+    }
+
+    /**
+     * Registers a temporary chunk in Bynder.
+     * @param {Object} init - result from init upload
+     * @param {Number} chunk - chunk id
+     * @return {Promise}
+     */
+    registerChunk(init, chunk) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const { s3file, s3_filename: filename } = init;
+        const { uploadid, targetid } = s3file;
+        const request = new APICall(
+            this.baseURL,
+            'v4/upload/',
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            {
+                id: uploadid,
+                targetid,
+                filename: `${filename}/p${chunk}`,
+                chunkNumber: chunk
+            }
+        );
+        return request.send();
+    }
+
+    /**
+     * Finalises the file upload when all chunks finished uploading and registers it in Bynder.
+     * @param {Object} init - result from init upload
+     * @param {Number} chunk - chunk id
+     * @return {Promise}
+     */
+    finalizeUpload(init, filename, chunks) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const { s3file, s3_filename: s3filename } = init;
+        const { uploadid, targetid } = s3file;
+        const request = new APICall(
+            this.baseURL,
+            `v4/upload/${uploadid}/`,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            {
+                targetid,
+                s3_filename: `${s3filename}/p${chunks}`,
+                original_filename: filename,
+                chunks
+            }
+        );
+        return request.send();
+    }
+
+    /**
+     * Checks if the files have finished uploading.
+     * @param {String[]} importIds - The import IDs of the files to be checked.
+     * @return {Promise}
+     */
+    pollUploadStatus(importIds) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const request = new APICall(
+            this.baseURL,
+            'v4/upload/poll/',
+            'GET',
+            this.consumerToken,
+            this.accessToken,
+            { items: importIds.join(',') }
+        );
+        return request.send();
+    }
+
+    /**
+     * Saves a media asset in Bynder. If media id is specified in the data a new version of the asset will be saved. 
+     * Otherwise a new asset will be saved.
+     * @param {Object} data - Asset data
+     * @return {Promise}
+     */
+    saveAsset(data) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const { brandId, mediaId } = data;
+        if (!brandId || brandId === '') {
+            return rejectValidation('upload', 'brandId');
+        }
+        const saveURL = mediaId ? `v4/media/${mediaId}/save/` : 'v4/media/save/';
+        const request = new APICall(
+            this.baseURL,
+            saveURL,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            data
+        );
+        return request.send();
+    }
+
+    /**
+     * Uploads an arbitrarily sized buffer or stream file and returns the uploaded asset information
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets}
+     * @param {Object} file={} - An object containing the id of the desired collection.
+     * @param {String} file.filename - The file name of the file to be saved
+     * @param {Buffer|Readable} file.body - The file to be uploaded. Can be either buffer or a read stream.
+     * @param {Number} file.length - The length of the file to be uploaded
+     * @param {Object} file.data={} - An object containing the assets' attributes
+     * @return {Promise} The information of the uploaded file, including IDs and all final file urls.
+     */
+    uploadFile(file) {
+        const { body, filename, data } = file;
+        const { brandId } = data;
+        const isBuffer = Buffer.isBuffer(body);
+        const isStream = typeof body.read === 'function';
+        const length = isBuffer ? body.length : file.length;
+
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!brandId || brandId === '') {
+            return rejectValidation('upload', 'brandId');
+        }
+        if (!filename || filename === '') {
+            return rejectValidation('upload', 'filename');
+        }
+        if (!body || (!isStream && !isBuffer)) {
+            return rejectValidation('upload', 'body');
+        }
+        if (!length || typeof length !== 'number') {
+            return rejectValidation('upload', 'length');
+        }
+
+        const getClosestUploadEndpoint = this.getClosestUploadEndpoint.bind(this);
+        const initUpload = this.initUpload.bind(this);
+        const registerChunk = this.registerChunk.bind(this);
+        const finalizeUpload = this.finalizeUpload.bind(this);
+        const pollUploadStatus = this.pollUploadStatus.bind(this);
+        const saveAsset = this.saveAsset.bind(this);
+
+        return Promise.all([
+            getClosestUploadEndpoint(),
+            initUpload(filename)
+        ])
+        .then((res) => {
+            const [endpoint, init] = res;
+            const uploadPath = init.multipart_params.key;
+
+            // count number of chunks
+            const CHUNK_SIZE = 1024 * 1024 * 5;
+            const chunks = Math.ceil(length / CHUNK_SIZE);
+
+            const uploadChunkToS3 = (chunkData, chunk) => {
+                console.log(`Uploading chunk ${chunk} ${chunkData.length}...`);
+                const form = new FormData();
+                const params = Object.assign(init.multipart_params, {
+                    name: `${basename(uploadPath)}/p${chunk}`,
+                    chunk,
+                    chunks,
+                    Filename: `${uploadPath}/p${chunk}`,
+                    key: `${uploadPath}/p${chunk}`
+                });
+                Object.keys(params).forEach((key) => {
+                    form.append(key, params[key]);
+                });
+                form.append('file', chunkData);
+                const headers = Object.assign(form.getHeaders(), {
+                    'content-length': form.getLengthSync()
+                });
+                return axios.post(endpoint, form, { headers });
+            };
+
+            // sequentially upload chunks to AWS, then register them
+            let chunk = 0;
+            if (isBuffer) {
+                // buffer input
+                return new Promise((resolve, reject) => {
+                    (function nextChunk() {
+                        if (chunk < chunks) {
+                            const start = chunk * CHUNK_SIZE;
+                            const end = Math.min(start + CHUNK_SIZE, length);
+                            const chunkData = body.slice(start, end);
+                            uploadChunkToS3(chunkData, ++chunk)
+                                .then(() => {
+                                    return registerChunk(init, chunk);
+                                })
+                                .then(nextChunk)
+                                .catch(reject);
+                        } else {
+                            // pass init and chunk number to finalize
+                            resolve({ init, chunk });
+                        }
+                    }());
+                });
+            }
+
+            // readable stream input
+            return new Promise((resolve, reject) => {
+                (function nextChunk() {
+                    if (chunk < chunks) {
+                        const chunkData = body.read(CHUNK_SIZE);
+                        if (chunkData !== null) {
+                            uploadChunkToS3(chunkData, ++chunk)
+                                .then(() => {
+                                    return registerChunk(init, chunk);
+                                })
+                                .then(nextChunk)
+                                .catch(reject);
+                        } else {
+                            // our read stream is not done yet reading
+                            // let's wait for a while...
+                            setTimeout(nextChunk, 50);
+                        }
+                    } else {
+                        // pass init and chunk number to finalize
+                        resolve({ init, chunk });
+                    }
+                }());
+            });
+        })
+        .then((uploadResponse) => {
+            const { init, chunk } = uploadResponse;
+            return finalizeUpload(init, filename, chunk);
+        })
+        .then((finalizeResponse) => {
+            const { importId } = finalizeResponse;
+            return new Promise((resolve, reject) => {
+                const POLLING_INTERVAL = 2000;
+                const MAX_POLLING_ATTEMPTS = 60;
+                let attempt = 0;
+                (function checkStatus() {
+                    pollUploadStatus([importId]).then((pollStatus) => {
+                        if (pollStatus !== null) {
+                            const { itemsDone, itemsFailed } = pollStatus;
+                            if (itemsDone.length > 0) {
+                                // done !
+                                return resolve({ itemsDone });
+                            }
+                            if (itemsFailed.length > 0) {
+                                // failed
+                                return reject({ itemsFailed });
+                            }
+                        }
+                        if (++attempt > MAX_POLLING_ATTEMPTS) {
+                            // timed oddut
+                            return reject(new Error(`Stopped polling after ${attempt} attempts`));
+                        }
+                        return setTimeout(checkStatus, POLLING_INTERVAL);
+                    }).catch(reject);
+                }());
+            });
+        })
+        .then((doneResponse) => {
+            const { itemsDone } = doneResponse;
+            const importId = itemsDone[0];
+            return saveAsset(Object.assign(data, { importId }));
+        });
     }
 }
