@@ -1,7 +1,7 @@
 import 'isomorphic-form-data';
-import { basename } from 'path';
 import OAuth from 'oauth-1.0a';
 import axios from 'axios';
+import util from './util';
 
 const defaultAssetsNumberPerPage = 50;
 
@@ -601,6 +601,25 @@ export default class Bynder {
     }
 
     /**
+     * Get a list of brands and subbrands
+     * @see {@link https://bynder.docs.apiary.io/#reference/security-roles/specific-security-profile/retrieve-brands-and-subbrands}
+     * @return {Promise}
+     */
+    getBrands() {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const request = new APICall(
+            this.baseURL,
+            'v4/brands/',
+            'GET',
+            this.consumerToken,
+            this.accessToken
+        );
+        return request.send();
+    }
+
+    /**
      * Gets the closest Amazon S3 bucket location to upload to.
      * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/1-get-closest-amazons3-upload-endpoint/get-closest-amazons3-upload-endpoint}
      * @return {Promise} Amazon S3 location url string.
@@ -721,7 +740,7 @@ export default class Bynder {
     }
 
     /**
-     * Saves a media asset in Bynder. If media id is specified in the data a new version of the asset will be saved. 
+     * Saves a media asset in Bynder. If media id is specified in the data a new version of the asset will be saved.
      * Otherwise a new asset will be saved.
      * @param {Object} data - Asset data
      * @return {Promise}
@@ -799,10 +818,9 @@ export default class Bynder {
             const chunks = Math.ceil(length / CHUNK_SIZE);
 
             const uploadChunkToS3 = (chunkData, chunk) => {
-                console.log(`Uploading chunk ${chunk} ${chunkData.length}...`);
                 const form = new FormData();
                 const params = Object.assign(init.multipart_params, {
-                    name: `${basename(uploadPath)}/p${chunk}`,
+                    name: `${util.basename(uploadPath)}/p${chunk}`,
                     chunk,
                     chunks,
                     Filename: `${uploadPath}/p${chunk}`,
