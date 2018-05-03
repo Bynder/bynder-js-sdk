@@ -28,6 +28,16 @@ bynder.saveNewMetaproperty({
     })
     .then((data) => {
         console.log('getMetaproperty', data, '\n\n');
+        return bynder.editMetaproperty({ id: metaId, label: 'byndertestlabel_mod' });
+    })
+    .then((data) => {
+        console.log('editMetaproperty', data, '\n\n');
+        return bynder.getMetaproperty({
+            id: metaId
+        });
+    })
+    .then((data) => {
+        console.log('getMetaproperty', data, '\n\n');
         return bynder.deleteMetaproperty({
             id: metaId
         });

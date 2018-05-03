@@ -93,6 +93,44 @@ describe('Get metaproperty', () => {
     });
 });
 
+describe('Edit metaproperty', () => {
+    let bynder;
+    let response;
+    let metaproperty;
+
+    beforeEach((done) => {
+        bynder = new Bynder(configs);
+
+        bynder.editMetaproperty({
+            id: metaId,
+            label: `${label}_mod`
+        }).then((data) => {
+            response = data;
+            return bynder.getMetaproperty({ id: metaId });
+        }).then((data) => {
+            metaproperty = data;
+            done();
+        })
+        .catch((error) => {
+            metaproperty = error;
+            done();
+        });
+    });
+
+    it('Edit one metaproperty', () => {
+        expect(response.statuscode).toEqual(201);
+        expect(response.message).toEqual('Created');
+        expect(metaproperty.constructor).toEqual(Object);
+        expect(metaproperty.label).toEqual(`${label}_mod`);
+        const metapropertyKeys = Object.keys(metaproperty);
+        expect(metapropertyKeys).toContain('name');
+        expect(metapropertyKeys).toContain('id');
+        expect(metapropertyKeys).toContain('options');
+        expect(metapropertyKeys).toContain('zindex');
+        expect(metapropertyKeys).toContain('isFilterable');
+    });
+});
+
 describe('Delete metaproperty', () => {
     let bynder;
     let deleteMetapropertyResponse;
