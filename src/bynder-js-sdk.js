@@ -479,6 +479,32 @@ export default class Bynder {
     }
 
     /**
+     * Modify new metaproperty with the information provided.
+     * @see {@link https://bynder.docs.apiary.io/#reference/metaproperties/specific-metaproperty-operations/modify-metaproperty|API Call}
+     * @param {Object} object={} - An object containing the data of the metaproperty.
+     * @param {String} queryObject.id - The id of the desired metaproperty.
+     * @return {Promise} Object - Returns a Promise that, when fulfilled, will either return an empty Object in
+     * case it's successful or an Error with the problem.
+     */
+    editMetaproperty(object) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!object.id) {
+            return rejectValidation('metaproperty', 'id');
+        }
+        const request = new APICall(
+            this.baseURL,
+            `v4/metaproperties/${object.id}/`,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            { data: JSON.stringify(object) } // The API requires an object with the query content stringified inside
+        );
+        return request.send();
+    }
+
+    /**
      * Delete the metaproperty with the provided id.
      * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/delete-metaproperty|API Call}
      * @param {Object} object={} - An object containing the id of the metaproperty to be deleted.
