@@ -482,6 +482,7 @@ export default class Bynder {
      * Modify new metaproperty with the information provided.
      * @see {@link https://bynder.docs.apiary.io/#reference/metaproperties/specific-metaproperty-operations/modify-metaproperty|API Call}
      * @param {Object} object={} - An object containing the data of the metaproperty.
+     * @param {String} queryObject.id - The id of the desired metaproperty.
      * @return {Promise} Object - Returns a Promise that, when fulfilled, will either return an empty Object in
      * case it's successful or an Error with the problem.
      */
