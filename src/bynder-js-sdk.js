@@ -649,7 +649,7 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        if (!filename || filename.length === 0) {
+        if (!filename) {
             return rejectValidation('upload', 'filename');
         }
         const request = new APICall(
@@ -752,7 +752,7 @@ export default class Bynder {
             return rejectURL();
         }
         const { brandId, mediaId } = data;
-        if (!brandId || brandId === '') {
+        if (!brandId) {
             return rejectValidation('upload', 'brandId');
         }
         const saveURL = mediaId ? `v4/media/${mediaId}/save/` : 'v4/media/save/';
@@ -787,10 +787,10 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        if (!brandId || brandId === '') {
+        if (!brandId) {
             return rejectValidation('upload', 'brandId');
         }
-        if (!filename || filename === '') {
+        if (!filename) {
             return rejectValidation('upload', 'filename');
         }
         if (!body || (!isStream && !isBuffer)) {
