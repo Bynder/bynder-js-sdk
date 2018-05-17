@@ -695,7 +695,7 @@ export default class Bynder {
     /**
      * Finalises the file upload when all chunks finished uploading and registers it in Bynder.
      * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/finalise-a-completely-uploaded-file}
-     * @param {Object} init - result from init upload
+     * @param {Object} init - Result from init upload
      * @param {String} fileName - Original file name
      * @param {Number} chunks - Number of chunks
      * @return {Promise}
@@ -805,6 +805,82 @@ export default class Bynder {
     }
 
     /**
+     * Uploads arbirtrarily sized buffer or stream file to provided S3 endpoint in chunks and registers each chunk to Bynder.
+     * Resolves the passed init result and final chunk number.
+     * @param {Object} file ={} - An object containing the id of the desired collection.
+     * @param {String} file.filename - The file name of the file to be saved
+     * @param {Buffer|Readable} file.body - The file to be uploaded. Can be either buffer or a read stream.
+     * @param {Number} file.length - The length of the file to be uploaded
+     * @param {string} endpoint - S3 endpoint url
+     * @param {Object} init - Result from init upload
+     * @return {Promise}
+     */
+    uploadFileInChunks(file, endpoint, init) {
+        const { body } = file;
+        const isBuffer = Buffer.isBuffer(body);
+        const length = isBuffer ? body.length : file.length;
+        const CHUNK_SIZE = 1024 * 1024 * 5;
+        const chunks = Math.ceil(length / CHUNK_SIZE);
+
+        const registerChunk = this.registerChunk.bind(this);
+
+        const uploadChunkToS3 = (chunkData, chunkNumber) => {
+            const uploadPath = init.multipart_params.key;
+            const form = new FormData();
+            const params = Object.assign(init.multipart_params, {
+                name: `${basename(uploadPath)}/p${chunkNumber}`,
+                chunkNumber,
+                chunks,
+                Filename: `${uploadPath}/p${chunkNumber}`,
+                key: `${uploadPath}/p${chunkNumber}`
+            });
+            Object.keys(params).forEach((key) => {
+                form.append(key, params[key]);
+            });
+            form.append('file', chunkData);
+            const headers = Object.assign(form.getHeaders(), {
+                'content-length': form.getLengthSync()
+            });
+            return axios.post(endpoint, form, { headers });
+        };
+
+        // sequentially upload chunks to AWS, then register them
+        return new Promise((resolve, reject) => {
+            let chunkNumber = 0;
+            (function nextChunk() {
+                if (chunkNumber >= chunks) {
+                    // we are finished, pass init and chunk number to be finalised
+                    return resolve({ init, chunkNumber });
+                }
+
+                // upload next chunk
+                let chunkData;
+                if (isBuffer) {
+                    // handle buffer data
+                    const start = chunkNumber * CHUNK_SIZE;
+                    const end = Math.min(start + CHUNK_SIZE, length);
+                    chunkData = body.slice(start, end);
+                } else {
+                    // handle stream data
+                    chunkData = body.read(CHUNK_SIZE);
+                    if (chunkData === null) {
+                        // our read stream is not done yet reading
+                        // let's wait for a while...
+                        setTimeout(nextChunk, 50);
+                    }
+                }
+                return uploadChunkToS3(chunkData, ++chunkNumber)
+                    .then(() => {
+                        // register uploaded chunk to Bynder
+                        return registerChunk(init, chunkNumber);
+                    })
+                    .then(nextChunk)
+                    .catch(reject);
+            }());
+        });
+    }
+
+    /**
      * Uploads an arbitrarily sized buffer or stream file and returns the uploaded asset information
      * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets}
      * @param {Object} file={} - An object containing the id of the desired collection.
@@ -839,7 +915,7 @@ export default class Bynder {
 
         const getClosestUploadEndpoint = this.getClosestUploadEndpoint.bind(this);
         const initUpload = this.initUpload.bind(this);
-        const registerChunk = this.registerChunk.bind(this);
+        const uploadFileInChunksToS3 = this.uploadFileInChunksToS3.bind(this);
         const finaliseUpload = this.finaliseUpload.bind(this);
         const saveAsset = this.saveAsset.bind(this);
         const waitForUploadDone = this.waitForUploadDone.bind(this);
@@ -850,78 +926,7 @@ export default class Bynder {
         ])
         .then((res) => {
             const [endpoint, init] = res;
-            const uploadPath = init.multipart_params.key;
-
-            // count number of chunks
-            const CHUNK_SIZE = 1024 * 1024 * 5;
-            const chunks = Math.ceil(length / CHUNK_SIZE);
-
-            const uploadChunkToS3 = (chunkData, chunk) => {
-                const form = new FormData();
-                const params = Object.assign(init.multipart_params, {
-                    name: `${util.basename(uploadPath)}/p${chunk}`,
-                    chunk,
-                    chunks,
-                    Filename: `${uploadPath}/p${chunk}`,
-                    key: `${uploadPath}/p${chunk}`
-                });
-                Object.keys(params).forEach((key) => {
-                    form.append(key, params[key]);
-                });
-                form.append('file', chunkData);
-                const headers = Object.assign(form.getHeaders(), {
-                    'content-length': form.getLengthSync()
-                });
-                return axios.post(endpoint, form, { headers });
-            };
-
-            // sequentially upload chunks to AWS, then register them
-            let chunk = 0;
-            if (isBuffer) {
-                // buffer input
-                return new Promise((resolve, reject) => {
-                    (function nextChunk() {
-                        if (chunk < chunks) {
-                            const start = chunk * CHUNK_SIZE;
-                            const end = Math.min(start + CHUNK_SIZE, length);
-                            const chunkData = body.slice(start, end);
-                            uploadChunkToS3(chunkData, ++chunk)
-                                .then(() => {
-                                    return registerChunk(init, chunk);
-                                })
-                                .then(nextChunk)
-                                .catch(reject);
-                        } else {
-                            // pass init and chunk number to finalize
-                            resolve({ init, chunk });
-                        }
-                    }());
-                });
-            }
-
-            // readable stream input
-            return new Promise((resolve, reject) => {
-                (function nextChunk() {
-                    if (chunk < chunks) {
-                        const chunkData = body.read(CHUNK_SIZE);
-                        if (chunkData !== null) {
-                            uploadChunkToS3(chunkData, ++chunk)
-                                .then(() => {
-                                    return registerChunk(init, chunk);
-                                })
-                                .then(nextChunk)
-                                .catch(reject);
-                        } else {
-                            // our read stream is not done yet reading
-                            // let's wait for a while...
-                            setTimeout(nextChunk, 50);
-                        }
-                    } else {
-                        // pass init and chunk number to finalize
-                        resolve({ init, chunk });
-                    }
-                }());
-            });
+            return uploadFileInChunksToS3(file, endpoint, init);
         })
         .then((uploadResponse) => {
             const { init, chunk } = uploadResponse;
