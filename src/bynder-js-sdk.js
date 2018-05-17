@@ -698,7 +698,7 @@ export default class Bynder {
      * @param {Number} chunk - chunk id
      * @return {Promise}
      */
-    finalizeUpload(init, filename, chunks) {
+    finaliseUpload(init, filename, chunks) {
         if (!this.validURL()) {
             return rejectURL();
         }
@@ -803,7 +803,7 @@ export default class Bynder {
         const getClosestUploadEndpoint = this.getClosestUploadEndpoint.bind(this);
         const initUpload = this.initUpload.bind(this);
         const registerChunk = this.registerChunk.bind(this);
-        const finalizeUpload = this.finalizeUpload.bind(this);
+        const finaliseUpload = this.finaliseUpload.bind(this);
         const pollUploadStatus = this.pollUploadStatus.bind(this);
         const saveAsset = this.saveAsset.bind(this);
 
@@ -888,7 +888,7 @@ export default class Bynder {
         })
         .then((uploadResponse) => {
             const { init, chunk } = uploadResponse;
-            return finalizeUpload(init, filename, chunk);
+            return finaliseUpload(init, filename, chunk);
         })
         .then((finalizeResponse) => {
             const { importId } = finalizeResponse;
