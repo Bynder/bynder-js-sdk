@@ -102,7 +102,7 @@ Here's a list of all the methods available, separated by module:
 * `getCategories(queryObject)`
 * `getCategory(queryObject)`
 
-## Brands
+### Brands
 * `getBrands()`
 
 ### Upload
