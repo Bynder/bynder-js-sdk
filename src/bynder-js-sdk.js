@@ -665,6 +665,7 @@ export default class Bynder {
 
     /**
      * Registers a temporary chunk in Bynder.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/3-upload-file-in-chunks-and-register-every-uploaded-chunk/register-uploaded-chunk}
      * @param {Object} init - result from init upload
      * @param {Number} chunk - chunk id
      * @return {Promise}
@@ -742,6 +743,7 @@ export default class Bynder {
     /**
      * Saves a media asset in Bynder. If media id is specified in the data a new version of the asset will be saved.
      * Otherwise a new asset will be saved.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/save-as-a-new-asset}
      * @param {Object} data - Asset data
      * @return {Promise}
      */
