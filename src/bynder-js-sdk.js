@@ -825,11 +825,11 @@ export default class Bynder {
         const registerChunk = this.registerChunk.bind(this);
 
         const uploadChunkToS3 = (chunkData, chunkNumber) => {
-            const uploadPath = init.multipart_params.key;
             const form = new FormData();
+            const uploadPath = init.multipart_params.key;
             const params = Object.assign(init.multipart_params, {
                 name: `${basename(uploadPath)}/p${chunkNumber}`,
-                chunkNumber,
+                chunk: chunkNumber,
                 chunks,
                 Filename: `${uploadPath}/p${chunkNumber}`,
                 key: `${uploadPath}/p${chunkNumber}`
@@ -866,7 +866,7 @@ export default class Bynder {
                     if (chunkData === null) {
                         // our read stream is not done yet reading
                         // let's wait for a while...
-                        setTimeout(nextChunk, 50);
+                        return setTimeout(nextChunk, 50);
                     }
                 }
                 return uploadChunkToS3(chunkData, ++chunkNumber)
@@ -915,7 +915,7 @@ export default class Bynder {
 
         const getClosestUploadEndpoint = this.getClosestUploadEndpoint.bind(this);
         const initUpload = this.initUpload.bind(this);
-        const uploadFileInChunksToS3 = this.uploadFileInChunksToS3.bind(this);
+        const uploadFileInChunks = this.uploadFileInChunks.bind(this);
         const finaliseUpload = this.finaliseUpload.bind(this);
         const saveAsset = this.saveAsset.bind(this);
         const waitForUploadDone = this.waitForUploadDone.bind(this);
@@ -926,11 +926,11 @@ export default class Bynder {
         ])
         .then((res) => {
             const [endpoint, init] = res;
-            return uploadFileInChunksToS3(file, endpoint, init);
+            return uploadFileInChunks(file, endpoint, init);
         })
         .then((uploadResponse) => {
-            const { init, chunk } = uploadResponse;
-            return finaliseUpload(init, filename, chunk);
+            const { init, chunkNumber } = uploadResponse;
+            return finaliseUpload(init, filename, chunkNumber);
         })
         .then((finalizeResponse) => {
             const { importId } = finalizeResponse;
