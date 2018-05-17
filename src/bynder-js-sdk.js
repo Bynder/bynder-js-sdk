@@ -913,7 +913,7 @@ export default class Bynder {
                             }
                         }
                         if (++attempt > MAX_POLLING_ATTEMPTS) {
-                            // timed oddut
+                            // timed out
                             return reject(new Error(`Stopped polling after ${attempt} attempts`));
                         }
                         return setTimeout(checkStatus, POLLING_INTERVAL);
