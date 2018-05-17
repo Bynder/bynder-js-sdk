@@ -1,7 +1,7 @@
 import 'isomorphic-form-data';
 import OAuth from 'oauth-1.0a';
 import axios from 'axios';
-import util from './util';
+import { basename } from 'path';
 
 const defaultAssetsNumberPerPage = 50;
 
@@ -744,6 +744,40 @@ export default class Bynder {
     }
 
     /**
+     * Resolves once assets are uploaded, or rejects after 60 attempts with 2000ms between them
+     * @param {String[]} importIds - The import IDs of the files to be checked.
+     * @return {Promise}
+     */
+    waitForUploadDone(importIds) {
+        const POLLING_INTERVAL = 2000;
+        const MAX_POLLING_ATTEMPTS = 60;
+        const pollUploadStatus = this.pollUploadStatus.bind(this);
+        return new Promise((resolve, reject) => {
+            let attempt = 0;
+            (function checkStatus() {
+                pollUploadStatus(importIds).then((pollStatus) => {
+                    if (pollStatus !== null) {
+                        const { itemsDone, itemsFailed } = pollStatus;
+                        if (itemsDone.length === importIds.length) {
+                            // done !
+                            return resolve({ itemsDone });
+                        }
+                        if (itemsFailed.length > 0) {
+                            // failed
+                            return reject({ itemsFailed });
+                        }
+                    }
+                    if (++attempt > MAX_POLLING_ATTEMPTS) {
+                        // timed out
+                        return reject(new Error(`Stopped polling after ${attempt} attempts`));
+                    }
+                    return setTimeout(checkStatus, POLLING_INTERVAL);
+                }).catch(reject);
+            }());
+        });
+    }
+
+    /**
      * Saves a media asset in Bynder. If media id is specified in the data a new version of the asset will be saved.
      * Otherwise a new asset will be saved.
      * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/save-as-a-new-asset}
@@ -807,8 +841,8 @@ export default class Bynder {
         const initUpload = this.initUpload.bind(this);
         const registerChunk = this.registerChunk.bind(this);
         const finaliseUpload = this.finaliseUpload.bind(this);
-        const pollUploadStatus = this.pollUploadStatus.bind(this);
         const saveAsset = this.saveAsset.bind(this);
+        const waitForUploadDone = this.waitForUploadDone.bind(this);
 
         return Promise.all([
             getClosestUploadEndpoint(),
@@ -895,31 +929,7 @@ export default class Bynder {
         })
         .then((finalizeResponse) => {
             const { importId } = finalizeResponse;
-            return new Promise((resolve, reject) => {
-                const POLLING_INTERVAL = 2000;
-                const MAX_POLLING_ATTEMPTS = 60;
-                let attempt = 0;
-                (function checkStatus() {
-                    pollUploadStatus([importId]).then((pollStatus) => {
-                        if (pollStatus !== null) {
-                            const { itemsDone, itemsFailed } = pollStatus;
-                            if (itemsDone.length > 0) {
-                                // done !
-                                return resolve({ itemsDone });
-                            }
-                            if (itemsFailed.length > 0) {
-                                // failed
-                                return reject({ itemsFailed });
-                            }
-                        }
-                        if (++attempt > MAX_POLLING_ATTEMPTS) {
-                            // timed out
-                            return reject(new Error(`Stopped polling after ${attempt} attempts`));
-                        }
-                        return setTimeout(checkStatus, POLLING_INTERVAL);
-                    }).catch(reject);
-                }());
-            });
+            return waitForUploadDone([importId]);
         })
         .then((doneResponse) => {
             const { itemsDone } = doneResponse;
