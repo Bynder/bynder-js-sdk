@@ -670,7 +670,7 @@ export default class Bynder {
      * @param {Number} chunk - chunk id
      * @return {Promise}
      */
-    registerChunk(init, chunk) {
+    registerChunk(init, chunkNumber) {
         if (!this.validURL()) {
             return rejectURL();
         }
@@ -685,8 +685,8 @@ export default class Bynder {
             {
                 id: uploadid,
                 targetid,
-                filename: `${filename}/p${chunk}`,
-                chunkNumber: chunk
+                filename: `${filename}/p${chunkNumber}`,
+                chunkNumber
             }
         );
         return request.send();
