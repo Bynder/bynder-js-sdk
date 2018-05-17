@@ -667,7 +667,7 @@ export default class Bynder {
      * Registers a temporary chunk in Bynder.
      * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/3-upload-file-in-chunks-and-register-every-uploaded-chunk/register-uploaded-chunk}
      * @param {Object} init - result from init upload
-     * @param {Number} chunk - chunk id
+     * @param {Number} chunkNumber - chunk number
      * @return {Promise}
      */
     registerChunk(init, chunkNumber) {
@@ -694,8 +694,10 @@ export default class Bynder {
 
     /**
      * Finalises the file upload when all chunks finished uploading and registers it in Bynder.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/finalise-a-completely-uploaded-file}
      * @param {Object} init - result from init upload
-     * @param {Number} chunk - chunk id
+     * @param {String} fileName - Original file name
+     * @param {Number} chunks - Number of chunks
      * @return {Promise}
      */
     finaliseUpload(init, filename, chunks) {
@@ -722,6 +724,7 @@ export default class Bynder {
 
     /**
      * Checks if the files have finished uploading.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/5-poll-processing-state-of-finalised-files/retrieve-entry-point}
      * @param {String[]} importIds - The import IDs of the files to be checked.
      * @return {Promise}
      */
