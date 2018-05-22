@@ -652,4 +652,31 @@ export default class Bynder {
         );
         return request.send();
     }
+
+    /**
+     * Add assets to the desired collection.
+     * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/add-asset-to-a-collection|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired collection.
+     * @param {String} queryObject.id - The id of the shared collection.
+     * @param {String} queryObject.data - JSON-serialised list of asset ids to add.
+     * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
+     * collection or an Error with the problem.
+     */
+    addMediaToCollection(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id || !queryObject.data || queryObject.data.length === 0) {
+            return rejectValidation('collection', 'data');
+        }
+        const request = new APICall(
+            this.baseURL,
+            `v4/collections/${queryObject.id}/media/`,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            { data: JSON.stringify(queryObject.data) }, // The API requires JSON-serialised list
+        );
+        return request.send();
+    }
 }
