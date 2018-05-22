@@ -94,6 +94,7 @@ Here's a list of all the methods available, separated by module:
 ### Collections
 * `getCollections(queryObject)`
 * `getCollection(queryObject)`
+* `createCollection(queryObject)`
 
 ### Tags
 * `getTags(queryObject)`

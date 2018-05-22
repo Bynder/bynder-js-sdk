@@ -112,7 +112,7 @@ class APICall {
                     message: response.statusText
                 });
             }
-            if (response.status === 200) {
+            if (response.status === 200 || response.status === 201) {
                 return response.data;
             }
             return {};
@@ -594,6 +594,33 @@ export default class Bynder {
             'GET',
             this.consumerToken,
             this.accessToken
+        );
+        return request.send();
+    }
+
+    /**
+     * Create the collection information according to the id provided.
+     * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/create-collection|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired collection.
+     * @param {String} queryObject.name - The name of the desired collection.
+     * @param {String} queryObject.description - The description of the desired collection.
+     * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
+     * collection or an Error with the problem.
+     */
+    createCollection(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.name) {
+            return rejectValidation('collection', 'name');
+        }
+        const request = new APICall(
+            this.baseURL,
+            'v4/collections/',
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            queryObject,
         );
         return request.send();
     }

@@ -17,6 +17,13 @@ bynder.getCollections({
     })
     .then((data) => {
         console.log('getCollection', data, '\n\n');
+        return bynder.createCollection({
+            name: 'test',
+            description: 'for API test'
+        });
+    })
+    .then((data) => {
+        console.log('createCollection', data, '\n\n');
     })
     .catch((error) => {
         console.log(error);
