@@ -823,10 +823,10 @@ export default class Bynder {
         const chunks = Math.ceil(length / CHUNK_SIZE);
 
         const registerChunk = this.registerChunk.bind(this);
+        const uploadPath = init.multipart_params.key;
 
         const uploadChunkToS3 = (chunkData, chunkNumber) => {
             const form = new FormData();
-            const uploadPath = init.multipart_params.key;
             const params = Object.assign(init.multipart_params, {
                 name: `${basename(uploadPath)}/p${chunkNumber}`,
                 chunk: chunkNumber,
