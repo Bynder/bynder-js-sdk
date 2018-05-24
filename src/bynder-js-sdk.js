@@ -530,27 +530,27 @@ export default class Bynder {
     }
 
     /**
-     * Get the options of metaproperty
+     * Add an option of metaproperty
      * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/retrieve-metaproperty-options|API Call}
      * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
-     * @param {String} queryObject.ids - The id of the desired metaproperty.
+     * @param {String} queryObject.id - The id of the desired metaproperty.
      * @return {Promise} Metaproperty - Returns a Promise that, when fulfilled, will either return an Object with the
      * metaproperty or an Error with the problem.
      */
-    getOptionsOfMetaproperty(queryObject = {}) {
+    addOptionToMetaproperty(queryObject) {
         if (!this.validURL()) {
             return rejectURL();
         }
-        if (!queryObject.ids) {
-            return rejectValidation('metaproperty options', 'ids');
+        if (!queryObject.id || !queryObject.name) {
+            return rejectValidation('metaproperty options', 'id or name');
         }
         const request = new APICall(
             this.baseURL,
-            'v4/metaproperties/options/',
-            'GET',
+            `v4/metaproperties/${queryObject.id}/options/`,
+            'POST',
             this.consumerToken,
             this.accessToken,
-            queryObject
+            { data: JSON.stringify({ name: queryObject.name }) }
         );
         return request.send();
     }
