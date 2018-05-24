@@ -543,7 +543,7 @@ export default class Bynder {
             return rejectURL();
         }
         if (!queryObject.id || !queryObject.name) {
-            return rejectValidation('metaproperty options', 'id or name');
+            return rejectValidation('metaproperty option', 'id or name');
         }
         const queryBody = Object.assign({}, queryObject);
         delete queryBody.id;
@@ -559,7 +559,7 @@ export default class Bynder {
     }
 
     /**
-     * Add an option of metaproperty
+     * modify an option of metaproperty
      * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/modify-metaproperty-option|API Call}
      * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
      * @param {String} queryObject.id - The id of the desired metaproperty.
@@ -573,10 +573,8 @@ export default class Bynder {
             return rejectURL();
         }
         if (!queryObject.id || !queryObject.optionId) {
-            return rejectValidation('metaproperty options', 'id or name');
+            return rejectValidation('metaproperty option', 'id or optionId');
         }
-        // const object = queryObject;
-        // delete object.id;
         const request = new APICall(
             this.baseURL,
             `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`,
@@ -584,6 +582,33 @@ export default class Bynder {
             this.consumerToken,
             this.accessToken,
             { data: JSON.stringify(queryObject) }
+        );
+        return request.send();
+    }
+
+    /**
+     * delete an option of metaproperty
+     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/modify-metaproperty-option|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
+     * @param {String} queryObject.id - The id of the desired metaproperty.
+     * @param {String} queryObject.optionId - The id of the desired option.
+     * @param {String} queryObject.name - The id of the desired metaproperty.
+     * @return {Promise} Metaproperty - Returns a Promise that, when fulfilled, will either return an Object with the
+     * metaproperty or an Error with the problem.
+     */
+    deleteMetapropertyOption(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id || !queryObject.optionId) {
+            return rejectValidation('metaproperty option', 'id or optionId');
+        }
+        const request = new APICall(
+            this.baseURL,
+            `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`,
+            'DELETE',
+            this.consumerToken,
+            this.accessToken,
         );
         return request.send();
     }
