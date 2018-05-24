@@ -92,6 +92,7 @@ Here's a list of all the methods available, separated by module:
 * `deleteMetaproperty(object)`
 * `createMetapropertyOption(object)`
 * `editMetapropertyOption(object)`
+* `deleteMetapropertyOption(object)`
 
 ### Collections
 * `getCollections(queryObject)`

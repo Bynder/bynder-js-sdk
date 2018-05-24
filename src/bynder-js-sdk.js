@@ -534,7 +534,7 @@ export default class Bynder {
      * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/create-metaproperty-option|API Call}
      * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
      * @param {String} queryObject.id - The id of the desired metaproperty.
-     * @param {String} queryObject.name - The id of the desired metaproperty.
+     * @param {String} queryObject.name - The name of the desired metaproperty.
      * @return {Promise} Metaproperty - Returns a Promise that, when fulfilled, will either return an Object with the
      * metaproperty or an Error with the problem.
      */
@@ -588,7 +588,7 @@ export default class Bynder {
 
     /**
      * delete an option of metaproperty
-     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/modify-metaproperty-option|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/delete-metaproperty-option|API Call}
      * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
      * @param {String} queryObject.id - The id of the desired metaproperty.
      * @param {String} queryObject.optionId - The id of the desired option.
