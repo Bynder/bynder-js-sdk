@@ -38,6 +38,12 @@ bynder.saveNewMetaproperty({
     })
     .then((data) => {
         console.log('getMetaproperty', data, '\n\n');
+        return bynder.getOptionsOfMetaproperty({
+            ids: metaId
+        });
+    })
+    .then((data) => {
+        console.log('getOptionsOfMetaproperty', data, '\n\n');
         return bynder.deleteMetaproperty({
             id: metaId
         });

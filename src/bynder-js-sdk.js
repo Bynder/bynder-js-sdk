@@ -530,6 +530,32 @@ export default class Bynder {
     }
 
     /**
+     * Get the options of metaproperty
+     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/retrieve-metaproperty-options|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
+     * @param {String} queryObject.ids - The id of the desired metaproperty.
+     * @return {Promise} Metaproperty - Returns a Promise that, when fulfilled, will either return an Object with the
+     * metaproperty or an Error with the problem.
+     */
+    getOptionsOfMetaproperty(queryObject = {}) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.ids) {
+            return rejectValidation('metaproperty options', 'ids');
+        }
+        const request = new APICall(
+            this.baseURL,
+            'v4/metaproperties/options/',
+            'GET',
+            this.consumerToken,
+            this.accessToken,
+            queryObject
+        );
+        return request.send();
+    }
+
+    /**
      * Get all the tags
      * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-access/retrieve-entry-point|API Call}
      * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.

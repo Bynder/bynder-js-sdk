@@ -93,6 +93,37 @@ describe('Get metaproperty', () => {
     });
 });
 
+describe('Get options of metaproperty', () => {
+    let bynder;
+    let options;
+
+    beforeEach((done) => {
+        bynder = new Bynder(configs);
+
+        bynder.getOptionsOfMetaproperty({
+            ids: metaId
+        }).then((data) => {
+            options = data;
+            done();
+        })
+        .catch((error) => {
+            options = error;
+            done();
+        });
+    });
+
+    it('Get options from metaproperty', () => {
+        expect(options.constructor).toEqual(Object);
+        const metapropertyKeys = Object.keys(options);
+        console.log(metapropertyKeys);
+        // expect(metapropertyKeys).toContain('name');
+        // expect(metapropertyKeys).toContain('id');
+        // expect(metapropertyKeys).toContain('options');
+        // expect(metapropertyKeys).toContain('zindex');
+        // expect(metapropertyKeys).toContain('isFilterable');
+    });
+});
+
 describe('Edit metaproperty', () => {
     let bynder;
     let response;
