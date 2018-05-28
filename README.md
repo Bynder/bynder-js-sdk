@@ -105,6 +105,12 @@ Here's a list of all the methods available, separated by module:
 * `getCategories(queryObject)`
 * `getCategory(queryObject)`
 
+### Brands
+* `getBrands()`
+
+### Upload
+* `uploadFile(fileObject)`
+
 ## Contribute to the SDK
 If you wish to contribute to this repository and further extend the API coverage of the SDK, here are the steps necessary to prepare your environment:
 
@@ -112,7 +118,7 @@ If you wish to contribute to this repository and further extend the API coverage
 2. In the root folder, run `npm install` to install all the dependencies.
 3. Create the file named `secret.json` to provide API tokens following this structure:
 ```json
-{   
+{
     "consumer": {
         "public": "<public_consumer_key>",
         "secret": "<secret_consumer_key>"
@@ -130,4 +136,4 @@ If you wish to contribute to this repository and further extend the API coverage
   3. `gulp babel` - Run Babel to create a folder 'dist' with ES2015 compatible code.
   4. `gulp jasmine` - Run Jasmine for all the spec files inside 'tests'.
   5. `gulp doc` - Run JSDoc to create a 'doc' folder with automatically generated documentation for the source code.
-  6. `gulp webserver` - Deploy a web server from the root folder at `localhost:8080` to run the html samples (in order to avoid CORS problems). 
+  6. `gulp webserver` - Deploy a web server from the root folder at `localhost:8080` to run the html samples (in order to avoid CORS problems).

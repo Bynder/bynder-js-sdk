@@ -1,5 +1,7 @@
+import 'isomorphic-form-data';
 import OAuth from 'oauth-1.0a';
 import axios from 'axios';
+import { basename } from 'path';
 
 const defaultAssetsNumberPerPage = 50;
 
@@ -626,6 +628,33 @@ export default class Bynder {
     }
 
     /**
+     * Add assets to the desired collection.
+     * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/add-asset-to-a-collection|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired collection.
+     * @param {String} queryObject.id - The id of the shared collection.
+     * @param {String} queryObject.data - JSON-serialised list of asset ids to add.
+     * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
+     * collection or an Error with the problem.
+     */
+    addMediaToCollection(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id || !queryObject.data || queryObject.data.length === 0) {
+            return rejectValidation('collection', 'data');
+        }
+        const request = new APICall(
+            this.baseURL,
+            `v4/collections/${queryObject.id}/media/`,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            { data: JSON.stringify(queryObject.data) }, // The API requires JSON-serialised list
+        );
+        return request.send();
+    }
+
+    /**
      * Share the collection to the recipients provided.
      * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/share-collection|API Call}
      * @param {Object} queryObject={} - An object containing the id of the desired collection.
@@ -654,29 +683,345 @@ export default class Bynder {
     }
 
     /**
-     * Add assets to the desired collection.
-     * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/add-asset-to-a-collection|API Call}
-     * @param {Object} queryObject={} - An object containing the id of the desired collection.
-     * @param {String} queryObject.id - The id of the shared collection.
-     * @param {String} queryObject.data - JSON-serialised list of asset ids to add.
-     * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
-     * collection or an Error with the problem.
+     * Get a list of brands and subbrands
+     * @see {@link https://bynder.docs.apiary.io/#reference/security-roles/specific-security-profile/retrieve-brands-and-subbrands}
+     * @return {Promise}
      */
-    addMediaToCollection(queryObject) {
+    getBrands() {
         if (!this.validURL()) {
             return rejectURL();
         }
-        if (!queryObject.id || !queryObject.data || queryObject.data.length === 0) {
-            return rejectValidation('collection', 'data');
+        const request = new APICall(
+            this.baseURL,
+            'v4/brands/',
+            'GET',
+            this.consumerToken,
+            this.accessToken
+        );
+        return request.send();
+    }
+
+    /**
+     * Gets the closest Amazon S3 bucket location to upload to.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/1-get-closest-amazons3-upload-endpoint/get-closest-amazons3-upload-endpoint}
+     * @return {Promise} Amazon S3 location url string.
+     */
+    getClosestUploadEndpoint() {
+        if (!this.validURL()) {
+            return rejectURL();
         }
         const request = new APICall(
             this.baseURL,
-            `v4/collections/${queryObject.id}/media/`,
+            'upload/endpoint',
+            'GET',
+            this.consumerToken,
+            this.accessToken
+        );
+        return request.send();
+    }
+
+    /**
+     * Starts the upload process. Registers a file upload with Bynder and returns authorisation information to allow
+     * uploading to the Amazon S3 bucket-endpoint.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/2-initialise-upload/initialise-upload}
+     * @param {String} filename - filename
+     * @return {Promise} Relevant S3 file information, necessary for the file upload.
+     */
+    initUpload(filename) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!filename) {
+            return rejectValidation('upload', 'filename');
+        }
+        const request = new APICall(
+            this.baseURL,
+            'upload/init',
             'POST',
             this.consumerToken,
             this.accessToken,
-            { data: JSON.stringify(queryObject.data) }, // The API requires JSON-serialised list
+            { filename },
         );
         return request.send();
+    }
+
+    /**
+     * Registers a temporary chunk in Bynder.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/3-upload-file-in-chunks-and-register-every-uploaded-chunk/register-uploaded-chunk}
+     * @param {Object} init - result from init upload
+     * @param {Number} chunkNumber - chunk number
+     * @return {Promise}
+     */
+    registerChunk(init, chunkNumber) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const { s3file, s3_filename: filename } = init;
+        const { uploadid, targetid } = s3file;
+        const request = new APICall(
+            this.baseURL,
+            'v4/upload/',
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            {
+                id: uploadid,
+                targetid,
+                filename: `${filename}/p${chunkNumber}`,
+                chunkNumber
+            }
+        );
+        return request.send();
+    }
+
+    /**
+     * Finalises the file upload when all chunks finished uploading and registers it in Bynder.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/finalise-a-completely-uploaded-file}
+     * @param {Object} init - Result from init upload
+     * @param {String} fileName - Original file name
+     * @param {Number} chunks - Number of chunks
+     * @return {Promise}
+     */
+    finaliseUpload(init, filename, chunks) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const { s3file, s3_filename: s3filename } = init;
+        const { uploadid, targetid } = s3file;
+        const request = new APICall(
+            this.baseURL,
+            `v4/upload/${uploadid}/`,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            {
+                targetid,
+                s3_filename: `${s3filename}/p${chunks}`,
+                original_filename: filename,
+                chunks
+            }
+        );
+        return request.send();
+    }
+
+    /**
+     * Checks if the files have finished uploading.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/5-poll-processing-state-of-finalised-files/retrieve-entry-point}
+     * @param {String[]} importIds - The import IDs of the files to be checked.
+     * @return {Promise}
+     */
+    pollUploadStatus(importIds) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const request = new APICall(
+            this.baseURL,
+            'v4/upload/poll/',
+            'GET',
+            this.consumerToken,
+            this.accessToken,
+            { items: importIds.join(',') }
+        );
+        return request.send();
+    }
+
+    /**
+     * Resolves once assets are uploaded, or rejects after 60 attempts with 2000ms between them
+     * @param {String[]} importIds - The import IDs of the files to be checked.
+     * @return {Promise}
+     */
+    waitForUploadDone(importIds) {
+        const POLLING_INTERVAL = 2000;
+        const MAX_POLLING_ATTEMPTS = 60;
+        const pollUploadStatus = this.pollUploadStatus.bind(this);
+        return new Promise((resolve, reject) => {
+            let attempt = 0;
+            (function checkStatus() {
+                pollUploadStatus(importIds).then((pollStatus) => {
+                    if (pollStatus !== null) {
+                        const { itemsDone, itemsFailed } = pollStatus;
+                        if (itemsDone.length === importIds.length) {
+                            // done !
+                            return resolve({ itemsDone });
+                        }
+                        if (itemsFailed.length > 0) {
+                            // failed
+                            return reject({ itemsFailed });
+                        }
+                    }
+                    if (++attempt > MAX_POLLING_ATTEMPTS) {
+                        // timed out
+                        return reject(new Error(`Stopped polling after ${attempt} attempts`));
+                    }
+                    return setTimeout(checkStatus, POLLING_INTERVAL);
+                }).catch(reject);
+            }());
+        });
+    }
+
+    /**
+     * Saves a media asset in Bynder. If media id is specified in the data a new version of the asset will be saved.
+     * Otherwise a new asset will be saved.
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/save-as-a-new-asset}
+     * @param {Object} data - Asset data
+     * @return {Promise}
+     */
+    saveAsset(data) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        const { brandId, mediaId } = data;
+        if (!brandId) {
+            return rejectValidation('upload', 'brandId');
+        }
+        const saveURL = mediaId ? `v4/media/${mediaId}/save/` : 'v4/media/save/';
+        const request = new APICall(
+            this.baseURL,
+            saveURL,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            data
+        );
+        return request.send();
+    }
+
+    /**
+     * Uploads arbirtrarily sized buffer or stream file to provided S3 endpoint in chunks and registers each chunk to Bynder.
+     * Resolves the passed init result and final chunk number.
+     * @param {Object} file ={} - An object containing the id of the desired collection.
+     * @param {String} file.filename - The file name of the file to be saved
+     * @param {Buffer|Readable} file.body - The file to be uploaded. Can be either buffer or a read stream.
+     * @param {Number} file.length - The length of the file to be uploaded
+     * @param {string} endpoint - S3 endpoint url
+     * @param {Object} init - Result from init upload
+     * @return {Promise}
+     */
+    uploadFileInChunks(file, endpoint, init) {
+        const { body } = file;
+        const isBuffer = Buffer.isBuffer(body);
+        const length = isBuffer ? body.length : file.length;
+        const CHUNK_SIZE = 1024 * 1024 * 5;
+        const chunks = Math.ceil(length / CHUNK_SIZE);
+
+        const registerChunk = this.registerChunk.bind(this);
+        const uploadPath = init.multipart_params.key;
+
+        const uploadChunkToS3 = (chunkData, chunkNumber) => {
+            const form = new FormData();
+            const params = Object.assign(init.multipart_params, {
+                name: `${basename(uploadPath)}/p${chunkNumber}`,
+                chunk: chunkNumber,
+                chunks,
+                Filename: `${uploadPath}/p${chunkNumber}`,
+                key: `${uploadPath}/p${chunkNumber}`
+            });
+            Object.keys(params).forEach((key) => {
+                form.append(key, params[key]);
+            });
+            form.append('file', chunkData);
+            const headers = Object.assign(form.getHeaders(), {
+                'content-length': form.getLengthSync()
+            });
+            return axios.post(endpoint, form, { headers });
+        };
+
+        // sequentially upload chunks to AWS, then register them
+        return new Promise((resolve, reject) => {
+            let chunkNumber = 0;
+            (function nextChunk() {
+                if (chunkNumber >= chunks) {
+                    // we are finished, pass init and chunk number to be finalised
+                    return resolve({ init, chunkNumber });
+                }
+
+                // upload next chunk
+                let chunkData;
+                if (isBuffer) {
+                    // handle buffer data
+                    const start = chunkNumber * CHUNK_SIZE;
+                    const end = Math.min(start + CHUNK_SIZE, length);
+                    chunkData = body.slice(start, end);
+                } else {
+                    // handle stream data
+                    chunkData = body.read(CHUNK_SIZE);
+                    if (chunkData === null) {
+                        // our read stream is not done yet reading
+                        // let's wait for a while...
+                        return setTimeout(nextChunk, 50);
+                    }
+                }
+                return uploadChunkToS3(chunkData, ++chunkNumber)
+                    .then(() => {
+                        // register uploaded chunk to Bynder
+                        return registerChunk(init, chunkNumber);
+                    })
+                    .then(nextChunk)
+                    .catch(reject);
+            }());
+        });
+    }
+
+    /**
+     * Uploads an arbitrarily sized buffer or stream file and returns the uploaded asset information
+     * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets}
+     * @param {Object} file={} - An object containing the id of the desired collection.
+     * @param {String} file.filename - The file name of the file to be saved
+     * @param {Buffer|Readable} file.body - The file to be uploaded. Can be either buffer or a read stream.
+     * @param {Number} file.length - The length of the file to be uploaded
+     * @param {Object} file.data={} - An object containing the assets' attributes
+     * @return {Promise} The information of the uploaded file, including IDs and all final file urls.
+     */
+    uploadFile(file) {
+        const { body, filename, data } = file;
+        const { brandId } = data;
+        const isBuffer = Buffer.isBuffer(body);
+        const isStream = typeof body.read === 'function';
+        const length = isBuffer ? body.length : file.length;
+
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!brandId) {
+            return rejectValidation('upload', 'brandId');
+        }
+        if (!filename) {
+            return rejectValidation('upload', 'filename');
+        }
+        if (!body || (!isStream && !isBuffer)) {
+            return rejectValidation('upload', 'body');
+        }
+        if (!length || typeof length !== 'number') {
+            return rejectValidation('upload', 'length');
+        }
+
+        const getClosestUploadEndpoint = this.getClosestUploadEndpoint.bind(this);
+        const initUpload = this.initUpload.bind(this);
+        const uploadFileInChunks = this.uploadFileInChunks.bind(this);
+        const finaliseUpload = this.finaliseUpload.bind(this);
+        const saveAsset = this.saveAsset.bind(this);
+        const waitForUploadDone = this.waitForUploadDone.bind(this);
+
+        return Promise.all([
+            getClosestUploadEndpoint(),
+            initUpload(filename)
+        ])
+        .then((res) => {
+            const [endpoint, init] = res;
+            return uploadFileInChunks(file, endpoint, init);
+        })
+        .then((uploadResponse) => {
+            const { init, chunkNumber } = uploadResponse;
+            return finaliseUpload(init, filename, chunkNumber);
+        })
+        .then((finalizeResponse) => {
+            const { importId } = finalizeResponse;
+            return waitForUploadDone([importId]);
+        })
+        .then((doneResponse) => {
+            const { itemsDone } = doneResponse;
+            const importId = itemsDone[0];
+            return saveAsset(Object.assign(data, { importId }));
+        });
     }
 }
