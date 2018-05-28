@@ -139,7 +139,7 @@ describe('Create an option to metaproperty', () => {
     beforeEach((done) => {
         bynder = new Bynder(configs);
 
-        bynder.createMetapropertyOption({
+        bynder.saveNewMetapropertyOption({
             id: metaId,
             name: 'optiontest'
         }).then((data) => {

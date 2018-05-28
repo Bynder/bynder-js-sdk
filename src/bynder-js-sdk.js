@@ -538,7 +538,7 @@ export default class Bynder {
      * @return {Promise} Metaproperty - Returns a Promise that, when fulfilled, will either return an Object with the
      * metaproperty or an Error with the problem.
      */
-    createMetapropertyOption(queryObject) {
+    saveNewMetapropertyOption(queryObject) {
         if (!this.validURL()) {
             return rejectURL();
         }

@@ -33,13 +33,13 @@ bynder.saveNewMetaproperty({
     })
     .then((data) => {
         console.log('editMetaproperty', data, '\n\n');
-        return bynder.createMetapropertyOption({
+        return bynder.saveNewMetapropertyOption({
             id: metaId,
             name: 'optiontest'
         });
     })
     .then((data) => {
-        console.log('createMetapropertyOption', data, '\n\n');
+        console.log('saveNewMetapropertyOption', data, '\n\n');
         return bynder.getMetaproperty({
             id: metaId
         });
