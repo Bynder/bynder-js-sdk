@@ -67,7 +67,7 @@ describe('Create one new collection', () => {
     beforeEach((done) => {
         bynder = new Bynder(configs);
 
-        bynder.createCollection({
+        bynder.saveNewCollection({
             name: 'test'
         }).then((data) => {
             result = data;

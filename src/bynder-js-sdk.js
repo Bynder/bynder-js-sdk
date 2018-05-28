@@ -609,7 +609,7 @@ export default class Bynder {
      * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
      * collection or an Error with the problem.
      */
-    createCollection(queryObject) {
+    saveNewCollection(queryObject) {
         if (!this.validURL()) {
             return rejectURL();
         }
