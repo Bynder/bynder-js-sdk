@@ -535,8 +535,8 @@ export default class Bynder {
      * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
      * @param {String} queryObject.id - The id of the desired metaproperty.
      * @param {String} queryObject.name - The name of the desired metaproperty.
-     * @return {Promise} Metaproperty - Returns a Promise that, when fulfilled, will either return an Object with the
-     * metaproperty or an Error with the problem.
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
      */
     saveNewMetapropertyOption(queryObject) {
         if (!this.validURL()) {
@@ -565,8 +565,8 @@ export default class Bynder {
      * @param {String} queryObject.id - The id of the desired metaproperty.
      * @param {String} queryObject.optionId - The id of the desired option.
      * @param {String} queryObject.name - The id of the desired metaproperty.
-     * @return {Promise} Metaproperty - Returns a Promise that, when fulfilled, will either return an Object with the
-     * metaproperty or an Error with the problem.
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
      */
     editMetapropertyOption(queryObject) {
         if (!this.validURL()) {
@@ -575,13 +575,15 @@ export default class Bynder {
         if (!queryObject.id || !queryObject.optionId) {
             return rejectValidation('metaproperty option', 'id or optionId');
         }
+        const queryBody = Object.assign({}, queryObject);
+        delete queryBody.id;
         const request = new APICall(
             this.baseURL,
             `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`,
             'POST',
             this.consumerToken,
             this.accessToken,
-            { data: JSON.stringify(queryObject) }
+            { data: JSON.stringify(queryBody) }
         );
         return request.send();
     }
@@ -593,8 +595,8 @@ export default class Bynder {
      * @param {String} queryObject.id - The id of the desired metaproperty.
      * @param {String} queryObject.optionId - The id of the desired option.
      * @param {String} queryObject.name - The id of the desired metaproperty.
-     * @return {Promise} Metaproperty - Returns a Promise that, when fulfilled, will either return an Object with the
-     * metaproperty or an Error with the problem.
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
      */
     deleteMetapropertyOption(queryObject) {
         if (!this.validURL()) {
