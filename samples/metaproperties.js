@@ -63,7 +63,7 @@ bynder.saveNewMetaproperty({
     .then((data) => {
         console.log('getMetaproperty', data, '\n\n');
         optionId = data.options[0].id;
-        console.log(optionId);
+        console.log('Metaproperty option', optionId, '\n\n');
         return bynder.deleteMetapropertyOption({
             id: metaId,
             optionId
