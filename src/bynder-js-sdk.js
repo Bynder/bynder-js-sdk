@@ -606,8 +606,8 @@ export default class Bynder {
      * @param {Object} queryObject={} - An object containing the id of the desired collection.
      * @param {String} queryObject.name - The name of the desired collection.
      * @param {String} queryObject.description - The description of the desired collection.
-     * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
-     * collection or an Error with the problem.
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
      */
     saveNewCollection(queryObject) {
         if (!this.validURL()) {
@@ -633,14 +633,17 @@ export default class Bynder {
      * @param {Object} queryObject={} - An object containing the id of the desired collection.
      * @param {String} queryObject.id - The id of the shared collection.
      * @param {String} queryObject.data - JSON-serialised list of asset ids to add.
-     * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
-     * collection or an Error with the problem.
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
      */
     addMediaToCollection(queryObject) {
         if (!this.validURL()) {
             return rejectURL();
         }
-        if (!queryObject.id || !queryObject.data || queryObject.data.length === 0) {
+        if (!queryObject.id) {
+            return rejectValidation('collection', 'id');
+        }
+        if (!queryObject.data) {
             return rejectValidation('collection', 'data');
         }
         const request = new APICall(
@@ -668,8 +671,14 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        if (!queryObject.id || !queryObject.recipients || !queryObject.collectionOptions) {
-            return rejectValidation('collection', 'id, recipients or collectionOptions');
+        if (!queryObject.id) {
+            return rejectValidation('collection', 'id');
+        }
+        if (!queryObject.recipients) {
+            return rejectValidation('collection', 'recipients');
+        }
+        if (!queryObject.collectionOptions) {
+            return rejectValidation('collection', 'collectionOptions');
         }
         const request = new APICall(
             this.baseURL,
