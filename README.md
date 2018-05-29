@@ -97,6 +97,9 @@ Here's a list of all the methods available, separated by module:
 ### Collections
 * `getCollections(queryObject)`
 * `getCollection(queryObject)`
+* `saveNewCollection(queryObject)`
+* `shareCollection(queryObject)`
+* `addMediaToCollection(queryObject)`
 
 ### Tags
 * `getTags(queryObject)`

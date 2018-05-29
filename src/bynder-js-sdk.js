@@ -687,6 +687,97 @@ export default class Bynder {
     }
 
     /**
+     * Create the collection information according to the name provided.
+     * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/create-collection|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired collection.
+     * @param {String} queryObject.name - The name of the desired collection.
+     * @param {String} queryObject.description - The description of the desired collection.
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
+     */
+    saveNewCollection(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.name) {
+            return rejectValidation('collection', 'name');
+        }
+        const request = new APICall(
+            this.baseURL,
+            'v4/collections/',
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            queryObject,
+        );
+        return request.send();
+    }
+
+    /**
+     * Add assets to the desired collection.
+     * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/add-asset-to-a-collection|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired collection.
+     * @param {String} queryObject.id - The id of the shared collection.
+     * @param {String} queryObject.data - JSON-serialised list of asset ids to add.
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
+     */
+    addMediaToCollection(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id) {
+            return rejectValidation('collection', 'id');
+        }
+        if (!queryObject.data) {
+            return rejectValidation('collection', 'data');
+        }
+        const request = new APICall(
+            this.baseURL,
+            `v4/collections/${queryObject.id}/media/`,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            { data: JSON.stringify(queryObject.data) }, // The API requires JSON-serialised list
+        );
+        return request.send();
+    }
+
+    /**
+     * Share the collection to the recipients provided.
+     * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/share-collection|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired collection.
+     * @param {String} queryObject.id - The id of the shared collection.
+     * @param {String} queryObject.recipients - The email addressed of the recipients.
+     * @param {String} queryObject.collectionOptions - The recipent right of the shared collection: view, edit
+     * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
+     * collection or an Error with the problem.
+     */
+    shareCollection(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id) {
+            return rejectValidation('collection', 'id');
+        }
+        if (!queryObject.recipients) {
+            return rejectValidation('collection', 'recipients');
+        }
+        if (!queryObject.collectionOptions) {
+            return rejectValidation('collection', 'collectionOptions');
+        }
+        const request = new APICall(
+            this.baseURL,
+            `v4/collections/${queryObject.id}/share/`,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            queryObject,
+        );
+        return request.send();
+    }
+
+    /**
      * Get a list of brands and subbrands
      * @see {@link https://bynder.docs.apiary.io/#reference/security-roles/specific-security-profile/retrieve-brands-and-subbrands}
      * @return {Promise}
