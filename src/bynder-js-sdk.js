@@ -532,6 +532,92 @@ export default class Bynder {
     }
 
     /**
+     * Add an option of metaproperty
+     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/create-metaproperty-option|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
+     * @param {String} queryObject.id - The id of the desired metaproperty.
+     * @param {String} queryObject.name - The name of the desired metaproperty.
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
+     */
+    saveNewMetapropertyOption(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id || !queryObject.name) {
+            return rejectValidation('metaproperty option', 'id or name');
+        }
+        const queryBody = Object.assign({}, queryObject);
+        delete queryBody.id;
+        const request = new APICall(
+            this.baseURL,
+            `v4/metaproperties/${queryObject.id}/options/`,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            { data: JSON.stringify(queryBody) }
+        );
+        return request.send();
+    }
+
+    /**
+     * modify an option of metaproperty
+     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/modify-metaproperty-option|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
+     * @param {String} queryObject.id - The id of the desired metaproperty.
+     * @param {String} queryObject.optionId - The id of the desired option.
+     * @param {String} queryObject.name - The id of the desired metaproperty.
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
+     */
+    editMetapropertyOption(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id || !queryObject.optionId) {
+            return rejectValidation('metaproperty option', 'id or optionId');
+        }
+        const queryBody = Object.assign({}, queryObject);
+        delete queryBody.id;
+        const request = new APICall(
+            this.baseURL,
+            `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`,
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            { data: JSON.stringify(queryBody) }
+        );
+        return request.send();
+    }
+
+    /**
+     * delete an option of metaproperty
+     * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/delete-metaproperty-option|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
+     * @param {String} queryObject.id - The id of the desired metaproperty.
+     * @param {String} queryObject.optionId - The id of the desired option.
+     * @param {String} queryObject.name - The id of the desired metaproperty.
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
+     */
+    deleteMetapropertyOption(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id || !queryObject.optionId) {
+            return rejectValidation('metaproperty option', 'id or optionId');
+        }
+        const request = new APICall(
+            this.baseURL,
+            `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`,
+            'DELETE',
+            this.consumerToken,
+            this.accessToken,
+        );
+        return request.send();
+    }
+
+    /**
      * Get all the tags
      * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-access/retrieve-entry-point|API Call}
      * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.

@@ -5,6 +5,7 @@ const bynder = new Bynder(configs);
 
 const byndertestproperty = 'byndertestproperty';
 let metaId;
+let optionId;
 
 bynder.saveNewMetaproperty({
     name: byndertestproperty,
@@ -32,6 +33,44 @@ bynder.saveNewMetaproperty({
     })
     .then((data) => {
         console.log('editMetaproperty', data, '\n\n');
+        return bynder.saveNewMetapropertyOption({
+            id: metaId,
+            name: 'optiontest'
+        });
+    })
+    .then((data) => {
+        console.log('saveNewMetapropertyOption', data, '\n\n');
+        return bynder.getMetaproperty({
+            id: metaId
+        });
+    })
+    .then((data) => {
+        console.log('getMetaproperty', data, '\n\n');
+        optionId = data.options[0].id;
+        console.log('Metaproperty option', optionId, '\n\n');
+        return bynder.editMetapropertyOption({
+            id: metaId,
+            optionId,
+            label: 'Option Test'
+        });
+    })
+    .then((data) => {
+        console.log('editMetapropertyOption', data, '\n\n');
+        return bynder.getMetaproperty({
+            id: metaId
+        });
+    })
+    .then((data) => {
+        console.log('getMetaproperty', data, '\n\n');
+        optionId = data.options[0].id;
+        console.log('Metaproperty option', optionId, '\n\n');
+        return bynder.deleteMetapropertyOption({
+            id: metaId,
+            optionId
+        });
+    })
+    .then((data) => {
+        console.log('deleteMetapropertyOption', data, '\n\n');
         return bynder.getMetaproperty({
             id: metaId
         });
