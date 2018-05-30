@@ -77,7 +77,7 @@ class APICall {
             if (value === undefined) {
                 delete this.data[key];
             } else {
-                requestBody += `${encodeURI(key)}=${encodeURI(value)}&`;
+                requestBody += `${encodeURIComponent(key)}=${encodeURIComponent(value)}&`;
             }
         }
         requestBody = requestBody.slice(0, -1);
