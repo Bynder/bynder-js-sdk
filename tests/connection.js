@@ -4,16 +4,16 @@ const Bynder = require('../dist/bynder-js-sdk.js').default;
 const configs = require('../secret.json');
 
 let bynder;
-let categories;
+let brands;
 let fail;
 let error;
 
-function getCategoriesTest(done, misconfigs) {
+function getBrandsTest(done, misconfigs) {
     bynder = new Bynder(misconfigs);
 
-    bynder.getCategories()
+    bynder.getBrands()
         .then((data) => {
-            categories = data;
+            brands = data;
             done();
         })
         .catch((err) => {
@@ -29,13 +29,13 @@ describe('Wrong tokens', () => {
     misconfigs.consumer.public = 'foobar';
 
     beforeEach((done) => {
-        return getCategoriesTest(done, misconfigs);
+        return getBrandsTest(done, misconfigs);
     });
 
-    it('Produces unauthorized response', () => {
+    it('should produce unauthorized response', () => {
         expect(error).not.toBeUndefined();
         expect(error.response.status).toEqual(401);
-        expect(categories).toBeUndefined();
+        expect(brands).toBeUndefined();
         expect(fail).toBe(true);
     });
 });
@@ -49,50 +49,50 @@ describe('Null tokens', () => {
     misconfigs.accessToken.secret = null;
 
     beforeEach((done) => {
-        return getCategoriesTest(done, misconfigs);
+        return getBrandsTest(done, misconfigs);
     });
 
-    it('Produces unauthorized response', () => {
+    it('should produce unauthorized response', () => {
         expect(error).not.toBeUndefined();
         expect(error.response.status).toEqual(401);
-        expect(categories).toBeUndefined();
+        expect(brands).toBeUndefined();
         expect(fail).toBe(true);
     });
 });
 
-describe('Empty string base url', () => {
+describe('Empty string base URL', () => {
     fail = false;
     const misconfigs = JSON.parse(JSON.stringify(configs));
     misconfigs.baseURL = '';
 
     beforeEach((done) => {
-        return getCategoriesTest(done, misconfigs);
+        return getBrandsTest(done, misconfigs);
     });
 
-    it('Server cannot be reached', () => {
+    it('server cannot be reached', () => {
         expect(error).not.toBeUndefined();
         expect(error.status).toEqual(0);
         expect(fail).toBe(true);
     });
 });
 
-describe('Null url', () => {
+describe('Null URL', () => {
     fail = false;
     const misconfigs = JSON.parse(JSON.stringify(configs));
     misconfigs.baseURL = null;
 
     beforeEach((done) => {
-        return getCategoriesTest(done, misconfigs);
+        return getBrandsTest(done, misconfigs);
     });
 
-    it('Server cannot be reached', () => {
+    it('server cannot be reached', () => {
         expect(error).not.toBeUndefined();
         expect(error.status).toEqual(0);
         expect(fail).toBe(true);
     });
 });
 
-describe('Wrong url', () => {
+describe('Wrong URL', () => {
     fail = false;
     const misconfigs = JSON.parse(JSON.stringify(configs));
     let assets;
@@ -121,7 +121,7 @@ describe('Wrong url', () => {
             });
     });
 
-    it('Produces unauthorized response', () => {
+    it('should produce unauthorized response', () => {
         expect(assets).toBeUndefined();
         expect(error).not.toBeUndefined();
         expect(error.response.status).not.toBeLessThan(400);

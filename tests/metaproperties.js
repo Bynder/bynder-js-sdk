@@ -30,12 +30,12 @@ describe('Save metaproperty', () => {
         });
     });
 
-    it('Save one metaproperty', () => {
+    it('should save one metaproperty', () => {
         expect(saveDataResponse).not.toBeUndefined();
     });
 });
 
-describe('Get metaproperties', () => {
+describe('Get all metaproperties', () => {
     let bynder;
     let metaproperties;
 
@@ -58,13 +58,13 @@ describe('Get metaproperties', () => {
             });
     });
 
-    it('Get all metaproperties', () => {
+    it('should get all the metaproperties', () => {
         expect(Array.isArray(metaproperties)).toEqual(true);
         expect(metaId).not.toBeUndefined();
     });
 });
 
-describe('Get metaproperty', () => {
+describe('Get one metaproperty', () => {
     let bynder;
     let metaproperty;
 
@@ -83,7 +83,7 @@ describe('Get metaproperty', () => {
         });
     });
 
-    it('Get one metaproperty', () => {
+    it('should get one specific metaproperty', () => {
         expect(metaproperty.constructor).toEqual(Object);
         const metapropertyKeys = Object.keys(metaproperty);
         expect(metapropertyKeys).toContain('name');
@@ -118,7 +118,7 @@ describe('Edit metaproperty', () => {
         });
     });
 
-    it('Edit one metaproperty', () => {
+    it('should edit one metaproperty', () => {
         expect(response.statuscode).toEqual(201);
         expect(response.message).toEqual('Created');
         expect(metaproperty.constructor).toEqual(Object);
@@ -132,7 +132,7 @@ describe('Edit metaproperty', () => {
     });
 });
 
-describe('Create an option to metaproperty', () => {
+describe('Create an option for metaproperty', () => {
     let bynder;
     let result;
 
@@ -152,7 +152,7 @@ describe('Create an option to metaproperty', () => {
         });
     });
 
-    it('Get options from metaproperty', () => {
+    it('should create option for metaproperty', () => {
         expect(result.constructor).toEqual(Object);
         const metapropertyKeys = Object.keys(result);
         expect(metapropertyKeys).toContain('statuscode');
@@ -191,7 +191,7 @@ describe('Modify an option of metaproperty', () => {
         });
     });
 
-    it('Modify an option of metaproperty', () => {
+    it('should modify an option of metaproperty', () => {
         expect(result.constructor).toEqual(Object);
         const metapropertyKeys = Object.keys(result);
         expect(metapropertyKeys).toContain('statuscode');
@@ -229,7 +229,7 @@ describe('Delete an option of metaproperty', () => {
         });
     });
 
-    it('Modify an option of metaproperty', () => {
+    it('should delete an option of metaproperty', () => {
         expect(result).not.toBeUndefined();
         expect(result.constructor).toEqual(Object);
         const metapropertyKeys = Object.keys(result);
@@ -255,7 +255,7 @@ describe('Delete metaproperty', () => {
         });
     });
 
-    it('Get all metaproperties', () => {
+    it('should delete metaproperty', () => {
         expect(deleteMetapropertyResponse).not.toBeUndefined();
     });
 });

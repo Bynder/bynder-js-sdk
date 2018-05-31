@@ -32,7 +32,7 @@ describe('Get assets', () => {
             });
     });
 
-    it('Get all assets', () => {
+    it('should get all the assets', () => {
         expect(Array.isArray(assets)).toEqual(true);
         if (assets && assets.length) {
             const randomIndex = Math.floor(Math.random() * assets.length);
@@ -210,7 +210,7 @@ describe('Send special characters', () => {
 
     it('Passing illegal characters as values', () => {
         expect(assets2).not.toBeUndefined();
-        expect(assets2.response.status).toEqual(401);
+        expect(assets2.response.status).toEqual(400);
         expect(fail2).toBe(true);
     });
 });
