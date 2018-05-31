@@ -21,7 +21,7 @@ describe('Categories', () => {
             });
     });
 
-    it('Get all categories', () => {
+    it('should get all the categories', () => {
         expect(Array.isArray(categories)).toEqual(true);
         if (categories && categories.length) {
             const randomIndex = Math.floor(Math.random() * categories.length);

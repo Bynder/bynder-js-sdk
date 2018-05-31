@@ -21,7 +21,7 @@ describe('Tags', () => {
             });
     });
 
-    it('Get all tags', () => {
+    it('should get all the tags', () => {
         expect(Array.isArray(tags)).toEqual(true);
         if (tags && tags.length) {
             const randomIndex = Math.floor(Math.random() * tags.length);

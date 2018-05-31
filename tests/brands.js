@@ -21,11 +21,11 @@ describe('Brands', () => {
             });
     });
 
-    it('Get all brands', () => {
-        expect(Array.isArray(categories)).toEqual(true);
+    it('should get all the brands', () => {
+        expect(Array.isArray(brands)).toEqual(true);
         if (brands && brands.length) {
-            const randomIndex = Math.floor(Math.random() * categories.length);
-            const randomBrand = Object.keys(brand[randomIndex]);
+            const randomIndex = Math.floor(Math.random() * brands.length);
+            const randomBrand = Object.keys(brands[randomIndex]);
             expect(randomBrand).toContain('id');
             expect(randomBrand).toContain('name');
             expect(randomBrand).toContain('description');

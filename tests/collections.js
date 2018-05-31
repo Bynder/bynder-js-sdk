@@ -5,7 +5,7 @@ const configs = require('../secret.json');
 
 let randomCollectionId;
 
-describe('Get collections', () => {
+describe('Get all collections', () => {
     let bynder;
     let collections;
 
@@ -25,13 +25,13 @@ describe('Get collections', () => {
             });
     });
 
-    it('Get all the collections', () => {
+    it('should get all the collections', () => {
         expect(Array.isArray(collections)).toEqual(true);
         expect(randomCollectionId).not.toBeUndefined();
     });
 });
 
-describe('Get collection', () => {
+describe('Get one collection', () => {
     let bynder;
     let collection;
 
@@ -40,17 +40,18 @@ describe('Get collection', () => {
 
         bynder.getCollection({
             id: randomCollectionId
-        }).then((data) => {
+        })
+        .then((data) => {
             collection = data;
             done();
         })
-            .catch((error) => {
-                collection = error;
-                done();
-            });
+        .catch((error) => {
+            collection = error;
+            done();
+        });
     });
 
-    it('Get one collection', () => {
+    it('should get one specific collection', () => {
         expect(collection.constructor).toEqual(Object);
         const collectionKeys = Object.keys(collection);
         expect(collectionKeys).toContain('name');
@@ -60,7 +61,7 @@ describe('Get collection', () => {
     });
 });
 
-describe('Create one new collection', () => {
+describe('Create collection', () => {
     let bynder;
     let result;
 
@@ -69,83 +70,23 @@ describe('Create one new collection', () => {
 
         bynder.saveNewCollection({
             name: 'test'
-        }).then((data) => {
+        })
+        .then((data) => {
             result = data;
             done();
         })
-            .catch((error) => {
-                result = error;
-                done();
-            });
+        .catch((error) => {
+            result = error;
+            done();
+        });
     });
 
-    it('Get one collection', () => {
+    it('should create one collection', () => {
         expect(result.constructor).toEqual(Object);
         const collectionKeys = Object.keys(result);
         expect(collectionKeys).toContain('message');
         expect(collectionKeys).toContain('statuscode');
         expect(result.message).toBe('Created');
         expect(result.statuscode).toBe(201);
-    });
-});
-
-describe('Share one collection', () => {
-    let bynder;
-    let result;
-
-    beforeEach((done) => {
-        bynder = new Bynder(configs);
-
-        bynder.shareCollection({
-            id: randomCollectionId,
-            recipients: 'user1@bynder.com', // change to vaild email
-            collectionOptions: 'view'
-        }).then((data) => {
-            result = data;
-            done();
-        })
-            .catch((error) => {
-                result = error;
-                done();
-            });
-    });
-
-    it('Share one collection', () => {
-        expect(result.constructor).toEqual(Object);
-        const collectionKeys = Object.keys(result);
-        expect(collectionKeys).toContain('message');
-        expect(collectionKeys).toContain('statuscode');
-        expect(result.message).toBe('Created');
-        expect(result.statuscode).toBe(201);
-    });
-});
-
-describe('Add media to one collection', () => {
-    let bynder;
-    let result;
-
-    beforeEach((done) => {
-        bynder = new Bynder(configs);
-
-        bynder.addMediaToCollection({
-            id: randomCollectionId,
-            data: ['000000-0000-0000-0000000000000000'] // // change to vaild media ID
-        }).then((data) => {
-            result = data;
-            done();
-        })
-            .catch((error) => {
-                result = error;
-                done();
-            });
-    });
-
-    it('Add media to one collection', () => {
-        expect(result.constructor).toEqual(Object);
-        const collectionKeys = Object.keys(result);
-        expect(collectionKeys).toContain('message');
-        expect(collectionKeys).toContain('statuscode');
-        expect(result.message).toBe('Accepted');
-        expect(result.statuscode).toBe(202);
     });
 });
