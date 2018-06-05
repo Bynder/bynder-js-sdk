@@ -28,6 +28,18 @@ function rejectValidation(module, param) {
 }
 
 /**
+ * @param {Object} obj - The object we want to treat like a Buffer
+ * @return {Boolean} - Can obj be treated like a Buffer (i.e. is it a Node Buffer or HTML5 Blob)
+ * @todo Consider duck typing - should anything that supports slicing be considered bufferLike?
+ */
+
+function bufferLike(obj) {
+    const isBuffer = typeof Buffer !== 'undefined' && Buffer.isBuffer(obj);
+    const isBlob = typeof window !== 'undefined' && window.Blob && obj instanceof window.Blob;
+    return isBuffer || isBlob;
+}
+
+/**
  * @classdesc Represents an API call.
  * @class
  * @abstract
@@ -994,8 +1006,8 @@ export default class Bynder {
      */
     uploadFileInChunks(file, endpoint, init) {
         const { body } = file;
-        const isBuffer = Buffer.isBuffer(body);
-        const length = isBuffer ? body.length : file.length;
+        const isBufferLike = bufferLike(body);
+        const length = file.length !== undefined ? file.length : body.length;
         const CHUNK_SIZE = 1024 * 1024 * 5;
         const chunks = Math.ceil(length / CHUNK_SIZE);
 
@@ -1015,10 +1027,17 @@ export default class Bynder {
                 form.append(key, params[key]);
             });
             form.append('file', chunkData);
-            const headers = Object.assign(form.getHeaders(), {
-                'content-length': form.getLengthSync()
-            });
-            return axios.post(endpoint, form, { headers });
+            let opts;
+            if (typeof window !== 'undefined') {
+                opts = {}; // With browser based FormData headers are taken care of automatically
+            } else {
+                opts = {
+                    headers: Object.assign(form.getHeaders(), {
+                        'content-length': form.getLengthSync()
+                    })
+                };
+            }
+            return axios.post(endpoint, form, opts);
         };
 
         // sequentially upload chunks to AWS, then register them
@@ -1032,7 +1051,7 @@ export default class Bynder {
 
                 // upload next chunk
                 let chunkData;
-                if (isBuffer) {
+                if (isBufferLike) {
                     // handle buffer data
                     const start = chunkNumber * CHUNK_SIZE;
                     const end = Math.min(start + CHUNK_SIZE, length);
@@ -1070,9 +1089,9 @@ export default class Bynder {
     uploadFile(file) {
         const { body, filename, data } = file;
         const { brandId } = data;
-        const isBuffer = Buffer.isBuffer(body);
+        const isBufferLike = bufferLike(body);
         const isStream = typeof body.read === 'function';
-        const length = isBuffer ? body.length : file.length;
+        const length = file.length !== undefined ? file.length : body.length;
 
         if (!this.validURL()) {
             return rejectURL();
@@ -1083,7 +1102,7 @@ export default class Bynder {
         if (!filename) {
             return rejectValidation('upload', 'filename');
         }
-        if (!body || (!isStream && !isBuffer)) {
+        if (!body || (!isStream && !isBufferLike)) {
             return rejectValidation('upload', 'body');
         }
         if (!length || typeof length !== 'number') {
