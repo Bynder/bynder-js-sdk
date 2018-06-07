@@ -27,17 +27,6 @@ function rejectValidation(module, param) {
     });
 }
 
-/**
- * @param {Object} obj - The object we want to treat like a Buffer
- * @return {Boolean} - Can obj be treated like a Buffer (i.e. is it a Node Buffer or HTML5 Blob)
- * @todo Consider duck typing - should anything that supports slicing be considered bufferLike?
- */
-
-function bufferLike(obj) {
-    const isBuffer = typeof Buffer !== 'undefined' && Buffer.isBuffer(obj);
-    const isBlob = typeof window !== 'undefined' && window.Blob && obj instanceof window.Blob;
-    return isBuffer || isBlob;
-}
 
 /**
  * @classdesc Represents an API call.
@@ -133,6 +122,43 @@ class APICall {
         });
     }
 }
+
+
+const bodyTypes = {
+    BUFFER: 'BUFFER',
+    BLOB: 'BLOB',
+    STREAM: 'STREAM',
+    /**
+     * @param {Object} body - The file body whose type we need to determine
+     * @return {string} One of bodyTypes.BUFFER, bodyTypes.BLOB, bodyTypes.STREAM
+     */
+    get: (body) => {
+        if (typeof Buffer !== 'undefined' && Buffer.isBuffer(body)) {
+            return bodyTypes.BUFFER;
+        } else if (typeof window !== 'undefined' && window.Blob && body instanceof window.Blob) {
+            return bodyTypes.BLOB;
+        } else if (typeof body.read === 'function') {
+            return bodyTypes.STREAM;
+        }
+        return null;
+    }
+};
+
+/**
+ * @return {number} length - The amount of data that can be read from the file
+ */
+
+function getLength(file) {
+    const { body, length } = file;
+    const bodyType = bodyTypes.get(body);
+    if (bodyType === bodyTypes.BUFFER) {
+        return body.length;
+    } else if (bodyType === bodyTypes.BLOB) {
+        return body.size;
+    }
+    return length;
+}
+
 
 /**
  * @classdesc Represents the Bynder SDK. It allows the user to make every call to the API with a single function.
@@ -1006,8 +1032,8 @@ export default class Bynder {
      */
     uploadFileInChunks(file, endpoint, init) {
         const { body } = file;
-        const isBufferLike = bufferLike(body);
-        const length = file.length !== undefined ? file.length : body.length;
+        const bodyType = bodyTypes.get(body);
+        const length = getLength(file);
         const CHUNK_SIZE = 1024 * 1024 * 5;
         const chunks = Math.ceil(length / CHUNK_SIZE);
 
@@ -1048,15 +1074,9 @@ export default class Bynder {
                     // we are finished, pass init and chunk number to be finalised
                     return resolve({ init, chunkNumber });
                 }
-
                 // upload next chunk
                 let chunkData;
-                if (isBufferLike) {
-                    // handle buffer data
-                    const start = chunkNumber * CHUNK_SIZE;
-                    const end = Math.min(start + CHUNK_SIZE, length);
-                    chunkData = body.slice(start, end);
-                } else {
+                if (bodyType === bodyTypes.STREAM) {
                     // handle stream data
                     chunkData = body.read(CHUNK_SIZE);
                     if (chunkData === null) {
@@ -1064,6 +1084,11 @@ export default class Bynder {
                         // let's wait for a while...
                         return setTimeout(nextChunk, 50);
                     }
+                } else {
+                    // handle buffer/blob data
+                    const start = chunkNumber * CHUNK_SIZE;
+                    const end = Math.min(start + CHUNK_SIZE, length);
+                    chunkData = body.slice(start, end);
                 }
                 return uploadChunkToS3(chunkData, ++chunkNumber)
                     .then(() => {
@@ -1089,9 +1114,8 @@ export default class Bynder {
     uploadFile(file) {
         const { body, filename, data } = file;
         const { brandId } = data;
-        const isBufferLike = bufferLike(body);
-        const isStream = typeof body.read === 'function';
-        const length = file.length !== undefined ? file.length : body.length;
+        const bodyType = bodyTypes.get(body);
+        const length = getLength(file);
 
         if (!this.validURL()) {
             return rejectURL();
@@ -1102,7 +1126,7 @@ export default class Bynder {
         if (!filename) {
             return rejectValidation('upload', 'filename');
         }
-        if (!body || (!isStream && !isBufferLike)) {
+        if (!body || !bodyType) {
             return rejectValidation('upload', 'body');
         }
         if (!length || typeof length !== 'number') {
