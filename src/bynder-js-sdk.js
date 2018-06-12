@@ -135,9 +135,11 @@ const bodyTypes = {
     get: (body) => {
         if (typeof Buffer !== 'undefined' && Buffer.isBuffer(body)) {
             return bodyTypes.BUFFER;
-        } else if (typeof window !== 'undefined' && window.Blob && body instanceof window.Blob) {
+        }
+        if (typeof window !== 'undefined' && window.Blob && body instanceof window.Blob) {
             return bodyTypes.BLOB;
-        } else if (typeof body.read === 'function') {
+        }
+        if (typeof body.read === 'function') {
             return bodyTypes.STREAM;
         }
         return null;
@@ -153,7 +155,8 @@ function getLength(file) {
     const bodyType = bodyTypes.get(body);
     if (bodyType === bodyTypes.BUFFER) {
         return body.length;
-    } else if (bodyType === bodyTypes.BLOB) {
+    }
+    if (bodyType === bodyTypes.BLOB) {
         return body.size;
     }
     return length;
