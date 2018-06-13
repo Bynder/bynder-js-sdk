@@ -27,6 +27,7 @@ function rejectValidation(module, param) {
     });
 }
 
+
 /**
  * @classdesc Represents an API call.
  * @class
@@ -121,6 +122,46 @@ class APICall {
         });
     }
 }
+
+
+const bodyTypes = {
+    BUFFER: 'BUFFER',
+    BLOB: 'BLOB',
+    STREAM: 'STREAM',
+    /**
+     * @param {Object} body - The file body whose type we need to determine
+     * @return {string} One of bodyTypes.BUFFER, bodyTypes.BLOB, bodyTypes.STREAM
+     */
+    get: (body) => {
+        if (typeof Buffer !== 'undefined' && Buffer.isBuffer(body)) {
+            return bodyTypes.BUFFER;
+        }
+        if (typeof window !== 'undefined' && window.Blob && body instanceof window.Blob) {
+            return bodyTypes.BLOB;
+        }
+        if (typeof body.read === 'function') {
+            return bodyTypes.STREAM;
+        }
+        return null;
+    }
+};
+
+/**
+ * @return {number} length - The amount of data that can be read from the file
+ */
+
+function getLength(file) {
+    const { body, length } = file;
+    const bodyType = bodyTypes.get(body);
+    if (bodyType === bodyTypes.BUFFER) {
+        return body.length;
+    }
+    if (bodyType === bodyTypes.BLOB) {
+        return body.size;
+    }
+    return length;
+}
+
 
 /**
  * @classdesc Represents the Bynder SDK. It allows the user to make every call to the API with a single function.
@@ -994,8 +1035,8 @@ export default class Bynder {
      */
     uploadFileInChunks(file, endpoint, init) {
         const { body } = file;
-        const isBuffer = Buffer.isBuffer(body);
-        const length = isBuffer ? body.length : file.length;
+        const bodyType = bodyTypes.get(body);
+        const length = getLength(file);
         const CHUNK_SIZE = 1024 * 1024 * 5;
         const chunks = Math.ceil(length / CHUNK_SIZE);
 
@@ -1015,10 +1056,17 @@ export default class Bynder {
                 form.append(key, params[key]);
             });
             form.append('file', chunkData);
-            const headers = Object.assign(form.getHeaders(), {
-                'content-length': form.getLengthSync()
-            });
-            return axios.post(endpoint, form, { headers });
+            let opts;
+            if (typeof window !== 'undefined') {
+                opts = {}; // With browser based FormData headers are taken care of automatically
+            } else {
+                opts = {
+                    headers: Object.assign(form.getHeaders(), {
+                        'content-length': form.getLengthSync()
+                    })
+                };
+            }
+            return axios.post(endpoint, form, opts);
         };
 
         // sequentially upload chunks to AWS, then register them
@@ -1029,15 +1077,9 @@ export default class Bynder {
                     // we are finished, pass init and chunk number to be finalised
                     return resolve({ init, chunkNumber });
                 }
-
                 // upload next chunk
                 let chunkData;
-                if (isBuffer) {
-                    // handle buffer data
-                    const start = chunkNumber * CHUNK_SIZE;
-                    const end = Math.min(start + CHUNK_SIZE, length);
-                    chunkData = body.slice(start, end);
-                } else {
+                if (bodyType === bodyTypes.STREAM) {
                     // handle stream data
                     chunkData = body.read(CHUNK_SIZE);
                     if (chunkData === null) {
@@ -1045,6 +1087,11 @@ export default class Bynder {
                         // let's wait for a while...
                         return setTimeout(nextChunk, 50);
                     }
+                } else {
+                    // handle buffer/blob data
+                    const start = chunkNumber * CHUNK_SIZE;
+                    const end = Math.min(start + CHUNK_SIZE, length);
+                    chunkData = body.slice(start, end);
                 }
                 return uploadChunkToS3(chunkData, ++chunkNumber)
                     .then(() => {
@@ -1070,9 +1117,8 @@ export default class Bynder {
     uploadFile(file) {
         const { body, filename, data } = file;
         const { brandId } = data;
-        const isBuffer = Buffer.isBuffer(body);
-        const isStream = typeof body.read === 'function';
-        const length = isBuffer ? body.length : file.length;
+        const bodyType = bodyTypes.get(body);
+        const length = getLength(file);
 
         if (!this.validURL()) {
             return rejectURL();
@@ -1083,7 +1129,7 @@ export default class Bynder {
         if (!filename) {
             return rejectValidation('upload', 'filename');
         }
-        if (!body || (!isStream && !isBuffer)) {
+        if (!body || !bodyType) {
             return rejectValidation('upload', 'body');
         }
         if (!length || typeof length !== 'number') {
