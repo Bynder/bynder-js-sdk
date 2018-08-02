@@ -100,6 +100,7 @@ Here's a list of all the methods available, separated by module:
 * `saveNewCollection(queryObject)`
 * `shareCollection(queryObject)`
 * `addMediaToCollection(queryObject)`
+* `deleteMediaFromCollection(queryObject)`
 
 ### Tags
 * `getTags(queryObject)`
