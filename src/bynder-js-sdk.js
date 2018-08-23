@@ -466,6 +466,106 @@ export default class Bynder {
     }
 
     /**
+    * Get the assets usage information according to the id provided.
+    * @see {@link https://bynder.docs.apiary.io/#reference/asset-usage/asset-usage-operations/retrieve-asset-usage|API Call}
+    * @param {Object} queryObject - An object containing the id of the desired asset.
+    * @param {String} queryObject.id - The id of the desired asset to retrieve usage for.
+    * @return {Promise} Asset Usage - Returns a Promise that, when fulfilled, will either return an Object with
+    * the asset usage or an Error with the problem.
+    */
+    getAssetUsage(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id) {
+            return rejectValidation('asset usage', 'id');
+        }
+        const request = new APICall(
+            this.baseURL,
+            'media/usage/',
+            'GET',
+            this.consumerToken,
+            this.accessToken,
+            { asset_id: queryObject.id },
+        );
+        return request.send();
+    }
+
+    /**
+     * Create a usage for an asset according to the provided query object.
+     * @see {@link https://bynder.docs.apiary.io/#reference/asset-usage/asset-usage-operations/create-asset-usage|API Call}
+     * @param {Object} queryObject - An object containing the properties for the desired asset usage.
+     * @param {String} queryObject.id - The id of the desired asset to create a usage for.
+     * @param {String} queryObject.integration_id - The id of the desired integration to add.
+     * @param {String} queryObject.timestamp - Datetime. ISO8601 format: yyyy-mm-ddThh:mm:ssZ.
+     * @param {String} queryObject.uri - Location. Example: /hippo/first_post.
+     * @param {String} queryObject.additional - Additional information. Example: Usage description.
+     * @return {Promise} Asset usage - Returns a Promise that, when fulfilled, will either return an Object with
+     * the asset usage or an Error with the problem.
+     */
+    saveNewAssetUsage(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id) {
+            return rejectValidation('asset usage', 'id');
+        }
+        if (!queryObject.integration_id) {
+            return rejectValidation('asset usage', 'integration_id');
+        }
+        const request = new APICall(
+            this.baseURL,
+            'media/usage/',
+            'POST',
+            this.consumerToken,
+            this.accessToken,
+            {
+                asset_id: queryObject.id,
+                integration_id: queryObject.integration_id,
+                timestamp: queryObject.timestamp || null,
+                uri: queryObject.uri || null,
+                additional: queryObject.additional || null
+            },
+        );
+        return request.send();
+    }
+
+    /**
+     * Deletes an asset usage based on the provided asset and integration ids.
+     * @see {@link https://bynder.docs.apiary.io/#reference/asset-usage/asset-usage-operations/delete-asset-usage|API Call}
+     * @param {Object} queryObject - An object containing the id of the desired asset.
+     * @param {String} queryObject.id - The id of the desired asset to retrieve usage for.
+     * @param {String} queryObject.integration_id - The id of the desired integration to delete.
+     * @param {String} queryObject.uri - Location. Example: /hippo/first_post.
+     * @return {Promise} Asset Usage - Returns a Promise that, when fulfilled, will either return an Object with
+     * the asset usage or an Error with the problem.
+     */
+    deleteAssetUsage(queryObject) {
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id) {
+            return rejectValidation('asset usage', 'id');
+        }
+        if (!queryObject.integration_id) {
+            return rejectValidation('asset usage', 'integration_id');
+        }
+        const request = new APICall(
+            this.baseURL,
+            'media/usage/',
+            'DELETE',
+            this.consumerToken,
+            this.accessToken,
+            {
+                asset_id: queryObject.id,
+                integration_id: queryObject.integration_id,
+                uri: queryObject.uri || null,
+            },
+        );
+        return request.send();
+    }
+
+    /**
      * Get all the tags
      * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-access/retrieve-entry-point|API Call}
      * @param {Object} [params={}] - An object containing the parameters accepted by the API to narrow the query.
