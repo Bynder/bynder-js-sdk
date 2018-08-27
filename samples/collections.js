@@ -50,3 +50,15 @@ bynder.addMediaToCollection({
       .catch((error) => {
           console.log(error);
       });
+
+bynder.deleteMediaFromCollection({
+    id: '000000-0000-0000-0000000000000000',
+    deleteIds: ['000000-0000-0000-0000000000000000', '000000-0000-0000-0000000000000000']
+})
+    .then((data) => {
+        console.log('deleteMediaFromCollection', data, '\n\n');
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+

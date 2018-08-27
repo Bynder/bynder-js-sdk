@@ -785,6 +785,40 @@ export default class Bynder {
     }
 
     /**
+     * Remove assets from desired collection.
+     * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/remove-asset-from-a-collection|API Call}
+     * @param {Object} queryObject={} - An object containing the id of the desired collection and deleteIds of assets.
+     * @param {String} queryObject.id - The id of the shared collection.
+     * @param {String} queryObject.deleteIds - Asset ids to remove from the collection
+     * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
+     * response or an Error with the problem.
+     */
+    deleteMediaFromCollection(queryObject) {
+        const parametersObject = queryObject;
+        if (!this.validURL()) {
+            return rejectURL();
+        }
+        if (!queryObject.id) {
+            return rejectValidation('collection', 'id');
+        }
+        if (!queryObject.deleteIds) {
+            return rejectValidation('collection', 'deleteIds');
+        }
+        if (Array.isArray(parametersObject.deleteIds)) {
+            parametersObject.deleteIds = parametersObject.deleteIds.join();
+        }
+        const request = new APICall(
+            this.baseURL,
+            `v4/collections/${queryObject.id}/media/`,
+            'DELETE',
+            this.consumerToken,
+            this.accessToken,
+            parametersObject,
+        );
+        return request.send();
+    }
+
+    /**
      * Share the collection to the recipients provided.
      * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/share-collection|API Call}
      * @param {Object} queryObject={} - An object containing the id of the desired collection.
