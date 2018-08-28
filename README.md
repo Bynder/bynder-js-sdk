@@ -1,5 +1,6 @@
 # Bynder JavaScript SDK
 [![Build Status](https://travis-ci.org/Bynder/bynder-js-sdk.svg?branch=master)](https://travis-ci.org/Bynder/bynder-js-sdk)
+
 This SDK aims to help the development of integrations with [Bynder](https://www.bynder.com/en/) that use JavaScript, providing an easy interface to communicate with [Bynder's REST API](https://developer-docs.bynder.com/API/) and request the information required.
 For that purpose, many ES2015 features were used, as well as Promises notation to help dealing with asynchronous code.
 
