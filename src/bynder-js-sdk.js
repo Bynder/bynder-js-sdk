@@ -214,7 +214,7 @@ export default class Bynder {
 
     /**
      * Login to retrieve OAuth credentials.
-     * @see {@link http://docs.bynder.apiary.io/#reference/users/-deprecated-login-a-user-retrieve-coupled-oauth-credentials/login-a-user|API Call}
+     * @see {@link http://docs.bynder.apiary.io/#reference/users-deprecated-login-a-user-retrieve-coupled-oauth-credentials/login-a-user|API Call}
      * @param {Object} queryObject={} - An object containing the credentials with which the user intends to login.
      * @param {String} queryObject.username - The username of the user.
      * @param {String} queryObject.password - The password of the user.
@@ -368,7 +368,7 @@ export default class Bynder {
      * assets or an Error with the problem.
      */
     getAllMediaItems(queryObject = {}) {
-        const recursiveGetAssets = (queryObject, assets) => {
+        const recursiveGetAssets = (assets) => {
             let queryAssets = assets;
             const passingProperties = queryObject;
             passingProperties.page = !passingProperties.page ? 1 : passingProperties.page;

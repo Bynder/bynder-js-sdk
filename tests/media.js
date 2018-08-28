@@ -103,65 +103,35 @@ describe('Wrong properties', () => {
 
 describe('Unwanted parameters in query object', () => {
     let bynder;
-    let assets1;
-    let fail1 = false;
-    let assets2;
-    let fail2 = false;
+    let assets;
+    let fail = false;
 
     beforeAll((done) => {
         bynder = new Bynder(configs);
-        const p1 = bynder.getMediaList({
+        bynder.getMediaList({
             count: 1
         })
         .then((data) => {
-            assets1 = data;
+            assets = data;
+            done();
         })
         .catch((error) => {
-            fail1 = true;
-            assets1 = error;
-        });
-        const p2 = bynder.getMediaList({
-            limit: 1001
-        })
-        .then((data) => {
-            assets2 = data;
-        })
-        .catch((error) => {
-            fail2 = true;
-            assets2 = error;
-        });
-        Promise.all([p1, p2]).then(() => {
+            fail = true;
+            assets = error;
             done();
         });
     });
 
     it('Passing count in getAssets()', () => {
-        expect(fail1).toBe(false);
-        expect(Array.isArray(assets1)).toEqual(true);
-        if (assets1 && assets1.length) {
-            const randomIndex = Math.floor(Math.random() * assets1.length);
-            const randomObjectKeys = Object.keys(assets1[randomIndex]);
+        expect(fail).toBe(false);
+        expect(Array.isArray(assets)).toEqual(true);
+        if (assets && assets.length) {
+            const randomIndex = Math.floor(Math.random() * assets.length);
+            const randomObjectKeys = Object.keys(assets[randomIndex]);
             expect(randomObjectKeys).toContain('name');
             expect(randomObjectKeys).toContain('id');
             expect(randomObjectKeys).toContain('type');
             expect(randomObjectKeys).toContain('thumbnails');
-        }
-    });
-
-    it('Passing limit over 1000', () => {
-        expect(assets2).not.toBeUndefined();
-        expect(fail2).toBe(false);
-        expect(Array.isArray(assets2)).toEqual(true);
-        if (assets2 && assets2.length) {
-            const randomIndex = Math.floor(Math.random() * assets2.length);
-            const randomObjectKeys = Object.keys(assets2[randomIndex]);
-            expect(randomObjectKeys).toContain('name');
-            expect(randomObjectKeys).toContain('id');
-            expect(randomObjectKeys).toContain('type');
-            expect(randomObjectKeys).toContain('thumbnails');
-        }
-        if (assets2) {
-            expect(assets2.length).not.toBeGreaterThan(1000);
         }
     });
 });
@@ -259,11 +229,6 @@ describe('Media batch testing 1', () => {
         if (getAllAssetsResponse.length <= defaultAssetsNumberReturnedByApi) {
             expect(getAssetsResponse.length).toEqual(getAllAssetsResponse.length);
         }
-    });
-
-    it('The variable getAssetsTotal should be defined', () => {
-        expect(getAssetsTotal).not.toBeUndefined();
-        expect(getAllAssetsResponse.length).toEqual(getAssetsTotal);
     });
 
     it('Edit media request worked', () => {
