@@ -38,15 +38,19 @@ class APICall {
      * Create a APICall.
      * @constructor
      * @param {string} baseURL - A string with the base URL for account.
+     * @param {string} httpsAgent - A https agent.
+     * @param {string} httpAgent - A http agent.
      * @param {string} url - A string with the name of the API method.
      * @param {string} method - A string with the method of the API call.
      * @param {Object} consumerToken - An object with both the public and secret consumer keys.
      * @param {Object} accessToken - An object with both the public and secret access keys.
      * @param {Object} [data={}] - An object containing the query parameters.
      */
-    constructor(baseURL, url, method, consumerToken, accessToken, data = {}) {
+    constructor(baseURL, httpsAgent, httpAgent, url, method, consumerToken, accessToken, data = {}) {
         this.requestData = {};
         this.callURL = this.requestData.url = baseURL + url;
+        this.httpsAgent = httpsAgent;
+        this.httpAgent = httpAgent;
         this.method = this.requestData.method = method;
         this.consumerToken = consumerToken;
         this.accessToken = accessToken;
@@ -104,6 +108,8 @@ class APICall {
         }
 
         return axios(this.callURL, {
+            httpsAgent: this.httpsAgent,
+            httpAgent: this.httpAgent,
             method: this.method,
             data: body,
             headers
@@ -176,12 +182,16 @@ export default class Bynder {
      * @param {String} options.accessToken.public - The access token.
      * @param {String} options.accessToken.secret - The access token secret.
      * @param {String} options.baseURL - The URL with the account domain.
+     * @param {String} options.httpsAgent - The https agent.
+     * @param {String} options.httpAgent - The http agent.
      * @param {Object} options - An object containing the consumer keys, access keys and the base URL.
      */
     constructor(options) {
         this.consumerToken = options.consumer;
         this.accessToken = options.accessToken;
         this.baseURL = options.baseURL;
+        this.httpsAgent = options.httpsAgent;
+        this.httpAgent = options.httpAgent;
     }
 
     /**
@@ -204,6 +214,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/categories/',
             'GET',
             this.consumerToken,
@@ -231,6 +243,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/users/login/',
             'POST',
             this.consumerToken,
@@ -252,6 +266,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/oauth/request_token/',
             'POST',
             this.consumerToken,
@@ -295,6 +311,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/oauth/access_token/',
             'POST',
             this.consumerToken,
@@ -324,6 +342,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/media/',
             'GET',
             this.consumerToken,
@@ -351,6 +371,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/media/${queryObject.id}/`,
             'GET',
             this.consumerToken,
@@ -409,6 +431,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/media/',
             'GET',
             this.consumerToken,
@@ -438,6 +462,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/media/',
             'POST',
             this.consumerToken,
@@ -460,6 +486,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/metaproperties/',
             'GET',
             this.consumerToken,
@@ -491,6 +519,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/metaproperties/${queryObject.id}/`,
             'GET',
             this.consumerToken,
@@ -512,6 +542,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/metaproperties/',
             'POST',
             this.consumerToken,
@@ -538,6 +570,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/metaproperties/${object.id}/`,
             'POST',
             this.consumerToken,
@@ -564,6 +598,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/metaproperties/${object.id}/`,
             'DELETE',
             this.consumerToken,
@@ -592,6 +628,8 @@ export default class Bynder {
         delete queryBody.id;
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/metaproperties/${queryObject.id}/options/`,
             'POST',
             this.consumerToken,
@@ -622,6 +660,8 @@ export default class Bynder {
         delete queryBody.id;
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`,
             'POST',
             this.consumerToken,
@@ -650,6 +690,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`,
             'DELETE',
             this.consumerToken,
@@ -671,6 +713,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/tags/',
             'GET',
             this.consumerToken,
@@ -693,6 +737,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/collections/',
             'GET',
             this.consumerToken,
@@ -719,6 +765,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/collections/${queryObject.id}/`,
             'GET',
             this.consumerToken,
@@ -745,6 +793,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/collections/',
             'POST',
             this.consumerToken,
@@ -775,6 +825,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/collections/${queryObject.id}/media/`,
             'POST',
             this.consumerToken,
@@ -809,6 +861,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/collections/${queryObject.id}/media/`,
             'DELETE',
             this.consumerToken,
@@ -843,6 +897,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/collections/${queryObject.id}/share/`,
             'POST',
             this.consumerToken,
@@ -863,6 +919,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/brands/',
             'GET',
             this.consumerToken,
@@ -882,6 +940,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'upload/endpoint',
             'GET',
             this.consumerToken,
@@ -906,6 +966,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'upload/init',
             'POST',
             this.consumerToken,
@@ -930,6 +992,8 @@ export default class Bynder {
         const { uploadid, targetid } = s3file;
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/upload/',
             'POST',
             this.consumerToken,
@@ -960,6 +1024,8 @@ export default class Bynder {
         const { uploadid, targetid } = s3file;
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             `v4/upload/${uploadid}/`,
             'POST',
             this.consumerToken,
@@ -986,6 +1052,8 @@ export default class Bynder {
         }
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             'v4/upload/poll/',
             'GET',
             this.consumerToken,
@@ -1047,6 +1115,8 @@ export default class Bynder {
         const saveURL = mediaId ? `v4/media/${mediaId}/save/` : 'v4/media/save/';
         const request = new APICall(
             this.baseURL,
+            this.httpsAgent,
+            this.httpAgent,
             saveURL,
             'POST',
             this.consumerToken,
