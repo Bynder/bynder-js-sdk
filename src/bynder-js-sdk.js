@@ -91,19 +91,19 @@ class APICall {
      * @return {Promise} - Returns a Promise that, when fulfilled, will either return an JSON Object with the requested
      * data or an Error with the problem.
      */
-    send(method, url, data) {
+    send(method, url, dataObj) {
+        const data = (dataObj === undefined) ? {} : dataObj;
         this.requestData.method = method;
-        this.data = data;
         this.callURL = this.requestData.url = this.baseURL + url;
 
         const paramEncoded = this.urlEncodeData();
-        this.requestData.data = this.data;
+        this.requestData.data = data;
         const headers = this.createAuthHeader();
         let body = '';
         if (method === 'POST') {
             headers['Content-Type'] = 'application/x-www-form-urlencoded';
             body = paramEncoded;
-        } else if (Object.keys(this.data).length && this.data.constructor === Object) {
+        } else if (Object.keys(data).length && data.constructor === Object) {
             this.callURL += '?';
             this.callURL += paramEncoded;
         }
