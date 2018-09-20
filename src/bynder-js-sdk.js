@@ -40,18 +40,15 @@ class APICall {
      * @param {string} baseURL - A string with the base URL for account.
      * @param {string} httpsAgent - A https agent.
      * @param {string} httpAgent - A http agent.
-     * @param {string} url - A string with the name of the API method.
-     * @param {string} method - A string with the method of the API call.
      * @param {Object} consumerToken - An object with both the public and secret consumer keys.
      * @param {Object} accessToken - An object with both the public and secret access keys.
      * @param {Object} [data={}] - An object containing the query parameters.
      */
-    constructor(baseURL, httpsAgent, httpAgent, url, method, consumerToken, accessToken, data = {}) {
+    constructor(baseURL, httpsAgent, httpAgent, consumerToken, accessToken, data = {}) {
         this.requestData = {};
-        this.callURL = this.requestData.url = baseURL + url;
+        this.baseURL = baseURL;
         this.httpsAgent = httpsAgent;
         this.httpAgent = httpAgent;
-        this.method = this.requestData.method = method;
         this.consumerToken = consumerToken;
         this.accessToken = accessToken;
         this.data = data;
@@ -94,12 +91,16 @@ class APICall {
      * @return {Promise} - Returns a Promise that, when fulfilled, will either return an JSON Object with the requested
      * data or an Error with the problem.
      */
-    send() {
+    send(method, url, data) {
+        this.requestData.method = method;
+        this.data = data;
+        this.callURL = this.requestData.url = this.baseURL + url;
+
         const paramEncoded = this.urlEncodeData();
         this.requestData.data = this.data;
         const headers = this.createAuthHeader();
         let body = '';
-        if (this.method === 'POST') {
+        if (method === 'POST') {
             headers['Content-Type'] = 'application/x-www-form-urlencoded';
             body = paramEncoded;
         } else if (Object.keys(this.data).length && this.data.constructor === Object) {
@@ -110,7 +111,7 @@ class APICall {
         return axios(this.callURL, {
             httpsAgent: this.httpsAgent,
             httpAgent: this.httpAgent,
-            method: this.method,
+            method,
             data: body,
             headers
         })
@@ -187,11 +188,20 @@ export default class Bynder {
      * @param {Object} options - An object containing the consumer keys, access keys and the base URL.
      */
     constructor(options) {
-        this.consumerToken = options.consumer;
-        this.accessToken = options.accessToken;
+        // this.consumerToken = options.consumer;
+        // this.accessToken = options.accessToken;
         this.baseURL = options.baseURL;
-        this.httpsAgent = options.httpsAgent;
-        this.httpAgent = options.httpAgent;
+        // this.httpsAgent = options.httpsAgent;
+        // this.httpAgent = options.httpAgent;
+        // constructor(baseURL, httpsAgent, httpAgent, url, method, consumerToken, accessToken, data = {}) {
+
+        this.api = new APICall(
+            options.baseURL,
+            options.httpsAgent,
+            options.httpAgent,
+            options.consumer,
+            options.accessToken
+          );
     }
 
     /**
@@ -212,16 +222,8 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/categories/',
-            'GET',
-            this.consumerToken,
-            this.accessToken
-        );
-        return request.send();
+
+        return this.api.send('GET', 'v4/categories/');
     }
 
     /**
@@ -241,17 +243,8 @@ export default class Bynder {
         if (!queryObject.username || !queryObject.password || !queryObject.consumerId) {
             return rejectValidation('authentication', 'username, password or consumerId');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/users/login/',
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            queryObject
-        );
-        return request.send();
+
+        return this.api.send('POST', 'v4/users/login/', queryObject);
     }
 
     /**
@@ -264,19 +257,8 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/oauth/request_token/',
-            'POST',
-            this.consumerToken,
-            {
-                public: null,
-                secret: null
-            }
-        );
-        return request.send();
+
+        return this.api.send('POST', 'v4/oauth/request_token/', { public: null, secret: null });
     }
 
     /**
@@ -309,19 +291,8 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/oauth/access_token/',
-            'POST',
-            this.consumerToken,
-            {
-                public: token,
-                secret
-            }
-        );
-        return request.send();
+
+        return this.api.send('POST', 'v4/oauth/access_token/', { public: token, secret });
     }
 
     /**
@@ -340,17 +311,8 @@ export default class Bynder {
         if (Array.isArray(parametersObject.propertyOptionId)) {
             parametersObject.propertyOptionId = parametersObject.propertyOptionId.join();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/media/',
-            'GET',
-            this.consumerToken,
-            this.accessToken,
-            parametersObject
-        );
-        return request.send();
+        
+        return this.api.send('GET', 'v4/media/', parametersObject);
     }
 
     /**
@@ -369,17 +331,8 @@ export default class Bynder {
         if (!queryObject.id) {
             return rejectValidation('media', 'id');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/media/${queryObject.id}/`,
-            'GET',
-            this.consumerToken,
-            this.accessToken,
-            { versions: queryObject.versions }
-        );
-        return request.send();
+
+        return this.api.send('GET', `v4/media/${queryObject.id}/`, { versions: queryObject.versions });
     }
 
     /**
@@ -429,20 +382,10 @@ export default class Bynder {
         if (Array.isArray(parametersObject.propertyOptionId)) {
             parametersObject.propertyOptionId = parametersObject.propertyOptionId.join();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/media/',
-            'GET',
-            this.consumerToken,
-            this.accessToken,
-            parametersObject
-        );
-        return request.send()
-            .then((data) => {
-                return data.count.total;
-            });
+        return this.api.send('GET', 'v4/media/')
+        .then((data) => {
+            return data.count.total;
+        });
     }
 
     /**
@@ -460,17 +403,7 @@ export default class Bynder {
         if (!object.id) {
             return rejectValidation('media', 'id');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/media/',
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            object
-        );
-        return request.send();
+        return this.api.send('POST', 'v4/media/', object);
     }
 
     /**
@@ -484,22 +417,13 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/metaproperties/',
-            'GET',
-            this.consumerToken,
-            this.accessToken,
-            queryObject
-        );
-        return request.send()
-            .then((data) => {
-                return Object.keys(data).map((metaproperty) => {
-                    return data[metaproperty];
-                });
+
+        return this.api.send('GET', 'v4/metaproperties/', queryObject)
+        .then((data) => {
+            return Object.keys(data).map((metaproperty) => {
+                return data[metaproperty];
             });
+        });
     }
 
     /**
@@ -517,16 +441,7 @@ export default class Bynder {
         if (!queryObject.id) {
             return rejectValidation('metaproperty', 'id');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/metaproperties/${queryObject.id}/`,
-            'GET',
-            this.consumerToken,
-            this.accessToken
-        );
-        return request.send();
+        return this.api.send('GET', `v4/metaproperties/${queryObject.id}/`);
     }
 
     /**
@@ -540,17 +455,8 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/metaproperties/',
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            { data: JSON.stringify(object) } // The API requires an object with the query content stringified inside
-        );
-        return request.send();
+        return this.api.send('POST', 'v4/metaproperties/', { data: JSON.stringify(object) });
+        // The API requires an object with the query content stringified inside
     }
 
     /**
@@ -568,17 +474,8 @@ export default class Bynder {
         if (!object.id) {
             return rejectValidation('metaproperty', 'id');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/metaproperties/${object.id}/`,
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            { data: JSON.stringify(object) } // The API requires an object with the query content stringified inside
-        );
-        return request.send();
+        return this.api.send('POST', `v4/metaproperties/${object.id}/`, { data: JSON.stringify(object) });
+        // The API requires an object with the query content stringified inside
     }
 
     /**
@@ -596,16 +493,7 @@ export default class Bynder {
         if (!object.id) {
             return rejectValidation('metaproperty', 'id');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/metaproperties/${object.id}/`,
-            'DELETE',
-            this.consumerToken,
-            this.accessToken
-        );
-        return request.send();
+        return this.api.send('DELETE', `v4/metaproperties/${object.id}/`);
     }
 
     /**
@@ -626,17 +514,7 @@ export default class Bynder {
         }
         const queryBody = Object.assign({}, queryObject);
         delete queryBody.id;
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/metaproperties/${queryObject.id}/options/`,
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            { data: JSON.stringify(queryBody) }
-        );
-        return request.send();
+        return this.api.send('POST', `v4/metaproperties/${queryObject.id}/options/`, { data: JSON.stringify(queryBody) });
     }
 
     /**
@@ -658,17 +536,7 @@ export default class Bynder {
         }
         const queryBody = Object.assign({}, queryObject);
         delete queryBody.id;
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`,
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            { data: JSON.stringify(queryBody) }
-        );
-        return request.send();
+        return this.api.send('POST', `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`, { data: JSON.stringify(queryBody) });
     }
 
     /**
@@ -688,16 +556,7 @@ export default class Bynder {
         if (!queryObject.id || !queryObject.optionId) {
             return rejectValidation('metaproperty option', 'id or optionId');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`,
-            'DELETE',
-            this.consumerToken,
-            this.accessToken,
-        );
-        return request.send();
+        return this.api.send('DELETE', `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`);
     }
 
     /**
@@ -711,17 +570,7 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/tags/',
-            'GET',
-            this.consumerToken,
-            this.accessToken,
-            queryObject
-        );
-        return request.send();
+        return this.api.send('GET', 'v4/tags/', queryObject);
     }
 
     /**
@@ -735,17 +584,7 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/collections/',
-            'GET',
-            this.consumerToken,
-            this.accessToken,
-            queryObject
-        );
-        return request.send();
+        return this.api.send('GET', 'v4/collections/', queryObject);
     }
 
     /**
@@ -763,16 +602,7 @@ export default class Bynder {
         if (!queryObject.id) {
             return rejectValidation('collection', 'id');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/collections/${queryObject.id}/`,
-            'GET',
-            this.consumerToken,
-            this.accessToken
-        );
-        return request.send();
+        return this.api.send('GET', `v4/collections/${queryObject.id}/`);
     }
 
     /**
@@ -791,17 +621,7 @@ export default class Bynder {
         if (!queryObject.name) {
             return rejectValidation('collection', 'name');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/collections/',
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            queryObject,
-        );
-        return request.send();
+        return this.api.send('POST', 'v4/collections/', queryObject);
     }
 
     /**
@@ -823,17 +643,8 @@ export default class Bynder {
         if (!queryObject.data) {
             return rejectValidation('collection', 'data');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/collections/${queryObject.id}/media/`,
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            { data: JSON.stringify(queryObject.data) }, // The API requires JSON-serialised list
-        );
-        return request.send();
+        return this.api.send('POST', `v4/collections/${queryObject.id}/media/`, { data: JSON.stringify(queryObject.data) });
+        // The API requires JSON-serialised list
     }
 
     /**
@@ -859,17 +670,7 @@ export default class Bynder {
         if (Array.isArray(parametersObject.deleteIds)) {
             parametersObject.deleteIds = parametersObject.deleteIds.join();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/collections/${queryObject.id}/media/`,
-            'DELETE',
-            this.consumerToken,
-            this.accessToken,
-            parametersObject,
-        );
-        return request.send();
+        return this.api.send('DELETE', `v4/collections/${queryObject.id}/media/`, parametersObject);
     }
 
     /**
@@ -895,17 +696,7 @@ export default class Bynder {
         if (!queryObject.collectionOptions) {
             return rejectValidation('collection', 'collectionOptions');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/collections/${queryObject.id}/share/`,
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            queryObject,
-        );
-        return request.send();
+        return this.api.send('POST', `v4/collections/${queryObject.id}/share/`, queryObject);
     }
 
     /**
@@ -917,16 +708,7 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/brands/',
-            'GET',
-            this.consumerToken,
-            this.accessToken
-        );
-        return request.send();
+        return this.api.send('GET', 'v4/brands/');
     }
 
     /**
@@ -938,16 +720,7 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'upload/endpoint',
-            'GET',
-            this.consumerToken,
-            this.accessToken
-        );
-        return request.send();
+        return this.api.send('GET', 'upload/endpoint');
     }
 
     /**
@@ -964,17 +737,7 @@ export default class Bynder {
         if (!filename) {
             return rejectValidation('upload', 'filename');
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'upload/init',
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            { filename },
-        );
-        return request.send();
+        return this.api.send('POST', 'upload/init', { filename });
     }
 
     /**
@@ -990,22 +753,12 @@ export default class Bynder {
         }
         const { s3file, s3_filename: filename } = init;
         const { uploadid, targetid } = s3file;
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/upload/',
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            {
-                id: uploadid,
-                targetid,
-                filename: `${filename}/p${chunkNumber}`,
-                chunkNumber
-            }
-        );
-        return request.send();
+        return this.api.send('POST', 'v4/upload/', {
+            id: uploadid,
+            targetid,
+            filename: `${filename}/p${chunkNumber}`,
+            chunkNumber
+        });
     }
 
     /**
@@ -1022,22 +775,12 @@ export default class Bynder {
         }
         const { s3file, s3_filename: s3filename } = init;
         const { uploadid, targetid } = s3file;
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            `v4/upload/${uploadid}/`,
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            {
-                targetid,
-                s3_filename: `${s3filename}/p${chunks}`,
-                original_filename: filename,
-                chunks
-            }
-        );
-        return request.send();
+        return this.api.send('POST', `v4/upload/${uploadid}/`, {
+            targetid,
+            s3_filename: `${s3filename}/p${chunks}`,
+            original_filename: filename,
+            chunks
+        });
     }
 
     /**
@@ -1050,17 +793,7 @@ export default class Bynder {
         if (!this.validURL()) {
             return rejectURL();
         }
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            'v4/upload/poll/',
-            'GET',
-            this.consumerToken,
-            this.accessToken,
-            { items: importIds.join(',') }
-        );
-        return request.send();
+        return this.api.send('GET', 'v4/upload/poll/', { items: importIds.join(',') });
     }
 
     /**
@@ -1113,17 +846,8 @@ export default class Bynder {
             return rejectValidation('upload', 'brandId');
         }
         const saveURL = mediaId ? `v4/media/${mediaId}/save/` : 'v4/media/save/';
-        const request = new APICall(
-            this.baseURL,
-            this.httpsAgent,
-            this.httpAgent,
-            saveURL,
-            'POST',
-            this.consumerToken,
-            this.accessToken,
-            data
-        );
-        return request.send();
+
+        return this.api.send('POST', saveURL, data);
     }
 
     /**
