@@ -36,6 +36,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "is-url": "^1.2.4",
     "isomorphic-form-data": "^1.0.0",
     "node-fetch": "^1.6.0",
     "oauth-1.0a": "^1.0.1"

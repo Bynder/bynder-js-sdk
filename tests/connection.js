@@ -60,38 +60,6 @@ describe('Null tokens', () => {
     });
 });
 
-describe('Empty string base URL', () => {
-    fail = false;
-    const misconfigs = JSON.parse(JSON.stringify(configs));
-    misconfigs.baseURL = '';
-
-    beforeEach((done) => {
-        return getBrandsTest(done, misconfigs);
-    });
-
-    it('server cannot be reached', () => {
-        expect(error).not.toBeUndefined();
-        expect(error.status).toEqual(0);
-        expect(fail).toBe(true);
-    });
-});
-
-describe('Null URL', () => {
-    fail = false;
-    const misconfigs = JSON.parse(JSON.stringify(configs));
-    misconfigs.baseURL = null;
-
-    beforeEach((done) => {
-        return getBrandsTest(done, misconfigs);
-    });
-
-    it('server cannot be reached', () => {
-        expect(error).not.toBeUndefined();
-        expect(error.status).toEqual(0);
-        expect(fail).toBe(true);
-    });
-});
-
 describe('Wrong URL', () => {
     fail = false;
     const misconfigs = JSON.parse(JSON.stringify(configs));

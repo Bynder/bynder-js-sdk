@@ -2,19 +2,9 @@ import 'isomorphic-form-data';
 import OAuth from 'oauth-1.0a';
 import axios from 'axios';
 import { basename } from 'path';
+import isUrl from 'is-url';
 
 const defaultAssetsNumberPerPage = 50;
-
-/**
- * Rejects the request.
- * @return {Promise} error - Returns a Promise with the details for wrong base URL.
- */
-function rejectURL() {
-    return Promise.reject({
-        status: 0,
-        message: 'The base URL provided is not valid'
-    });
-}
 
 /**
  * Rejects the request.
@@ -44,8 +34,9 @@ class APICall {
      * @param {Object} accessToken - An object with both the public and secret access keys.
      * @param {Object} [data={}] - An object containing the query parameters.
      */
-    constructor(baseURL, httpsAgent, httpAgent, consumerToken, accessToken, data = {}) {
-        this.requestData = {};
+    constructor(baseURL, httpsAgent, httpAgent, consumerToken, accessToken) {
+        if (!isUrl(baseURL)) throw new Error('The base URL provided is not valid');
+
         this.baseURL = baseURL;
         this.httpsAgent = httpsAgent;
         this.httpAgent = httpAgent;
@@ -205,24 +196,12 @@ export default class Bynder {
     }
 
     /**
-     * Check if the API URL is valid.
-     * @return {Boolean} - Returns a boolean corresponding the URL correctness.
-     */
-    validURL() {
-        return this.baseURL;
-    }
-
-    /**
      * Get all the categories.
      * @see {@link http://docs.bynder.apiary.io/#reference/categories/retrieve-categories/retrieve-categories|API Call}
      * @return {Promise} Categories - Returns a Promise that, when fulfilled, will either return an Array with the
      * categories or an Error with the problem.
      */
     getCategories() {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
-
         return this.api.send('GET', 'v4/categories/');
     }
 
@@ -237,9 +216,6 @@ export default class Bynder {
      * OAuth credentials for login or an Error with the problem.
      */
     userLogin(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.username || !queryObject.password || !queryObject.consumerId) {
             return rejectValidation('authentication', 'username, password or consumerId');
         }
@@ -254,9 +230,6 @@ export default class Bynder {
      * couple of consumer token/secret or an Error with the problem.
      */
     getRequestToken() {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
 
         return this.api.send('POST', 'v4/oauth/request_token/', { public: null, secret: null });
     }
@@ -269,9 +242,6 @@ export default class Bynder {
      * @return {String} URL - Returns a String with the URL to the token authorisation page.
      */
     getAuthorisedURL(token, callback = undefined) {
-        if (!this.validURL()) {
-            return this.baseURL;
-        }
         let authoriseToken = `${this.baseURL}v4/oauth/authorise/?oauth_token=${token}`;
         if (callback) {
             authoriseToken += `&callback=${callback}`;
@@ -288,10 +258,6 @@ export default class Bynder {
      * OAuth credentials for login or an Error with the problem.
      */
     getAccessToken(token, secret) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
-
         return this.api.send('POST', 'v4/oauth/access_token/', { public: token, secret });
     }
 
@@ -304,9 +270,6 @@ export default class Bynder {
      */
     getMediaList(queryObject = {}) {
         const parametersObject = queryObject;
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         parametersObject.count = false; // The API will return a different response format in case this is true
         if (Array.isArray(parametersObject.propertyOptionId)) {
             parametersObject.propertyOptionId = parametersObject.propertyOptionId.join();
@@ -325,9 +288,6 @@ export default class Bynder {
      * an Error with the problem.
      */
     getMediaInfo(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id) {
             return rejectValidation('media', 'id');
         }
@@ -375,9 +335,6 @@ export default class Bynder {
      */
     getMediaTotal(queryObject = {}) {
         const parametersObject = queryObject;
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         parametersObject.count = true;
         if (Array.isArray(parametersObject.propertyOptionId)) {
             parametersObject.propertyOptionId = parametersObject.propertyOptionId.join();
@@ -397,9 +354,6 @@ export default class Bynder {
      * case it's successful or an Error with the problem.
      */
     editMedia(object) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!object.id) {
             return rejectValidation('media', 'id');
         }
@@ -414,10 +368,6 @@ export default class Bynder {
      * metaproperties or an Error with the problem.
      */
     getMetaproperties(queryObject = {}) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
-
         return this.api.send('GET', 'v4/metaproperties/', queryObject)
         .then((data) => {
             return Object.keys(data).map((metaproperty) => {
@@ -435,9 +385,6 @@ export default class Bynder {
      * metaproperty or an Error with the problem.
      */
     getMetaproperty(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id) {
             return rejectValidation('metaproperty', 'id');
         }
@@ -452,9 +399,6 @@ export default class Bynder {
      * case it's successful or an Error with the problem.
      */
     saveNewMetaproperty(object) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         return this.api.send('POST', 'v4/metaproperties/', { data: JSON.stringify(object) });
         // The API requires an object with the query content stringified inside
     }
@@ -468,9 +412,6 @@ export default class Bynder {
      * case it's successful or an Error with the problem.
      */
     editMetaproperty(object) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!object.id) {
             return rejectValidation('metaproperty', 'id');
         }
@@ -487,9 +428,6 @@ export default class Bynder {
      * case it's successful or an Error with the problem.
      */
     deleteMetaproperty(object) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!object.id) {
             return rejectValidation('metaproperty', 'id');
         }
@@ -506,9 +444,6 @@ export default class Bynder {
      * response or an Error with the problem.
      */
     saveNewMetapropertyOption(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id || !queryObject.name) {
             return rejectValidation('metaproperty option', 'id or name');
         }
@@ -528,9 +463,6 @@ export default class Bynder {
      * response or an Error with the problem.
      */
     editMetapropertyOption(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id || !queryObject.optionId) {
             return rejectValidation('metaproperty option', 'id or optionId');
         }
@@ -550,9 +482,6 @@ export default class Bynder {
      * response or an Error with the problem.
      */
     deleteMetapropertyOption(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id || !queryObject.optionId) {
             return rejectValidation('metaproperty option', 'id or optionId');
         }
@@ -567,9 +496,6 @@ export default class Bynder {
      * tags or an Error with the problem.
      */
     getTags(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         return this.api.send('GET', 'v4/tags/', queryObject);
     }
 
@@ -581,9 +507,6 @@ export default class Bynder {
      * collections or an Error with the problem.
      */
     getCollections(queryObject = {}) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         return this.api.send('GET', 'v4/collections/', queryObject);
     }
 
@@ -596,9 +519,6 @@ export default class Bynder {
      * collection or an Error with the problem.
      */
     getCollection(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id) {
             return rejectValidation('collection', 'id');
         }
@@ -615,9 +535,6 @@ export default class Bynder {
      * response or an Error with the problem.
      */
     saveNewCollection(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.name) {
             return rejectValidation('collection', 'name');
         }
@@ -634,9 +551,6 @@ export default class Bynder {
      * response or an Error with the problem.
      */
     addMediaToCollection(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id) {
             return rejectValidation('collection', 'id');
         }
@@ -658,9 +572,6 @@ export default class Bynder {
      */
     deleteMediaFromCollection(queryObject) {
         const parametersObject = queryObject;
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id) {
             return rejectValidation('collection', 'id');
         }
@@ -684,9 +595,6 @@ export default class Bynder {
      * collection or an Error with the problem.
      */
     shareCollection(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id) {
             return rejectValidation('collection', 'id');
         }
@@ -705,9 +613,6 @@ export default class Bynder {
      * @return {Promise}
      */
     getBrands() {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         return this.api.send('GET', 'v4/brands/');
     }
 
@@ -717,9 +622,6 @@ export default class Bynder {
      * @return {Promise} Amazon S3 location url string.
      */
     getClosestUploadEndpoint() {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         return this.api.send('GET', 'upload/endpoint');
     }
 
@@ -731,9 +633,6 @@ export default class Bynder {
      * @return {Promise} Relevant S3 file information, necessary for the file upload.
      */
     initUpload(filename) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!filename) {
             return rejectValidation('upload', 'filename');
         }
@@ -748,9 +647,6 @@ export default class Bynder {
      * @return {Promise}
      */
     registerChunk(init, chunkNumber) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         const { s3file, s3_filename: filename } = init;
         const { uploadid, targetid } = s3file;
         return this.api.send('POST', 'v4/upload/', {
@@ -770,9 +666,6 @@ export default class Bynder {
      * @return {Promise}
      */
     finaliseUpload(init, filename, chunks) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         const { s3file, s3_filename: s3filename } = init;
         const { uploadid, targetid } = s3file;
         return this.api.send('POST', `v4/upload/${uploadid}/`, {
@@ -790,9 +683,6 @@ export default class Bynder {
      * @return {Promise}
      */
     pollUploadStatus(importIds) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         return this.api.send('GET', 'v4/upload/poll/', { items: importIds.join(',') });
     }
 
@@ -838,9 +728,6 @@ export default class Bynder {
      * @return {Promise}
      */
     saveAsset(data) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         const { brandId, mediaId } = data;
         if (!brandId) {
             return rejectValidation('upload', 'brandId');
@@ -948,9 +835,6 @@ export default class Bynder {
         const bodyType = bodyTypes.get(body);
         const length = getLength(file);
 
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!brandId) {
             return rejectValidation('upload', 'brandId');
         }
