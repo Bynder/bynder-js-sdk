@@ -3,6 +3,8 @@ import OAuth from 'oauth-1.0a';
 import axios from 'axios';
 import { basename } from 'path';
 import isUrl from 'is-url';
+import joinUrl from 'proper-url-join';
+import queryString from 'query-string';
 
 const defaultAssetsNumberPerPage = 50;
 
@@ -15,6 +17,16 @@ function rejectValidation(module, param) {
         status: 0,
         message: `The ${module} ${param} is not valid or it was not specified properly`
     });
+}
+
+    /**
+     * Creates the Authorization header.
+     * @return {Object} header - Returns an object with the Authorization header and its signed content.
+     */
+function createAuthHeader(requestData, consumerToken, accessToken) {
+    const oauth = new OAuth({ consumer: consumerToken });
+
+    return oauth.toHeader(oauth.authorize(requestData, accessToken));
 }
 
 
@@ -42,39 +54,6 @@ class APICall {
         this.httpAgent = httpAgent;
         this.consumerToken = consumerToken;
         this.accessToken = accessToken;
-        this.data = data;
-    }
-
-    /**
-     * Creates the Authorization header.
-     * @return {Object} header - Returns an object with the Authorization header and its signed content.
-     */
-    createAuthHeader() {
-        const oauth = new OAuth({
-            consumer: {
-                public: this.consumerToken.public,
-                secret: this.consumerToken.secret
-            }
-        });
-        return oauth.toHeader(oauth.authorize(this.requestData, this.accessToken));
-    }
-
-    /**
-     * Encode the data object to URI.
-     * @return {string} - Returns the URI string equivalent to the data object of the request.
-     */
-    urlEncodeData() {
-        let requestBody = '';
-        for (const key of Object.keys(this.data)) {
-            const value = this.data[key];
-            if (value === undefined) {
-                delete this.data[key];
-            } else {
-                requestBody += `${encodeURIComponent(key)}=${encodeURIComponent(value)}&`;
-            }
-        }
-        requestBody = requestBody.slice(0, -1);
-        return requestBody;
     }
 
     /**
@@ -82,24 +61,19 @@ class APICall {
      * @return {Promise} - Returns a Promise that, when fulfilled, will either return an JSON Object with the requested
      * data or an Error with the problem.
      */
-    send(method, url, dataObj) {
-        const data = (dataObj === undefined) ? {} : dataObj;
-        this.requestData.method = method;
-        this.callURL = this.requestData.url = this.baseURL + url;
-
-        const paramEncoded = this.urlEncodeData();
-        this.requestData.data = data;
-        const headers = this.createAuthHeader();
+    send(method, url, data = {}) {
+        let callURL = joinUrl(this.baseURL, url, { trailingSlash: true });
+        const headers = createAuthHeader({ url: callURL, data, method }, this.consumerToken, this.accessToken);
         let body = '';
+
         if (method === 'POST') {
             headers['Content-Type'] = 'application/x-www-form-urlencoded';
-            body = paramEncoded;
+            body = queryString.stringify(data);
         } else if (Object.keys(data).length && data.constructor === Object) {
-            this.callURL += '?';
-            this.callURL += paramEncoded;
+            callURL = joinUrl(callURL, { trailingSlash: true, query: data });
         }
 
-        return axios(this.callURL, {
+        return axios(callURL, {
             httpsAgent: this.httpsAgent,
             httpAgent: this.httpAgent,
             method,
@@ -179,12 +153,8 @@ export default class Bynder {
      * @param {Object} options - An object containing the consumer keys, access keys and the base URL.
      */
     constructor(options) {
-        // this.consumerToken = options.consumer;
-        // this.accessToken = options.accessToken;
+        this.options = options;
         this.baseURL = options.baseURL;
-        // this.httpsAgent = options.httpsAgent;
-        // this.httpAgent = options.httpAgent;
-        // constructor(baseURL, httpsAgent, httpAgent, url, method, consumerToken, accessToken, data = {}) {
 
         this.api = new APICall(
             options.baseURL,
@@ -208,19 +178,19 @@ export default class Bynder {
     /**
      * Login to retrieve OAuth credentials.
      * @see {@link https://bynder.docs.apiary.io/#reference/users/-deprecated-login-a-user-operations/login-a-user|API Call}
-     * @param {Object} queryObject={} - An object containing the credentials with which the user intends to login.
-     * @param {String} queryObject.username - The username of the user.
-     * @param {String} queryObject.password - The password of the user.
-     * @param {String} queryObject.consumerId - The consumerId of the user.
+     * @param {Object} params={} - An object containing the credentials with which the user intends to login.
+     * @param {String} params.username - The username of the user.
+     * @param {String} params.password - The password of the user.
+     * @param {String} params.consumerId - The consumerId of the user.
      * @return {Promise} Credentials - Returns a Promise that, when fulfilled, will either return an Object with the
      * OAuth credentials for login or an Error with the problem.
      */
-    userLogin(queryObject) {
-        if (!queryObject.username || !queryObject.password || !queryObject.consumerId) {
+    userLogin(params) {
+        if (!params.username || !params.password || !params.consumerId) {
             return rejectValidation('authentication', 'username, password or consumerId');
         }
 
-        return this.api.send('POST', 'v4/users/login/', queryObject);
+        return this.api.send('POST', 'v4/users/login/', params);
     }
 
     /**
@@ -248,8 +218,11 @@ export default class Bynder {
      * @param {String} [callback] - The callback to which the page will be redirected after authenticating the token.
      * @return {String} URL - Returns a String with the URL to the token authorisation page.
      */
-    getAuthorisedURL(token, callback = undefined) {
-        let authoriseToken = `${this.baseURL}v4/oauth/authorise/?oauth_token=${token}`;
+    getAuthorisedURL(token, callback) {
+        let authoriseToken = joinUrl(this.baseURL, 'v4/oauth/authorise', {
+            trailingSlash: true,
+            query: { oauth_token: token }
+        });
         if (callback) {
             authoriseToken += `&callback=${callback}`;
         }
@@ -271,57 +244,57 @@ export default class Bynder {
     /**
      * Get the assets according to the parameters provided.
      * @see {@link http://docs.bynder.apiary.io/#reference/assets/asset-operations/retrieve-assets|API Call}
-     * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.
+     * @param {Object} [params={}] - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Assets - Returns a Promise that, when fulfilled, will either return an Array with the assets or
      * an Error with the problem.
      */
-    getMediaList(queryObject = {}) {
-        const parametersObject = queryObject;
-        parametersObject.count = false; // The API will return a different response format in case this is true
-        if (Array.isArray(parametersObject.propertyOptionId)) {
-            parametersObject.propertyOptionId = parametersObject.propertyOptionId.join();
-        }
-        
-        return this.api.send('GET', 'v4/media/', parametersObject);
+    getMediaList(params = {}) {
+        return this.api.send('GET', 'v4/media/', {
+            ...params,
+            count: false,
+            ...(Array.isArray(params.propertyOptionId)
+              ? params.propertyOptionId.join(',')
+              : {})
+        });
     }
 
     /**
      * Get the assets information according to the id provided.
      * @see {@link http://docs.bynder.apiary.io/#reference/assets/specific-asset-operations/retrieve-specific-asset|API Call}
-     * @param {Object} queryObject - An object containing the id and the version of the desired asset.
-     * @param {String} queryObject.id - The id of the desired asset.
-     * @param {Number} [queryObject.version] - The version of the desired asset.
+     * @param {Object} params - An object containing the id and the version of the desired asset.
+     * @param {String} params.id - The id of the desired asset.
+     * @param {Boolean} [params.versions] - Whether to include info about the different asset versions.
      * @return {Promise} Asset - Returns a Promise that, when fulfilled, will either return an Object with the asset or
      * an Error with the problem.
      */
-    getMediaInfo(queryObject) {
-        if (!queryObject.id) {
+    getMediaInfo({ id, ...options } = {}) {
+        if (!id) {
             return rejectValidation('media', 'id');
         }
 
-        return this.api.send('GET', `v4/media/${queryObject.id}/`, { versions: queryObject.versions });
+        return this.api.send('GET', `v4/media/${id}/`, options);
     }
 
     /**
      * Get all the assets starting from the page provided (1 by default) and incrementing according to the offset given.
      * @see {@link http://docs.bynder.apiary.io/#reference/assets/asset-operations/retrieve-assets|API Call}
-     * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.
+     * @param {Object} [params={}] - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Assets - Returns a Promise that, when fulfilled, will either return an Array with all the
      * assets or an Error with the problem.
      */
-    getAllMediaItems(queryObject = {}) {
-        const recursiveGetAssets = (queryObject, assets) => {
+    getAllMediaItems(params = {}) {
+        const recursiveGetAssets = (_params, assets) => {
             let queryAssets = assets;
-            const passingProperties = queryObject;
-            passingProperties.page = !passingProperties.page ? 1 : passingProperties.page;
-            passingProperties.limit = !passingProperties.limit ? defaultAssetsNumberPerPage : passingProperties.limit;
+            const params = { ..._params };
+            params.page = !params.page ? 1 : params.page;
+            params.limit = !params.limit ? defaultAssetsNumberPerPage : params.limit;
 
-            return this.getMediaList(passingProperties)
+            return this.getMediaList(params)
             .then((data) => {
                 queryAssets = assets.concat(data);
-                if (data && data.length === passingProperties.limit) { // If the results page is full it means another one might exist
-                    passingProperties.page += 1;
-                    return recursiveGetAssets(passingProperties, queryAssets);
+                if (data && data.length === params.limit) { // If the results page is full it means another one might exist
+                    params.page += 1;
+                    return recursiveGetAssets(params, queryAssets);
                 }
                 return queryAssets;
             })
@@ -330,23 +303,22 @@ export default class Bynder {
             });
         };
 
-        return recursiveGetAssets(queryObject, []);
+        return recursiveGetAssets(params, []);
     }
 
     /**
      * Get the assets total according to the parameters provided.
      * @see {@link http://docs.bynder.apiary.io/#reference/assets/asset-operations/retrieve-assets|API Call}
-     * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.
+     * @param {Object} [params={}] - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Number - Returns a Promise that, when fulfilled, will either return the number of assets
      * fitting the query or an Error with the problem.
      */
-    getMediaTotal(queryObject = {}) {
-        const parametersObject = queryObject;
-        parametersObject.count = true;
+    getMediaTotal(params = {}) {
+        const parametersObject = Object.assign({}, params, { count: true });
         if (Array.isArray(parametersObject.propertyOptionId)) {
             parametersObject.propertyOptionId = parametersObject.propertyOptionId.join();
         }
-        return this.api.send('GET', 'v4/media/')
+        return this.api.send('GET', 'v4/media/', parametersObject)
         .then((data) => {
             return data.count.total;
         });
@@ -355,27 +327,27 @@ export default class Bynder {
     /**
      * Edit an existing asset with the information provided.
      * @see {@link http://docs.bynder.apiary.io/#reference/assets/specific-asset-operations/modify-asset|API Call}
-     * @param {Object} object={} - An object containing the parameters accepted by the API to change in the asset.
-     * @param {String} object.id - The id of the desired asset.
+     * @param {Object} params={} - An object containing the parameters accepted by the API to change in the asset.
+     * @param {String} params.id - The id of the desired asset.
      * @return {Promise} Object - Returns a Promise that, when fulfilled, will either return an empty Object in
      * case it's successful or an Error with the problem.
      */
-    editMedia(object) {
-        if (!object.id) {
+    editMedia(params = {}) {
+        if (!params.id) {
             return rejectValidation('media', 'id');
         }
-        return this.api.send('POST', 'v4/media/', object);
+        return this.api.send('POST', 'v4/media/', params);
     }
 
     /**
      * Get all the metaproperties
      * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/retrieve-metaproperties|API Call}
-     * @param {Object} queryObject={} - An object containing the parameters accepted by the API to narrow the query.
+     * @param {Object} params={} - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Metaproperties - Returns a Promise that, when fulfilled, will either return an Array with the
      * metaproperties or an Error with the problem.
      */
-    getMetaproperties(queryObject = {}) {
-        return this.api.send('GET', 'v4/metaproperties/', queryObject)
+    getMetaproperties(params = {}) {
+        return this.api.send('GET', 'v4/metaproperties/', params)
         .then((data) => {
             return Object.keys(data).map((metaproperty) => {
                 return data[metaproperty];
@@ -386,16 +358,16 @@ export default class Bynder {
     /**
      * Get the metaproperty information according to the id provided.
      * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/retrieve-specific-metaproperty|API Call}
-     * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
-     * @param {String} queryObject.id - The id of the desired metaproperty.
+     * @param {Object} params={} - An object containing the id of the desired metaproperty.
+     * @param {String} params.id - The id of the desired metaproperty.
      * @return {Promise} Metaproperty - Returns a Promise that, when fulfilled, will either return an Object with the
      * metaproperty or an Error with the problem.
      */
-    getMetaproperty(queryObject) {
-        if (!queryObject.id) {
+    getMetaproperty({ id } = {}) {
+        if (!id) {
             return rejectValidation('metaproperty', 'id');
         }
-        return this.api.send('GET', `v4/metaproperties/${queryObject.id}/`);
+        return this.api.send('GET', `v4/metaproperties/${id}/`);
     }
 
     /**
@@ -405,8 +377,8 @@ export default class Bynder {
      * @return {Promise} Object - Returns a Promise that, when fulfilled, will either return an empty Object in
      * case it's successful or an Error with the problem.
      */
-    saveNewMetaproperty(object) {
-        return this.api.send('POST', 'v4/metaproperties/', { data: JSON.stringify(object) });
+    saveNewMetaproperty(params = {}) {
+        return this.api.send('POST', 'v4/metaproperties/', { data: JSON.stringify(params) });
         // The API requires an object with the query content stringified inside
     }
 
@@ -414,15 +386,15 @@ export default class Bynder {
      * Modify new metaproperty with the information provided.
      * @see {@link https://bynder.docs.apiary.io/#reference/metaproperties/specific-metaproperty-operations/modify-metaproperty|API Call}
      * @param {Object} object={} - An object containing the data of the metaproperty.
-     * @param {String} queryObject.id - The id of the desired metaproperty.
+     * @param {String} params.id - The id of the desired metaproperty.
      * @return {Promise} Object - Returns a Promise that, when fulfilled, will either return an empty Object in
      * case it's successful or an Error with the problem.
      */
-    editMetaproperty(object) {
-        if (!object.id) {
+    editMetaproperty({ id, ...params } = {}) {
+        if (!id) {
             return rejectValidation('metaproperty', 'id');
         }
-        return this.api.send('POST', `v4/metaproperties/${object.id}/`, { data: JSON.stringify(object) });
+        return this.api.send('POST', `v4/metaproperties/${id}/`, { data: JSON.stringify(params) });
         // The API requires an object with the query content stringified inside
     }
 
@@ -434,184 +406,180 @@ export default class Bynder {
      * @return {Promise} Object - Returns a Promise that, when fulfilled, will either return an empty Object in
      * case it's successful or an Error with the problem.
      */
-    deleteMetaproperty(object) {
-        if (!object.id) {
+    deleteMetaproperty({ id } = {}) {
+        if (!id) {
             return rejectValidation('metaproperty', 'id');
         }
-        return this.api.send('DELETE', `v4/metaproperties/${object.id}/`);
+        return this.api.send('DELETE', `v4/metaproperties/${id}/`);
     }
 
     /**
      * Add an option of metaproperty
      * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/create-metaproperty-option|API Call}
-     * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
-     * @param {String} queryObject.id - The id of the desired metaproperty.
-     * @param {String} queryObject.name - The name of the desired metaproperty.
+     * @param {Object} params={} - An object containing the id of the desired metaproperty.
+     * @param {String} params.id - The id of the desired metaproperty.
+     * @param {String} params.name - The name of the desired metaproperty.
      * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
      * response or an Error with the problem.
      */
-    saveNewMetapropertyOption(queryObject) {
-        if (!queryObject.id || !queryObject.name) {
+    saveNewMetapropertyOption({ id, ...params } = {}) {
+        if (!id || !params.name) {
             return rejectValidation('metaproperty option', 'id or name');
         }
-        const queryBody = Object.assign({}, queryObject);
-        delete queryBody.id;
-        return this.api.send('POST', `v4/metaproperties/${queryObject.id}/options/`, { data: JSON.stringify(queryBody) });
+
+        return this.api.send('POST', `v4/metaproperties/${id}/options/`, { data: JSON.stringify(params) });
     }
 
     /**
      * modify an option of metaproperty
      * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/modify-metaproperty-option|API Call}
-     * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
-     * @param {String} queryObject.id - The id of the desired metaproperty.
-     * @param {String} queryObject.optionId - The id of the desired option.
-     * @param {String} queryObject.name - The id of the desired metaproperty.
+     * @param {Object} params={} - An object containing the id of the desired metaproperty.
+     * @param {String} params.id - The id of the desired metaproperty.
+     * @param {String} params.optionId - The id of the desired option.
+     * @param {String} params.name - The id of the desired metaproperty.
      * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
      * response or an Error with the problem.
      */
-    editMetapropertyOption(queryObject) {
-        if (!queryObject.id || !queryObject.optionId) {
+    editMetapropertyOption({ id, ...params } = {}) {
+        if (!id || !params.optionId) {
             return rejectValidation('metaproperty option', 'id or optionId');
         }
-        const queryBody = Object.assign({}, queryObject);
-        delete queryBody.id;
-        return this.api.send('POST', `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`, { data: JSON.stringify(queryBody) });
+
+        return this.api.send('POST', `v4/metaproperties/${id}/options/${params.optionId}/`, { data: JSON.stringify(params) });
     }
 
     /**
      * delete an option of metaproperty
      * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/specific-metaproperty-operations/delete-metaproperty-option|API Call}
-     * @param {Object} queryObject={} - An object containing the id of the desired metaproperty.
-     * @param {String} queryObject.id - The id of the desired metaproperty.
-     * @param {String} queryObject.optionId - The id of the desired option.
-     * @param {String} queryObject.name - The id of the desired metaproperty.
+     * @param {Object} params={} - An object containing the id of the desired metaproperty.
+     * @param {String} params.id - The id of the desired metaproperty.
+     * @param {String} params.optionId - The id of the desired option.
+     * @param {String} params.name - The id of the desired metaproperty.
      * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
      * response or an Error with the problem.
      */
-    deleteMetapropertyOption(queryObject) {
-        if (!queryObject.id || !queryObject.optionId) {
+    deleteMetapropertyOption({ id, optionId }) {
+        if (!id || !optionId) {
             return rejectValidation('metaproperty option', 'id or optionId');
         }
-        return this.api.send('DELETE', `v4/metaproperties/${queryObject.id}/options/${queryObject.optionId}/`);
+        return this.api.send('DELETE', `v4/metaproperties/${id}/options/${optionId}/`);
     }
 
     /**
      * Get all the tags
      * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-access/retrieve-entry-point|API Call}
-     * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.
+     * @param {Object} [params={}] - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Tags - Returns a Promise that, when fulfilled, will either return an Array with the
      * tags or an Error with the problem.
      */
-    getTags(queryObject) {
-        return this.api.send('GET', 'v4/tags/', queryObject);
+    getTags(params = {}) {
+        return this.api.send('GET', 'v4/tags/', params);
     }
 
     /**
      * Get collections according to the parameters provided
      * @see {@link http://docs.bynder.apiary.io/#reference/collections/collection-operations/retrieve-collections|API Call}
-     * @param {Object} [queryObject={}] - An object containing the parameters accepted by the API to narrow the query.
+     * @param {Object} [params={}] - An object containing the parameters accepted by the API to narrow the query.
      * @return {Promise} Collections - Returns a Promise that, when fulfilled, will either return an Array with the
      * collections or an Error with the problem.
      */
-    getCollections(queryObject = {}) {
-        return this.api.send('GET', 'v4/collections/', queryObject);
+    getCollections(params = {}) {
+        return this.api.send('GET', 'v4/collections/', params);
     }
 
     /**
      * Get the collection information according to the id provided.
      * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/retrieve-specific-collection|API Call}
-     * @param {Object} queryObject={} - An object containing the id of the desired collection.
-     * @param {String} queryObject.id - The id of the desired collection.
+     * @param {Object} params={} - An object containing the id of the desired collection.
+     * @param {String} params.id - The id of the desired collection.
      * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
      * collection or an Error with the problem.
      */
-    getCollection(queryObject) {
-        if (!queryObject.id) {
+    getCollection({ id } = {}) {
+        if (!id) {
             return rejectValidation('collection', 'id');
         }
-        return this.api.send('GET', `v4/collections/${queryObject.id}/`);
+        return this.api.send('GET', `v4/collections/${id}/`);
     }
 
     /**
      * Create the collection information according to the name provided.
      * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/create-collection|API Call}
-     * @param {Object} queryObject={} - An object containing the id of the desired collection.
-     * @param {String} queryObject.name - The name of the desired collection.
-     * @param {String} queryObject.description - The description of the desired collection.
+     * @param {Object} params={} - An object containing the id of the desired collection.
+     * @param {String} params.name - The name of the desired collection.
+     * @param {String} params.description - The description of the desired collection.
      * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
      * response or an Error with the problem.
      */
-    saveNewCollection(queryObject) {
-        if (!queryObject.name) {
+    saveNewCollection(params = {}) {
+        if (!params.name) {
             return rejectValidation('collection', 'name');
         }
-        return this.api.send('POST', 'v4/collections/', queryObject);
+        return this.api.send('POST', 'v4/collections/', params);
     }
 
     /**
      * Add assets to the desired collection.
      * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/add-asset-to-a-collection|API Call}
-     * @param {Object} queryObject={} - An object containing the id of the desired collection.
-     * @param {String} queryObject.id - The id of the shared collection.
-     * @param {String} queryObject.data - JSON-serialised list of asset ids to add.
+     * @param {Object} params={} - An object containing the id of the desired collection.
+     * @param {String} params.id - The id of the shared collection.
+     * @param {String} params.data - JSON-serialised list of asset ids to add.
      * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
      * response or an Error with the problem.
      */
-    addMediaToCollection(queryObject) {
-        if (!queryObject.id) {
+    addMediaToCollection({ id, data } = {}) {
+        if (!id) {
             return rejectValidation('collection', 'id');
         }
-        if (!queryObject.data) {
+        if (!data) {
             return rejectValidation('collection', 'data');
         }
-        return this.api.send('POST', `v4/collections/${queryObject.id}/media/`, { data: JSON.stringify(queryObject.data) });
-        // The API requires JSON-serialised list
+        return this.api.send('POST', `v4/collections/${id}/media/`, { data: JSON.stringify(data) });
     }
 
     /**
      * Remove assets from desired collection.
      * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/remove-asset-from-a-collection|API Call}
-     * @param {Object} queryObject={} - An object containing the id of the desired collection and deleteIds of assets.
-     * @param {String} queryObject.id - The id of the shared collection.
-     * @param {String} queryObject.deleteIds - Asset ids to remove from the collection
+     * @param {Object} params={} - An object containing the id of the desired collection and deleteIds of assets.
+     * @param {String} params.id - The id of the shared collection.
+     * @param {String} params.deleteIds - Asset ids to remove from the collection
      * @return {Promise} Response - Returns a Promise that, when fulfilled, will either return an Object with the
      * response or an Error with the problem.
      */
-    deleteMediaFromCollection(queryObject) {
-        const parametersObject = queryObject;
-        if (!queryObject.id) {
+    deleteMediaFromCollection({ id, deleteIds } = {}) {
+        if (!id) {
             return rejectValidation('collection', 'id');
         }
-        if (!queryObject.deleteIds) {
+        if (!deleteIds) {
             return rejectValidation('collection', 'deleteIds');
         }
-        if (Array.isArray(parametersObject.deleteIds)) {
-            parametersObject.deleteIds = parametersObject.deleteIds.join();
-        }
-        return this.api.send('DELETE', `v4/collections/${queryObject.id}/media/`, parametersObject);
+        return this.api.send('DELETE', `v4/collections/${id}/media/`, {
+            deleteIds: Array.isArray(deleteIds) ? deleteIds.join(',') : deleteIds
+        });
     }
 
     /**
      * Share the collection to the recipients provided.
      * @see {@link http://docs.bynder.apiary.io/#reference/collections/specific-collection-operations/share-collection|API Call}
-     * @param {Object} queryObject={} - An object containing the id of the desired collection.
-     * @param {String} queryObject.id - The id of the shared collection.
-     * @param {String} queryObject.recipients - The email addressed of the recipients.
-     * @param {String} queryObject.collectionOptions - The recipent right of the shared collection: view, edit
+     * @param {Object} params={} - An object containing the id of the desired collection.
+     * @param {String} params.id - The id of the shared collection.
+     * @param {String} params.recipients - The email addressed of the recipients.
+     * @param {String} params.collectionOptions - The recipent right of the shared collection: view, edit
      * @return {Promise} Collection - Returns a Promise that, when fulfilled, will either return an Object with the
      * collection or an Error with the problem.
      */
-    shareCollection(queryObject) {
-        if (!queryObject.id) {
+    shareCollection({ id, ...params } = {}) {
+        if (!id) {
             return rejectValidation('collection', 'id');
         }
-        if (!queryObject.recipients) {
+        if (!params.recipients) {
             return rejectValidation('collection', 'recipients');
         }
-        if (!queryObject.collectionOptions) {
+        if (!params.collectionOptions) {
             return rejectValidation('collection', 'collectionOptions');
         }
-        return this.api.send('POST', `v4/collections/${queryObject.id}/share/`, queryObject);
+
+        return this.api.send('POST', `v4/collections/${id}/share/`, params);
     }
 
     /**

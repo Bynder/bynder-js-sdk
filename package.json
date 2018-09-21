@@ -39,7 +39,9 @@
     "is-url": "^1.2.4",
     "isomorphic-form-data": "^1.0.0",
     "node-fetch": "^1.6.0",
-    "oauth-1.0a": "^1.0.1"
+    "oauth-1.0a": "^1.0.1",
+    "proper-url-join": "^1.2.0",
+    "query-string": "^6.1.0"
   },
   "repository": "git@github.com:Bynder/bynder-js-sdk.git"
 }
