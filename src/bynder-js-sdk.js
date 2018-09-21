@@ -230,8 +230,15 @@ export default class Bynder {
      * couple of consumer token/secret or an Error with the problem.
      */
     getRequestToken() {
+        const api = new APICall(
+          this.options.baseURL,
+          this.options.httpsAgent,
+          this.options.httpAgent,
+          this.options.consumer,
+          { public: null, secret: null }
+        );
 
-        return this.api.send('POST', 'v4/oauth/request_token/', { public: null, secret: null });
+        return api.send('POST', 'v4/oauth/request_token/');
     }
 
     /**
