@@ -12,9 +12,9 @@
         // http://eslint.org/docs/rules/indent
         "indent": ["error", 4],
 
-        // enforce the max line length to be 120 chars
-        // http://eslint.org/docs/rules/max-len
-        "max-len": ["error", 120],
+        "max-len": "off",
+
+        "no-shadow": "off",
 
         // disallowing comma trailing
         // http://eslint.org/docs/rules/max-len

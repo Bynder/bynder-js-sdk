@@ -20,7 +20,8 @@ gulp.task('lint', () => {
 gulp.task('babel', () => {
     gulp.src('src/*.js')
         .pipe(babel({
-            presets: ['env']
+            presets: ['env'],
+            plugins: ['transform-object-rest-spread']
         }))
         .pipe(gulp.dest('dist'));
 });
@@ -43,7 +44,9 @@ gulp.task('build', () => {
                     exclude: /node_modules/,
                     loader: 'babel-loader',
                     query: {
-                        presets: ['env']
+                        presets: ['env'],
+                        plugins: ['transform-object-rest-spread']
+
                     }
                 },
                 {
