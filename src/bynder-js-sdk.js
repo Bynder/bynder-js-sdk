@@ -340,6 +340,21 @@ export default class Bynder {
     }
 
     /**
+     * Delete an existing asset.
+     * @see {@link http://docs.bynder.apiary.io/#reference/assets/specific-asset-operations/delete-asset|API Call}
+     * @param {Object} params={} - An object containing the id of the asset to be deleted.
+     * @param {String} params.id - The id of the asset.
+     * @return {Promise} Object - Returns a Promise that, when fulfilled, will either return an empty Object in
+     * case it's successful or an Error with the problem.
+     */
+    deleteMedia({ id }) {
+        if (!id) {
+            return rejectValidation('media', 'id');
+        }
+        return this.api.send('DELETE', `v4/media/${id}/`);
+    }
+
+    /**
      * Get all the metaproperties
      * @see {@link http://docs.bynder.apiary.io/#reference/metaproperties/retrieve-metaproperties|API Call}
      * @param {Object} params={} - An object containing the parameters accepted by the API to narrow the query.
@@ -559,7 +574,7 @@ export default class Bynder {
             {
                 asset_id: queryObject.id,
                 integration_id: queryObject.integration_id,
-                uri: queryObject.uri || null,
+                uri: queryObject.uri || null
             },
         );
         return request.send();
