@@ -1,6 +1,6 @@
 {
   "name": "@bynder/bynder-js-sdk",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Bynder Javascript SDK",
   "main": "./dist/bynder-js-sdk.js",
   "scripts": {
@@ -10,7 +10,9 @@
   },
   "author": "Bynder",
   "license": "MIT",
-  "files": ["dist/bynder-js-sdk.js"],
+  "files": [
+    "dist/bynder-js-sdk.js"
+  ],
   "devDependencies": {
     "babel": "^6.5.2",
     "babel-core": "^6.20.0",
