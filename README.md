@@ -79,12 +79,18 @@ Here's a list of all the methods available, separated by module:
 * `getAuthorisedURL(token, callback)`
 * `getAccessToken(token, secret)`
 
-### Media items
+### Media
 * `getMediaList(queryObject)`
 * `getMediaInfo(queryObject)`
 * `getAllMediaItems(queryObject)`
 * `getMediaTotal(queryObject)`
 * `editMedia(object)`
+* `deleteMedia(id)`
+
+### Media usage
+* `getAssetUsage(queryObject)`
+* `saveNewAssetUsage(queryObject)`
+* `deleteAssetUsage(queryObject)`
 
 ### Metaproperties
 * `getMetaproperties(queryObject)`
