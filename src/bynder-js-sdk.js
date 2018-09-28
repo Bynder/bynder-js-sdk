@@ -759,39 +759,36 @@ export default class Bynder {
             return axios.post(endpoint, form, opts);
         };
 
-        // sequentially upload chunks to AWS, then register them
-        return new Promise((resolve, reject) => {
-            let chunkNumber = 0;
-            (function nextChunk() {
-                if (chunkNumber >= chunks) {
-                    // we are finished, pass init and chunk number to be finalised
-                    return resolve({ init, chunkNumber });
+        function delay(ms) {
+            return new Promise((resolve) => { setTimeout(resolve, ms); });
+        }
+
+         // sequentially upload chunks to AWS, then register them
+        function nextChunk(chunkNumber) {
+            if (chunkNumber >= chunks) {
+                return Promise.resolve({ init, chunkNumber });
+            }
+            let chunkData;
+            if (bodyType === bodyTypes.STREAM) {
+                // handle stream data
+                chunkData = body.read(CHUNK_SIZE);
+                if (chunkData === null) {
+                    // our read stream is not done yet reading
+                    // let's wait for a while...
+                    return delay(50).then(() => { return nextChunk(chunkNumber); });
                 }
-                // upload next chunk
-                let chunkData;
-                if (bodyType === bodyTypes.STREAM) {
-                    // handle stream data
-                    chunkData = body.read(CHUNK_SIZE);
-                    if (chunkData === null) {
-                        // our read stream is not done yet reading
-                        // let's wait for a while...
-                        return setTimeout(nextChunk, 50);
-                    }
-                } else {
-                    // handle buffer/blob data
-                    const start = chunkNumber * CHUNK_SIZE;
-                    const end = Math.min(start + CHUNK_SIZE, length);
-                    chunkData = body.slice(start, end);
-                }
-                return uploadChunkToS3(chunkData, ++chunkNumber)
-                    .then(() => {
-                        // register uploaded chunk to Bynder
-                        return registerChunk(init, chunkNumber);
-                    })
-                    .then(nextChunk)
-                    .catch(reject);
-            }());
-        });
+            } else {
+                // handle buffer/blob data
+                const start = chunkNumber * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, length);
+                chunkData = body.slice(start, end);
+            }
+            const newChunkNumber = chunkNumber + 1;
+            return uploadChunkToS3(chunkData, newChunkNumber)
+                .then(() => { return registerChunk(init, newChunkNumber); })
+                .then(() => { return nextChunk(newChunkNumber); });
+        }
+        return nextChunk(0);
     }
 
     /**
