@@ -113,6 +113,9 @@ Here's a list of all the methods available, separated by module:
 ### Tags
 * `getTags(queryObject)`
 
+### Smartfilters
+* `getSmartfilters(queryObject)`
+
 ### Categories
 * `getCategories(queryObject)`
 * `getCategory(queryObject)`
