@@ -176,7 +176,7 @@ export default class Bynder {
     }
 
     /**
-     * Get all the categories.
+     * Get all the smartfilters.
      * @see {@link https://bynder.docs.apiary.io/#reference/smartfilters/smartfilters-operations/retrieve-smartfilters|API Call}
      * @return {Promise} Smartfilters - Returns a Promise that, when fulfilled, will either return an Array with the
      * smartfilters or an Error with the problem.

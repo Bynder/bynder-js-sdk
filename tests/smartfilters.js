@@ -25,12 +25,12 @@ describe('Smartfilters', () => {
         expect(Array.isArray(smartfilters)).toEqual(true);
         if (smartfilters && smartfilters.length) {
             const randomIndex = Math.floor(Math.random() * smartfilters.length);
-            const randomCategory = Object.keys(smartfilters[randomIndex]);
-            expect(randomCategory).toContain('icon');
-            expect(randomCategory).toContain('labels');
-            expect(randomCategory).toContain('zindex');
-            expect(randomCategory).toContain('id');
-            expect(randomCategory).toContain('metaproperties');
+            const randomSmartfilter = Object.keys(smartfilters[randomIndex]);
+            expect(randomSmartfilter).toContain('icon');
+            expect(randomSmartfilter).toContain('labels');
+            expect(randomSmartfilter).toContain('zindex');
+            expect(randomSmartfilter).toContain('id');
+            expect(randomSmartfilter).toContain('metaproperties');
         }
     });
 });
