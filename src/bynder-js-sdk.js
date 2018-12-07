@@ -489,9 +489,6 @@ export default class Bynder {
     * the asset usage or an Error with the problem.
     */
     getAssetUsage(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id) {
             return rejectValidation('asset usage', 'id');
         }
@@ -519,9 +516,6 @@ export default class Bynder {
      * the asset usage or an Error with the problem.
      */
     saveNewAssetUsage(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id) {
             return rejectValidation('asset usage', 'id');
         }
@@ -556,9 +550,6 @@ export default class Bynder {
      * the asset usage or an Error with the problem.
      */
     deleteAssetUsage(queryObject) {
-        if (!this.validURL()) {
-            return rejectURL();
-        }
         if (!queryObject.id) {
             return rejectValidation('asset usage', 'id');
         }
