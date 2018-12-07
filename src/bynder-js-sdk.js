@@ -176,6 +176,16 @@ export default class Bynder {
     }
 
     /**
+     * Get all the smartfilters.
+     * @see {@link https://bynder.docs.apiary.io/#reference/smartfilters/smartfilters-operations/retrieve-smartfilters|API Call}
+     * @return {Promise} Smartfilters - Returns a Promise that, when fulfilled, will either return an Array with the
+     * smartfilters or an Error with the problem.
+     */
+    getSmartfilters() {
+        return this.api.send('GET', 'v4/smartfilters/');
+    }
+
+    /**
      * Login to retrieve OAuth credentials.
      * @see {@link https://bynder.docs.apiary.io/#reference/users/-deprecated-login-a-user-operations/login-a-user|API Call}
      * @param {Object} params={} - An object containing the credentials with which the user intends to login.
