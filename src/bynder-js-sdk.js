@@ -84,7 +84,8 @@ class APICall {
             if (response.status >= 400) { // check for 4XX, 5XX, wtv
                 return Promise.reject({
                     status: response.status,
-                    message: response.statusText
+                    message: response.statusText,
+                    body: response.data
                 });
             }
             if (response.status >= 200 && response.status <= 202) {
