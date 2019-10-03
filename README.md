@@ -133,6 +133,9 @@ bynder
 
 - `getSmartfilters(queryObject)`
 
+### Smartfilters
+* `getSmartfilters(queryObject)`
+
 ### Categories
 
 - `getCategories(queryObject)`

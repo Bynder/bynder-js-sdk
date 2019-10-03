@@ -1,5 +1,4 @@
 require("isomorphic-form-data");
-const OAuth = require("oauth-1.0a");
 const axios = require("axios");
 const { basename } = require("path");
 const isUrl = require("is-url");
@@ -87,7 +86,8 @@ class APICall {
         // check for 4XX, 5XX, wtv
         return Promise.reject({
           status: response.status,
-          message: response.statusText
+          message: response.statusText,
+          body: response.data
         });
       }
       if (response.status >= 200 && response.status <= 202) {
