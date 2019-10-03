@@ -1,14 +1,13 @@
 const gulp = require('gulp');
 const eslint = require('gulp-eslint');
 const babel = require('gulp-babel');
-const jasmine = require('gulp-jasmine');
 const jsdoc = require('gulp-jsdoc3');
 const connect = require('gulp-connect');
 const webpack = require('webpack');
 const path = require('path');
 
 gulp.task('default', () => {
-    gulp.start('lint', 'jasmine', 'babel', 'doc');
+    gulp.start('lint', 'babel', 'doc');
 });
 
 gulp.task('lint', () => {
@@ -20,7 +19,8 @@ gulp.task('lint', () => {
 gulp.task('babel', () => {
     gulp.src('src/*.js')
         .pipe(babel({
-            presets: ['env']
+            presets: ['env'],
+            plugins: ['transform-object-rest-spread']
         }))
         .pipe(gulp.dest('dist'));
 });
@@ -43,7 +43,9 @@ gulp.task('build', () => {
                     exclude: /node_modules/,
                     loader: 'babel-loader',
                     query: {
-                        presets: ['env']
+                        presets: ['env'],
+                        plugins: ['transform-object-rest-spread']
+
                     }
                 },
                 {
@@ -67,14 +69,6 @@ gulp.task('build', () => {
         }
         console.log('Application built successfully !');
     });
-});
-
-gulp.task('jasmine', () => {
-    gulp.src('tests/*.js')
-        // gulp-jasmine works on filepaths so you can't have any plugins before it
-        .pipe(jasmine({
-            verbose: true
-        }));
 });
 
 gulp.task('doc', (cb) => {

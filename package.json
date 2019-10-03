@@ -1,15 +1,18 @@
 {
   "name": "@bynder/bynder-js-sdk",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "Bynder Javascript SDK",
   "main": "./dist/bynder-js-sdk.js",
   "scripts": {
-    "test": "jasmine tests/*",
+    "test": "jest",
     "build": "gulp babel",
     "prepublish": "npm run build"
   },
   "author": "Bynder",
   "license": "MIT",
+  "files": [
+    "dist/bynder-js-sdk.js"
+  ],
   "devDependencies": {
     "babel": "^6.5.2",
     "babel-core": "^6.20.0",
@@ -25,19 +28,24 @@
     "gulp-babel": "^6.1.2",
     "gulp-connect": "^5.0.0",
     "gulp-eslint": "^3.0.1",
-    "gulp-jasmine": "^2.4.0",
     "gulp-jsdoc3": "^0.3.0",
     "istanbul": "^0.4.5",
-    "jasmine": "^2.6.0",
+    "jest": "^24.1.0",
     "json-loader": "^0.5.4",
     "path": "^0.12.7",
     "webpack": "^1.14.0"
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "is-url": "^1.2.4",
     "isomorphic-form-data": "^1.0.0",
+    "nanoid": "^2.0.1",
     "node-fetch": "^1.6.0",
-    "oauth-1.0a": "^1.0.1"
+    "oauth-1.0a": "^1.0.1",
+    "proper-url-join": "^1.2.0",
+    "query-string": "^6.1.0",
+    "simple-oauth2": "^2.2.1"
   },
   "repository": "git@github.com:Bynder/bynder-js-sdk.git"
 }
