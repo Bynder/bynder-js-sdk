@@ -5,7 +5,6 @@ const isUrl = require("is-url");
 const joinUrl = require("proper-url-join");
 const queryString = require("query-string");
 const simpleOAuth2 = require("simple-oauth2");
-const nanoid = require("nanoid");
 const url = require("url");
 
 const DEFAULT_SCOPES = "openid offline";
