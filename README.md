@@ -134,7 +134,8 @@ bynder
 - `getSmartfilters(queryObject)`
 
 ### Smartfilters
-* `getSmartfilters(queryObject)`
+
+- `getSmartfilters(queryObject)`
 
 ### Categories
 
@@ -171,6 +172,5 @@ If you wish to contribute to this repository and further extend the API coverage
 - `gulp lint` - Run ESlint and check the code.
 - `gulp build` - Run webpack to bundle the code in order to run in a browser.
 - `gulp babel` - Run Babel to create a folder 'dist' with ES2015 compatible code.
-- `gulp jest [--collect-coverage]` - Run Jest for all the spec files inside tests folder (with optional coverage).
 - `gulp doc` - Run JSDoc to create a 'doc' folder with automatically generated documentation for the source code.
 - `gulp webserver` - Deploy a web server from the root folder at `localhost:8080` to run the html samples (in order to avoid CORS problems).
