@@ -200,7 +200,6 @@ describe("Modify an option of metaproperty", () => {
   });
 
   test("should modify an option of metaproperty", () => {
-    console.log(result);
     const metapropertyKeys = Object.keys(result);
     expect(metapropertyKeys).toContain("statuscode");
     expect(metapropertyKeys).toContain("message");
