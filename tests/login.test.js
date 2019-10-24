@@ -6,8 +6,10 @@ let bynder;
 
 describe("Make authorization URL", () => {
   bynder = new Bynder(configs);
-  const encodedRedirectUri = encodeURIComponent(configs.redirectUri);
-  const authorizationUrl = bynder.makeAuthorizationURL("state example");
+  const authorizationUrl = bynder.makeAuthorizationURL(
+    "state example",
+    "offline"
+  );
 
   test("should return correct authorization URL", () => {
     // Security token is random token so we compare without this
