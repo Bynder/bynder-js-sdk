@@ -34,8 +34,8 @@ Before executing any request, you need to authorize the calls to the API:
 ```js
 const bynder = new Bynder({
   baseURL: "http://api-url.bynder.io/api/",
-  clientId: "<your Hydra client id>",
-  clientSecret: "<your Hydra client secret>",
+  clientId: "<your OAuth2 client id>",
+  clientSecret: "<your OAuth2 client secret>",
   redirectUri: "<url where user will be redirected after authenticating>"
 });
 ```
@@ -57,8 +57,8 @@ If you already have an access token, you can also initialize Bynder with the tok
 ```js
 const bynder = new Bynder({
   baseURL: "http://api-url.bynder.io/api/",
-  clientId: "<your Hydra client id>",
-  clientSecret: "<your Hydra client secret>",
+  clientId: "<your OAuth2 client id>",
+  clientSecret: "<your OAuth2 client secret>",
   redirectUri: "<url where user will be redirected after authenticating>",
   token: "<OAuth2 access token>"
 });
@@ -161,8 +161,8 @@ If you wish to contribute to this repository and further extend the API coverage
 ```json
 {
   "baseURL": "http://api-url.bynder.io/api/",
-  "clientId": "<your Hydra client id>",
-  "clientSecret": "<your Hydra client secret>",
+  "clientId": "<your OAuth2 client id>",
+  "clientSecret": "<your OAuth2 client secret>",
   "redirectUri": "<url where user will be redirected after authenticating>"
 }
 ```
