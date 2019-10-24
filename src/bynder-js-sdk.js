@@ -7,7 +7,6 @@ const queryString = require("query-string");
 const simpleOAuth2 = require("simple-oauth2");
 const url = require("url");
 
-const DEFAULT_SCOPES = "openid offline";
 const defaultAssetsNumberPerPage = 50;
 
 /**
@@ -196,10 +195,10 @@ class Bynder {
    * Builds OAuth2 authorization URL.
    * @return {String} Authorization URL
    */
-  makeAuthorizationURL(state) {
+  makeAuthorizationURL(state, scope) {
     return this.oauth2.authorizationCode.authorizeURL({
       redirect_uri: this.redirectUri,
-      scope: DEFAULT_SCOPES,
+      scope: scope,
       state: state
     });
   }
@@ -212,8 +211,7 @@ class Bynder {
   getToken(code) {
     const tokenConfig = {
       code: code,
-      redirect_uri: this.redirectUri,
-      scope: DEFAULT_SCOPES
+      redirect_uri: this.redirectUri
     };
 
     return this.oauth2.authorizationCode.getToken(tokenConfig).then(result => {
