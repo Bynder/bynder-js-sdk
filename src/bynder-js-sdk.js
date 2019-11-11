@@ -54,14 +54,19 @@ class APICall {
 
     const headers = {};
 
-    if (!this.token) {
+    if (!this.token && !this.permanentToken) {
       throw new Error("No token found");
     }
-    this.token = await (this.token.expired()
-      ? this.token.refresh()
-      : Promise.resolve(this.token));
 
-    headers["Authorization"] = "Bearer " + this.token.token.access_token;
+    if (this.permanentToken) {
+      headers["Authorization"] = "Bearer " + this.permanentToken;
+    } else {
+      this.token = await (this.token.expired()
+        ? this.token.refresh()
+        : Promise.resolve(this.token));
+
+      headers["Authorization"] = "Bearer " + this.token.token.access_token;
+    }
 
     let body = "";
 
@@ -159,7 +164,18 @@ class Bynder {
     this.baseURL = options.baseURL;
     this.redirectUri = options.redirectUri;
 
-    this.oauthBaseUrl = url.resolve(options.baseURL, "/v6/authentication/");
+    this.api = new APICall(
+      options.baseURL,
+      options.httpsAgent,
+      options.httpAgent
+    );
+
+    if (typeof options.permanentToken === "string") {
+      this.api.permanentToken = options.permanentToken;
+      return;
+    }
+
+    const oauthBaseUrl = url.resolve(options.baseURL, "/v6/authentication/");
 
     this.oauth2 = simpleOAuth2.create({
       client: {
@@ -167,19 +183,13 @@ class Bynder {
         secret: options.clientSecret
       },
       auth: {
-        tokenHost: this.oauthBaseUrl,
+        tokenHost: oauthBaseUrl,
         tokenPath: "oauth2/token",
         revokePath: "oauth2/revoke",
-        authorizeHost: this.oauthBaseUrl,
+        authorizeHost: oauthBaseUrl,
         authorizePath: "oauth2/auth"
       }
     });
-
-    this.api = new APICall(
-      options.baseURL,
-      options.httpsAgent,
-      options.httpAgent
-    );
 
     if (options.token) {
       if (typeof options.token.access_token !== "string") {

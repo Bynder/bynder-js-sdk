@@ -56,3 +56,11 @@ describe("Make API call with invalid token", () => {
     expect(() => new Bynder(invalidTokenConfig)).toThrow(Error);
   });
 });
+
+describe("Initialize Bynder with permanent token", () => {
+  test("should pass", () => {
+    const bynder = new Bynder({...configs, permanentToken: "test"});
+
+    expect(bynder.api.permanentToken).toEqual("test");
+  });
+});
