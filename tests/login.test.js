@@ -1,6 +1,12 @@
 const Bynder = require("../src/bynder-js-sdk.js");
-const configs = require("../secret.json");
 const url = require("url");
+
+const configs = {
+    "baseURL": "https://portal.getbynder.com/api/",
+    "clientId": "test-client-id",
+    "clientSecret": "test-client-secret",
+    "redirectUri": "https://test-redirect-uri.com"
+};
 
 let bynder;
 

@@ -4,8 +4,6 @@ node_js:
   - "8"
   - "10"
   - "11"
-before_install:
-  - openssl aes-256-cbc -K $encrypted_4c6b84b54e85_key -iv $encrypted_4c6b84b54e85_iv -in secret.json.enc -out secret.json -d
 notifications:
   email:
     recipients:
