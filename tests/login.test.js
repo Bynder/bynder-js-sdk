@@ -1,6 +1,12 @@
 const Bynder = require("../src/bynder-js-sdk.js");
-const configs = require("../secret.json");
 const url = require("url");
+
+const configs = {
+    "baseURL": "https://portal.getbynder.com/api/",
+    "clientId": "test-client-id",
+    "clientSecret": "test-client-secret",
+    "redirectUri": "https://test-redirect-uri.com"
+};
 
 let bynder;
 
@@ -54,5 +60,13 @@ describe("Make API call with invalid token", () => {
     };
 
     expect(() => new Bynder(invalidTokenConfig)).toThrow(Error);
+  });
+});
+
+describe("Initialize Bynder with permanent token", () => {
+  test("should pass", () => {
+    const bynder = new Bynder({...configs, permanentToken: "test"});
+
+    expect(bynder.api.permanentToken).toEqual("test");
   });
 });

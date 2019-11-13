@@ -2,7 +2,10 @@
 
 [![Build Status](https://travis-ci.org/Bynder/bynder-js-sdk.svg?branch=master)](https://travis-ci.org/Bynder/bynder-js-sdk)
 
-This SDK aims to help the development of integrations with [Bynder](https://www.bynder.com/en/) that use JavaScript, providing an easy interface to communicate with [Bynder's REST API](https://developer-docs.bynder.com/API/).
+This SDK aims to help the development of integrations with
+[Bynder](https://www.bynder.com/en/) that use JavaScript, providing an easy
+interface to communicate with
+[Bynder's REST API](https://developer-docs.bynder.com/API/).
 
 ## Requirements
 
@@ -10,7 +13,8 @@ To use this SDK, you will need:
 
 - [Node.js **v6.3.0 or above**](https://nodejs.org/)
 
-Node installation will include [NPM](https://www.npmjs.com/), which is responsible for dependency management.
+Node installation will include [NPM](https://www.npmjs.com/), which is
+responsible for dependency management.
 
 ## Installation
 
@@ -22,18 +26,34 @@ Node installation will include [NPM](https://www.npmjs.com/), which is responsib
 
 ## Usage
 
-This SDK relies heavily on [Promises](https://developers.google.com/web/fundamentals/getting-started/primers/promises), making it easier to handle the asynchronous requests made to the API.
-The SDK provides a `Bynder` object containing several methods which map to the calls and parameters described in [Bynder's API documentation](http://docs.bynder.apiary.io/).
+This SDK relies heavily on [Promises](https://developers.google.com/web/fundamentals/getting-started/primers/promises),
+making it easier to handle the asynchronous requests made to the API. The SDK
+provides a `Bynder` object containing several methods which map to the
+calls and parameters described in
+[Bynder's API documentation](http://docs.bynder.apiary.io/).
 
-The following snippet is a generic example of how to use the SDK. If you need details for a specific module, refer to the [samples folder](https://github.com/Bynder/bynder-js-sdk/tree/master/samples).
+The following snippet is a generic example of how to use the SDK. If you need
+details for a specific module, refer to the
+[samples folder](https://github.com/Bynder/bynder-js-sdk/tree/master/samples).
 
 Before executing any request, you need to authorize the calls to the API:
+
+
+#### Using a permanent token
+```js
+const bynder = new Bynder({
+  baseURL: "https//portal.getbynder.com/api/",
+  permanentToken: "<token>",
+});
+```
+
+#### Using OAuth2
 
 1. Call the constructor with your configuration
 
 ```js
 const bynder = new Bynder({
-  baseURL: "http://api-url.bynder.io/api/",
+  baseURL: "https://portal.getbynder.com/api/",
   clientId: "<your OAuth2 client id>",
   clientSecret: "<your OAuth2 client secret>",
   redirectUri: "<url where user will be redirected after authenticating>"
@@ -52,7 +72,8 @@ const authorizationURL = bynder.makeAuthorizationURL();
 bynder.getToken(code);
 ```
 
-If you already have an access token, you can also initialize Bynder with the token directly:
+If you already have an access token, you can also initialize Bynder with the
+token directly:
 
 ```js
 const bynder = new Bynder({
@@ -64,9 +85,15 @@ const bynder = new Bynder({
 });
 ```
 
-You can now use the various methods from the SDK to fetch media, metaproperties and other data. Following the Promises notation, you should use `.then()`/`.catch()` to handle the successful and failed requests, respectively.
+#### Making requests
 
-Most of the calls take an object as the only parameter but please refer to the API documentation to tune the query as intended.
+You can now use the various methods from the SDK to fetch media, metaproperties
+and other data. Following the Promises notation, you should use
+`.then()`/`.catch()` to handle the successful and failed requests,
+respectively.
+
+Most of the calls take an object as the only parameter but please refer to the
+API documentation to tune the query as intended.
 
 ```js
 bynder
@@ -152,7 +179,8 @@ bynder
 
 ## Contribute to the SDK
 
-If you wish to contribute to this repository and further extend the API coverage in the SDK, here are the steps necessary to prepare your environment:
+If you wish to contribute to this repository and further extend the API coverage in the SDK, here
+are the steps necessary to prepare your environment:
 
 1. Clone the repository
 2. In the root folder, run `yarn install` to install all of the dependencies.
@@ -173,4 +201,5 @@ If you wish to contribute to this repository and further extend the API coverage
 - `gulp build` - Run webpack to bundle the code in order to run in a browser.
 - `gulp babel` - Run Babel to create a folder 'dist' with ES2015 compatible code.
 - `gulp doc` - Run JSDoc to create a 'doc' folder with automatically generated documentation for the source code.
-- `gulp webserver` - Deploy a web server from the root folder at `localhost:8080` to run the html samples (in order to avoid CORS problems).
+- `gulp webserver` - Deploy a web server from the root folder at
+  `localhost:8080` to run the html samples (in order to avoid CORS problems).
