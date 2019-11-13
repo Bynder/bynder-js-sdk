@@ -23,7 +23,13 @@ gulp.task("babel", () => {
     .pipe(
       babel({
         presets: ["env"],
-        plugins: ["transform-object-rest-spread"]
+        plugins: ["transform-object-rest-spread",
+            ["transform-runtime", {
+                "polyfill": false,
+                "regenerator": true
+                }
+            ]
+        ]
       })
     )
     .pipe(gulp.dest("dist"));
