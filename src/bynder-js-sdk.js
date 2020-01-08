@@ -811,7 +811,9 @@ class Bynder {
    */
   waitForUploadDone(importIds) {
     const POLLING_INTERVAL = 2000;
-    const MAX_POLLING_ATTEMPTS = 60;
+    const MAX_POLLING_ATTEMPTS = typeof process === 'object'
+      ? process.env.BYNDER_MAX_POLLING_ATTEMPTS || 60 
+      : 60;
     const pollUploadStatus = this.pollUploadStatus.bind(this);
     return new Promise((resolve, reject) => {
       let attempt = 0;
