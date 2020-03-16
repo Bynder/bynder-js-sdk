@@ -2,7 +2,6 @@ require("isomorphic-form-data");
 const axios = require("axios");
 const { basename } = require("path");
 const isUrl = require("is-url");
-const joinUrl = require("proper-url-join");
 const queryString = require("query-string");
 const simpleOAuth2 = require("simple-oauth2");
 const url = require("url");
@@ -50,8 +49,6 @@ class APICall {
    * data or an Error with the problem.
    */
   async send(method, url, data = {}) {
-    let callURL = joinUrl(this.baseURL, url, { trailingSlash: true });
-
     const headers = {};
 
     if (!this.token && !this.permanentToken) {
@@ -69,20 +66,23 @@ class APICall {
     }
 
     let body = "";
+    let params = null;
 
     if (method === "POST") {
       headers["Content-Type"] = "application/x-www-form-urlencoded";
 
       body = queryString.stringify(data);
     } else if (Object.keys(data).length && data.constructor === Object) {
-      callURL = joinUrl(callURL, { trailingSlash: true, query: data });
+      params = data;
     }
 
-    return axios(callURL, {
+    return axios(url, {
+      baseURL: this.baseURL,
       httpsAgent: this.httpsAgent,
       httpAgent: this.httpAgent,
       method,
       data: body,
+      params,
       headers
     }).then(response => {
       if (response.status >= 400) {
