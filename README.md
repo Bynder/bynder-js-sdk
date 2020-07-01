@@ -11,7 +11,7 @@ interface to communicate with
 
 To use this SDK, you will need:
 
-- [Node.js **v6.3.0 or above**](https://nodejs.org/)
+- [Node.js **above v6.3.0** but below **v12**](https://nodejs.org/)
 
 Node installation will include [NPM](https://www.npmjs.com/), which is
 responsible for dependency management.
@@ -125,6 +125,7 @@ bynder
 - `getMediaTotal(queryObject)`
 - `editMedia(object)`
 - `deleteMedia(id)`
+- `getMediaDownloadUrl(object)`
 
 ### Media usage
 
