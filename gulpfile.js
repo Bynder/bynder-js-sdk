@@ -13,8 +13,11 @@ gulp.task("default", () => {
 gulp.task("lint", () => {
   return gulp
     .src(["src/*.js", "!node_modules/**"])
-    .pipe(eslint())
-    .pipe(eslint.format());
+    .pipe(eslint({
+      fix: true
+    }))
+    .pipe(eslint.format())
+    .pipe(gulp.dest("src"));
 });
 
 gulp.task("babel", () => {
