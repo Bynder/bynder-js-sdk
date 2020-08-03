@@ -142,6 +142,7 @@ bynder
 - `saveNewMetapropertyOption(object)`
 - `editMetapropertyOption(object)`
 - `deleteMetapropertyOption(object)`
+- `getMetapropertyOptions(queryObject)`
 
 ### Collections
 
