@@ -513,6 +513,18 @@ class Bynder {
     );
   }
 
+  getMetapropertyOptions({ id, ...params } = {}) {
+    if (!id) {
+      return rejectValidation("metaproperty option", "id");
+    }
+
+    return this.api.send("GET", `v4/metaproperties/${id}/options/`, params).then(data => {
+      return Object.keys(data).map(metaproperty => {
+       return data[metaproperty];
+      });
+    });
+  }
+
   /**
    * Get the assets usage information according to the id provided.
    * @see {@link https://bynder.docs.apiary.io/#reference/asset-usage/asset-usage-operations/retrieve-asset-usage|API Call}
