@@ -1,4 +1,4 @@
-const Bynder = require("../src/bynder-js-sdk.js");
+import Bynder from "../src/bynder-js-sdk.js";
 
 const configs = {
   "baseURL": "https://portal.getbynder.com/api/",
@@ -60,9 +60,7 @@ describe("Make API call with invalid token", () => {
       token: { access_token: 2345 }
     };
 
-    expect(() => {
-      return new Bynder(invalidTokenConfig)
-    }).toThrow(Error);
+    expect(() => new Bynder(invalidTokenConfig)).toThrow(Error);
   });
 });
 

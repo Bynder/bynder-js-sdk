@@ -1,11 +1,11 @@
-require("isomorphic-form-data");
-const axios = require("axios");
-const { basename } = require("path");
-const isUrl = require("is-url");
-const joinUrl = require("proper-url-join");
-const queryString = require("query-string");
-const simpleOAuth2 = require("simple-oauth2");
-const url = require("url");
+import "isomorphic-form-data";
+import axios from "axios";
+import {basename} from "path";
+import isUrl from "is-url";
+import joinUrl from "proper-url-join";
+import queryString from "query-string";
+import simpleOAuth2 from "simple-oauth2";
+import url from "url";
 
 const defaultAssetsNumberPerPage = 50;
 
@@ -59,13 +59,13 @@ class APICall {
     }
 
     if (this.permanentToken) {
-      headers["Authorization"] = "Bearer " + this.permanentToken;
+      headers["Authorization"] = `Bearer ${this.permanentToken}`;
     } else {
       this.token = await (this.token.expired()
         ? this.token.refresh()
         : Promise.resolve(this.token));
 
-      headers["Authorization"] = "Bearer " + this.token.token.access_token;
+      headers["Authorization"] = `Bearer ${this.token.token.access_token}`;
     }
 
     let body = "";
@@ -194,7 +194,7 @@ class Bynder {
     if (options.token) {
       if (typeof options.token.access_token !== "string") {
         throw new Error(
-          "Invalid token format: " + JSON.stringify(options.token, null, 2)
+          `Invalid token format: ${JSON.stringify(options.token, null, 2)}`
         );
       }
       this.api.token = this.oauth2.accessToken.create(options.token);
@@ -208,8 +208,8 @@ class Bynder {
   makeAuthorizationURL(state, scope) {
     return this.oauth2.authorizationCode.authorizeURL({
       redirect_uri: this.redirectUri,
-      scope: scope,
-      state: state
+      scope,
+      state
     });
   }
 
@@ -220,7 +220,7 @@ class Bynder {
    */
   getToken(code) {
     const tokenConfig = {
-      code: code,
+      code,
       redirect_uri: this.redirectUri
     };
 
@@ -320,9 +320,7 @@ class Bynder {
           }
           return queryAssets;
         })
-        .catch(error => {
-          return error;
-        });
+        .catch(error => error);
     };
 
     return recursiveGetAssets(params, []);
@@ -340,9 +338,7 @@ class Bynder {
     if (Array.isArray(parametersObject.propertyOptionId)) {
       parametersObject.propertyOptionId = parametersObject.propertyOptionId.join();
     }
-    return this.api.send("GET", "v4/media/", parametersObject).then(data => {
-      return data.count.total;
-    });
+    return this.api.send("GET", "v4/media/", parametersObject).then(({count}) => count.total);
   }
 
   /**
@@ -383,11 +379,7 @@ class Bynder {
    * metaproperties or an Error with the problem.
    */
   getMetaproperties(params = {}) {
-    return this.api.send("GET", "v4/metaproperties/", params).then(data => {
-      return Object.keys(data).map(metaproperty => {
-        return data[metaproperty];
-      });
-    });
+    return this.api.send("GET", "v4/metaproperties/", params).then(data => Object.keys(data).map(metaproperty => data[metaproperty]));
   }
 
   /**
@@ -521,8 +513,8 @@ class Bynder {
    * @return {Promise} Asset Usage - Returns a Promise that, when fulfilled, will either return an Object with
    * the asset usage or an Error with the problem.
    */
-  getAssetUsage(queryObject) {
-    if (!queryObject.id) {
+  getAssetUsage({id}) {
+    if (!id) {
       return rejectValidation("asset usage", "id");
     }
     const request = new APICall(
@@ -531,7 +523,7 @@ class Bynder {
       "GET",
       this.consumerToken,
       this.accessToken,
-      { asset_id: queryObject.id }
+      { asset_id: id }
     );
     return request.send();
   }
@@ -582,11 +574,11 @@ class Bynder {
    * @return {Promise} Asset Usage - Returns a Promise that, when fulfilled, will either return an Object with
    * the asset usage or an Error with the problem.
    */
-  deleteAssetUsage(queryObject) {
-    if (!queryObject.id) {
+  deleteAssetUsage({id, integration_id, uri}) {
+    if (!id) {
       return rejectValidation("asset usage", "id");
     }
-    if (!queryObject.integration_id) {
+    if (!integration_id) {
       return rejectValidation("asset usage", "integration_id");
     }
     const request = new APICall(
@@ -596,9 +588,9 @@ class Bynder {
       this.consumerToken,
       this.accessToken,
       {
-        asset_id: queryObject.id,
-        integration_id: queryObject.integration_id,
-        uri: queryObject.uri || null
+        asset_id: id,
+        integration_id,
+        uri: uri || null
       }
     );
     return request.send();
@@ -812,7 +804,7 @@ class Bynder {
   waitForUploadDone(importIds) {
     const POLLING_INTERVAL = 2000;
     const MAX_POLLING_ATTEMPTS = typeof process === 'object'
-      ? process.env.BYNDER_MAX_POLLING_ATTEMPTS || 60 
+      ? process.env.BYNDER_MAX_POLLING_ATTEMPTS || 60
       : 60;
     const pollUploadStatus = this.pollUploadStatus.bind(this);
     return new Promise((resolve, reject) => {
@@ -926,9 +918,7 @@ class Bynder {
         if (chunkData === null) {
           // our read stream is not done yet reading
           // let's wait for a while...
-          return delay(50).then(() => {
-            return nextChunk(chunkNumber);
-          });
+          return delay(50).then(() => nextChunk(chunkNumber));
         }
       } else {
         // handle buffer/blob data
@@ -938,12 +928,8 @@ class Bynder {
       }
       const newChunkNumber = chunkNumber + 1;
       return uploadChunkToS3(chunkData, newChunkNumber)
-        .then(() => {
-          return registerChunk(init, newChunkNumber);
-        })
-        .then(() => {
-          return nextChunk(newChunkNumber);
-        });
+        .then(() => registerChunk(init, newChunkNumber))
+        .then(() => nextChunk(newChunkNumber));
     }
     return nextChunk(0);
   }
@@ -1005,4 +991,4 @@ class Bynder {
   }
 }
 
-module.exports = Bynder;
+export default Bynder;
