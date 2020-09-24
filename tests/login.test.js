@@ -1,11 +1,10 @@
 const Bynder = require("../src/bynder-js-sdk.js");
-const url = require("url");
 
 const configs = {
-    "baseURL": "https://portal.getbynder.com/api/",
-    "clientId": "test-client-id",
-    "clientSecret": "test-client-secret",
-    "redirectUri": "https://test-redirect-uri.com"
+  "baseURL": "https://portal.getbynder.com/api/",
+  "clientId": "test-client-id",
+  "clientSecret": "test-client-secret",
+  "redirectUri": "https://test-redirect-uri.com"
 };
 
 let bynder;
@@ -24,6 +23,8 @@ describe("Make authorization URL", () => {
 });
 
 describe("Make API call without token", () => {
+  let result;
+
   beforeEach(done => {
     const configWithoutToken = {
       baseURL: configs.baseURL,
@@ -59,7 +60,9 @@ describe("Make API call with invalid token", () => {
       token: { access_token: 2345 }
     };
 
-    expect(() => new Bynder(invalidTokenConfig)).toThrow(Error);
+    expect(() => {
+      return new Bynder(invalidTokenConfig)
+    }).toThrow(Error);
   });
 });
 
