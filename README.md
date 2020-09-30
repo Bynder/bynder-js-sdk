@@ -174,7 +174,7 @@ If you wish to contribute to this repository and further extend the API coverage
 are the steps necessary to prepare your environment:
 
 1. Clone the repository
-2. In the root folder, run `yarn install` to install all of the dependencies.
+2. In the root folder, run `npm install` to install all of the dependencies.
 3. Create a `secret.json` file with the following structure:
 
 ```json
@@ -188,9 +188,7 @@ are the steps necessary to prepare your environment:
 
 4. The following gulp tasks are available:
 
-- `gulp lint` - Run ESlint and check the code.
-- `gulp build` - Run webpack to bundle the code in order to run in a browser.
-- `gulp babel` - Run Babel to create a folder 'dist' with ES2015 compatible code.
-- `gulp doc` - Run JSDoc to create a 'doc' folder with automatically generated documentation for the source code.
-- `gulp webserver` - Deploy a web server from the root folder at
-  `localhost:8080` to run the html samples (in order to avoid CORS problems).
+- `npm run lint` - Run ESlint and check the code.
+- `npm run build` - Run webpack to bundle the code in order to run in a browser.
+- `npm run doc` - Run JSDoc to create a 'doc' folder with automatically generated documentation for the source code.
+- `npm run dev` - Starts a builder in watch mode for development

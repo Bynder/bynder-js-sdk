@@ -4,7 +4,6 @@
   "description": "Bynder Javascript SDK",
   "main": "dist/bynder-js-sdk.cjs.js",
   "module": "dist/bynder-js-sdk.esm.js",
-  "browser": "dist/bundle.js",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
@@ -12,7 +11,8 @@
     "lint": "eslint --config .eslintrc src/ tests/",
     "test:watch": "npm run test -- --watch src/ test/ --notify",
     "prestest": "npm run lint",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "doc": "jsdoc --destination docs --readme README.md src/**/*.js"
   },
   "author": "Bynder",
   "license": "MIT",
@@ -34,6 +34,7 @@
     "eslint": "^7.9.0",
     "eslint-plugin-import": "^2.22.0",
     "jest": "^24.9.0",
+    "jsdoc": "^3.6.6",
     "json-loader": "^0.5.7",
     "path": "^0.12.7",
     "rollup": "^2.28.2",
@@ -68,7 +69,7 @@
       "**/*.{js,jsx}",
       "!**/node_modules/**",
       "!**/dist/**",
-      "!**/resources/**"
+      "!**/docs/**"
     ],
     "coveragePathIgnorePatterns": [
       "/node_modules/",
@@ -77,6 +78,7 @@
       "/repl.js",
       "/coverage/",
       "/samples/",
+      "/docs/",
       "/rollup.config.js"
     ],
     "coverageDirectory": "coverage",
