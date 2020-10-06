@@ -1,5 +1,9 @@
+import axios from 'axios';
 import {v4 as uuid} from 'uuid';
 import Bynder from '../../src/index.js';
+
+// Axios' Jest mock, so we don't hit the real API
+jest.mock('axios');
 
 const config = {
   baseURL: 'https://portal.getbynder.com/api/',
@@ -17,8 +21,12 @@ const file = {
   }
 };
 
-describe('Auth', () => {
-  describe('Make authorization URL', () => {
+afterAll(() => {
+  jest.unmock('axios');
+});
+
+describe('.oauth2', () => {
+  describe('#makeAuthorizationURL', () => {
     const _bynder = new Bynder(config);
     const authorizationUrl = _bynder.makeAuthorizationURL('state example', 'offline');
 
@@ -28,29 +36,25 @@ describe('Auth', () => {
     });
   });
 
-  describe('Make API call without token', () => {
-    it('returns an Error', async () => {
-      try {
-        const _bynder = new Bynder(config);
-        await _bynder.getMediaList();
-      } catch (error) {
-        expect(error.message).toEqual('No token found');
-      }
-    });
+  it('returns an Error when makes an API call without token', async () => {
+    try {
+      const _bynder = new Bynder(config);
+      await _bynder.getMediaList();
+    } catch (error) {
+      expect(error.message).toEqual('No token found');
+    }
   });
 
-  describe('Make API call with invalid token', () => {
-    it('returns an Error', () => {
-      const invalidTokenConfig = {
-        baseURL: config.baseURL,
-        clientId: config.clientId,
-        clientSecret: config.clientSecret,
-        redirectUri: config.redirectUri,
-        token: { access_token: 2345 }
-      };
+  it('returns an Error when makes an API call with invalid token', () => {
+    const invalidTokenConfig = {
+      baseURL: config.baseURL,
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+      redirectUri: config.redirectUri,
+      token: { access_token: 2345 }
+    };
 
-      expect(() => new Bynder(invalidTokenConfig)).toThrow(Error);
-    });
+    expect(() => new Bynder(invalidTokenConfig)).toThrow(/Invalid token format/);
   });
 
   describe('Initialize Bynder with permanent token', () => {
@@ -61,9 +65,70 @@ describe('Auth', () => {
 });
 
 describe('#uploadFile', () => {
-  describe('#uploadFileInChunks', () => {
-    const chunks = 1;
+  it('throws an error with no brand ID', () => {
+    bynder.uploadFile({
+      body: file.body,
+      filename: file.filename,
+      data: {}
+    }).catch(error => {
+      expect(error).toEqual({
+        status: 0,
+        message: 'The upload brandId is not valid or it was not specified properly'
+      });
+    });
+  });
 
+  it('throws an error with no filename', () => {
+    bynder.uploadFile({
+      body: file.body,
+      data: file.data
+    }).catch(error => {
+      expect(error).toEqual({
+        status: 0,
+        message: 'The upload filename is not valid or it was not specified properly'
+      });
+    });
+  });
+
+  it('throws an error with no body', () => {
+    bynder.uploadFile({
+      data: file.data,
+      filename: file.filename
+    }).catch(error => {
+      expect(error).toEqual({
+        status: 0,
+        message: 'The upload body is not valid or it was not specified properly'
+      });
+    });
+  });
+
+  it('throws an error with no body type', () => {
+    bynder.uploadFile({
+      body: 'A-BODY',
+      data: file.data,
+      filename: file.filename
+    }).catch(error => {
+      expect(error).toEqual({
+        status: 0,
+        message: 'The upload body is not valid or it was not specified properly'
+      });
+    });
+  });
+
+  it('throws an error with no length', () => {
+    bynder.uploadFile({
+      body: Buffer.from('', 'utf-8'),
+      data: file.data,
+      filename: file.filename
+    }).catch(error => {
+      expect(error).toEqual({
+        status: 0,
+        message: 'The upload length is not valid or it was not specified properly'
+      });
+    });
+  });
+
+  describe('#uploadFileInChunks', () => {
     beforeEach(() => {
       jest.clearAllMocks();
       bynder.uploadFileInChunks = jest.fn(() => Promise.resolve(1));
@@ -77,7 +142,7 @@ describe('#uploadFile', () => {
       const fileId = uuid();
       bynder.uploadFile(file, fileId);
 
-      expect(bynder.uploadFileInChunks).toHaveBeenNthCalledWith(1, file, fileId);
+      expect(bynder.uploadFileInChunks).toHaveBeenNthCalledWith(1, file, fileId, file.body.length);
     });
   });
 
@@ -107,5 +172,20 @@ describe('#uploadFile', () => {
 
       expect(bynder.finaliseUpload).toHaveBeenNthCalledWith(1, fileId, file.filename, chunks, file.body.length);
     });
+  });
+});
+
+describe('#uploadFileInChunks', () => {
+  it('calls the FS upload chunk endpoint', async () => {
+    const fileId = uuid();
+    axios.mockImplementation(() => Promise.resolve({}));
+
+    await bynder.uploadFileInChunks(file, fileId, file.body.length)
+          .then(chunks => {
+            expect(chunks).toEqual(1);
+          })
+          .catch(error => {
+            expect(error).toBeUndefined();
+          });
   });
 });

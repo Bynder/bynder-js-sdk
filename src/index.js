@@ -720,11 +720,12 @@ export default class Bynder {
    * @param {Number} size - File byte size
    * @return {Promise}
    */
-  async uploadFileInChunks(file, fileId) {
+  async uploadFileInChunks(file, fileId, size) {
     const { body } = file;
-    const { length: size } = body;
     const chunks = Math.ceil(size / FILE_CHUNK_SIZE);
     let chunkNumber = 0;
+
+    console.log(`CHUNKS: ${chunks}`)
 
     // Iterate over the chunks and send them
     while (chunkNumber <= chunks) {
@@ -732,7 +733,11 @@ export default class Bynder {
       const end = Math.min(start + FILE_CHUNK_SIZE, size);
       const chunk = body.slice(start, end);
 
-      await this.api.send('POST', `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`, { chunk });
+      await this.api.send('POST', `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`, { chunk })
+        .catch(error => {
+          console.error(error);
+          throw error;
+        });
 
       chunkNumber++;
     }
@@ -773,7 +778,7 @@ export default class Bynder {
       return rejectValidation('upload', 'length');
     }
 
-    return this.uploadFileInChunks(file, fileId)
+    return this.uploadFileInChunks(file, fileId, size)
       .then(chunks => this.finaliseUpload(fileId, filename, chunks, size))
       // .then(correlationId => this.pollUploadStatus(fileId, correlationId))
       // .then(() => this.saveAsset(fileId));
