@@ -27,7 +27,7 @@ export const bodyTypes = {
     if (window?.Blob && body instanceof window?.Blob) {
       return bodyTypes.BLOB;
     }
-    if (typeof body.read === 'function') {
+    if (typeof body?.read === 'function') {
       return bodyTypes.STREAM;
     }
     return null;
