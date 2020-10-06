@@ -1,153 +1,20 @@
-import "isomorphic-form-data";
-import axios from "axios";
-import {basename} from "path";
-import isUrl from "is-url";
-import joinUrl from "proper-url-join";
-import queryString from "query-string";
-import simpleOAuth2 from "simple-oauth2";
-import url from "url";
+'use strict';
 
-const defaultAssetsNumberPerPage = 50;
+import 'isomorphic-form-data';
 
-/**
- * Rejects the request.
- * @return {Promise} error - Returns a Promise with the details for the wrong request.
- */
-function rejectValidation(module, param) {
-  return Promise.reject({
-    status: 0,
-    message: `The ${module} ${param} is not valid or it was not specified properly`
-  });
-}
-
-/**
- * @classdesc Represents an API call.
- * @class
- * @abstract
- */
-class APICall {
-  /**
-   * Create a APICall.
-   * @constructor
-   * @param {string} baseURL - A string with the base URL for account.
-   * @param {string} httpsAgent - A https agent.
-   * @param {string} httpAgent - A http agent.
-   * @param {string} token - Optional OAuth2 access token
-   * @param {Object} [data={}] - An object containing the query parameters.
-   */
-  constructor(baseURL, httpsAgent, httpAgent, token) {
-    if (!isUrl(baseURL)) throw new Error("The base URL provided is not valid");
-
-    this.baseURL = baseURL;
-    this.httpsAgent = httpsAgent;
-    this.httpAgent = httpAgent;
-    this.token = token;
-  }
-
-  /**
-   * Fetch the information from the API.
-   * @return {Promise} - Returns a Promise that, when fulfilled, will either return an JSON Object with the requested
-   * data or an Error with the problem.
-   */
-  async send(method, url, data = {}) {
-    let callURL = joinUrl(this.baseURL, url, { trailingSlash: true });
-
-    const headers = {};
-
-    if (!this.token && !this.permanentToken) {
-      throw new Error("No token found");
-    }
-
-    if (this.permanentToken) {
-      headers["Authorization"] = `Bearer ${this.permanentToken}`;
-    } else {
-      this.token = await (this.token.expired()
-        ? this.token.refresh()
-        : Promise.resolve(this.token));
-
-      headers["Authorization"] = `Bearer ${this.token.token.access_token}`;
-    }
-
-    let body = "";
-
-    if (method === "POST") {
-      headers["Content-Type"] = "application/x-www-form-urlencoded";
-
-      body = queryString.stringify(data);
-    } else if (Object.keys(data).length && data.constructor === Object) {
-      callURL = joinUrl(callURL, { trailingSlash: true, query: data });
-    }
-
-    return axios(callURL, {
-      httpsAgent: this.httpsAgent,
-      httpAgent: this.httpAgent,
-      method,
-      data: body,
-      headers
-    }).then(response => {
-      if (response.status >= 400) {
-        // check for 4XX, 5XX, wtv
-        return Promise.reject({
-          status: response.status,
-          message: response.statusText,
-          body: response.data
-        });
-      }
-      if (response.status >= 200 && response.status <= 202) {
-        return response.data;
-      }
-      return {};
-    });
-  }
-}
-
-const bodyTypes = {
-  BUFFER: "BUFFER",
-  BLOB: "BLOB",
-  STREAM: "STREAM",
-  /**
-   * @param {Object} body - The file body whose type we need to determine
-   * @return {string} One of bodyTypes.BUFFER, bodyTypes.BLOB, bodyTypes.STREAM
-   */
-  get: body => {
-    if (typeof Buffer !== "undefined" && Buffer.isBuffer(body)) {
-      return bodyTypes.BUFFER;
-    }
-    if (
-      typeof window !== "undefined" &&
-      window.Blob &&
-      body instanceof window.Blob
-    ) {
-      return bodyTypes.BLOB;
-    }
-    if (typeof body.read === "function") {
-      return bodyTypes.STREAM;
-    }
-    return null;
-  }
-};
-
-/**
- * @return {number} length - The amount of data that can be read from the file
- */
-
-function getLength(file) {
-  const { body, length } = file;
-  const bodyType = bodyTypes.get(body);
-  if (bodyType === bodyTypes.BUFFER) {
-    return body.length;
-  }
-  if (bodyType === bodyTypes.BLOB) {
-    return body.size;
-  }
-  return length;
-}
+import simpleOAuth2 from 'simple-oauth2';
+import {v4 as uuid} from 'uuid';
+import WebSocket from 'ws';
+import url from 'url';
+import APICall from './api';
+import {rejectValidation, bodyTypes, getLength} from './utils';
+import {DEFAULT_ASSETS_NUMBER_PER_PAGE, WEBSOCKET_TOPIC_NAME, FILE_CHUNK_SIZE} from './constants';
 
 /**
  * @classdesc Represents the Bynder SDK. It allows the user to make every call to the API with a single function.
  * @class
  */
-class Bynder {
+export default class Bynder {
   /**
    * Create Bynder SDK.
    * @constructor
@@ -170,12 +37,12 @@ class Bynder {
       options.httpAgent
     );
 
-    if (typeof options.permanentToken === "string") {
+    if (typeof options.permanentToken === 'string') {
       this.api.permanentToken = options.permanentToken;
       return;
     }
 
-    const oauthBaseUrl = url.resolve(options.baseURL, "/v6/authentication/");
+    const oauthBaseUrl = url.resolve(options.baseURL, '/v6/authentication/');
 
     this.oauth2 = simpleOAuth2.create({
       client: {
@@ -184,18 +51,16 @@ class Bynder {
       },
       auth: {
         tokenHost: oauthBaseUrl,
-        tokenPath: "oauth2/token",
-        revokePath: "oauth2/revoke",
+        tokenPath: 'oauth2/token',
+        revokePath: 'oauth2/revoke',
         authorizeHost: oauthBaseUrl,
-        authorizePath: "oauth2/auth"
+        authorizePath: 'oauth2/auth'
       }
     });
 
     if (options.token) {
-      if (typeof options.token.access_token !== "string") {
-        throw new Error(
-          `Invalid token format: ${JSON.stringify(options.token, null, 2)}`
-        );
+      if (typeof options.token.access_token !== 'string') {
+        throw new Error(`Invalid token format: ${JSON.stringify(options.token, null, 2)}`);
       }
       this.api.token = this.oauth2.accessToken.create(options.token);
     }
@@ -238,7 +103,7 @@ class Bynder {
    * smartfilters or an Error with the problem.
    */
   getSmartfilters() {
-    return this.api.send("GET", "v4/smartfilters/");
+    return this.api.send('GET', 'v4/smartfilters/');
   }
 
   /**
@@ -254,12 +119,12 @@ class Bynder {
   userLogin(params) {
     if (!params.username || !params.password || !params.consumerId) {
       return rejectValidation(
-        "authentication",
-        "username, password or consumerId"
+        'authentication',
+        'username, password or consumerId'
       );
     }
 
-    return this.api.send("POST", "v4/users/login/", params);
+    return this.api.send('POST', 'v4/users/login/', params);
   }
 
   /**
@@ -270,11 +135,11 @@ class Bynder {
    * an Error with the problem.
    */
   getMediaList(params = {}) {
-    return this.api.send("GET", "v4/media/", {
+    return this.api.send('GET', 'v4/media/', {
       ...params,
       count: false,
       ...(Array.isArray(params.propertyOptionId)
-        ? params.propertyOptionId.join(",")
+        ? params.propertyOptionId.join(',')
         : {})
     });
   }
@@ -290,10 +155,10 @@ class Bynder {
    */
   getMediaInfo({ id, ...options } = {}) {
     if (!id) {
-      return rejectValidation("media", "id");
+      return rejectValidation('media', 'id');
     }
 
-    return this.api.send("GET", `v4/media/${id}/`, options);
+    return this.api.send('GET', `v4/media/${id}/`, options);
   }
 
   /**
@@ -308,7 +173,7 @@ class Bynder {
       let queryAssets = assets;
       const params = { ..._params };
       params.page = !params.page ? 1 : params.page;
-      params.limit = !params.limit ? defaultAssetsNumberPerPage : params.limit;
+      params.limit = !params.limit ? DEFAULT_ASSETS_NUMBER_PER_PAGE : params.limit;
 
       return this.getMediaList(params)
         .then(data => {
@@ -338,7 +203,7 @@ class Bynder {
     if (Array.isArray(parametersObject.propertyOptionId)) {
       parametersObject.propertyOptionId = parametersObject.propertyOptionId.join();
     }
-    return this.api.send("GET", "v4/media/", parametersObject).then(({count}) => count.total);
+    return this.api.send('GET', 'v4/media/', parametersObject).then(({count}) => count.total);
   }
 
   /**
@@ -351,9 +216,9 @@ class Bynder {
    */
   editMedia(params = {}) {
     if (!params.id) {
-      return rejectValidation("media", "id");
+      return rejectValidation('media', 'id');
     }
-    return this.api.send("POST", "v4/media/", params);
+    return this.api.send('POST', 'v4/media/', params);
   }
 
   /**
@@ -366,9 +231,9 @@ class Bynder {
    */
   deleteMedia({ id }) {
     if (!id) {
-      return rejectValidation("media", "id");
+      return rejectValidation('media', 'id');
     }
-    return this.api.send("DELETE", `v4/media/${id}/`);
+    return this.api.send('DELETE', `v4/media/${id}/`);
   }
 
   /**
@@ -379,7 +244,7 @@ class Bynder {
    * metaproperties or an Error with the problem.
    */
   getMetaproperties(params = {}) {
-    return this.api.send("GET", "v4/metaproperties/", params).then(data => Object.keys(data).map(metaproperty => data[metaproperty]));
+    return this.api.send('GET', 'v4/metaproperties/', params).then(data => Object.keys(data).map(metaproperty => data[metaproperty]));
   }
 
   /**
@@ -392,9 +257,9 @@ class Bynder {
    */
   getMetaproperty({ id } = {}) {
     if (!id) {
-      return rejectValidation("metaproperty", "id");
+      return rejectValidation('metaproperty', 'id');
     }
-    return this.api.send("GET", `v4/metaproperties/${id}/`);
+    return this.api.send('GET', `v4/metaproperties/${id}/`);
   }
 
   /**
@@ -405,7 +270,7 @@ class Bynder {
    * case it's successful or an Error with the problem.
    */
   saveNewMetaproperty(params = {}) {
-    return this.api.send("POST", "v4/metaproperties/", {
+    return this.api.send('POST', 'v4/metaproperties/', {
       data: JSON.stringify(params)
     });
     // The API requires an object with the query content stringified inside
@@ -421,9 +286,9 @@ class Bynder {
    */
   editMetaproperty({ id, ...params } = {}) {
     if (!id) {
-      return rejectValidation("metaproperty", "id");
+      return rejectValidation('metaproperty', 'id');
     }
-    return this.api.send("POST", `v4/metaproperties/${id}/`, {
+    return this.api.send('POST', `v4/metaproperties/${id}/`, {
       data: JSON.stringify(params)
     });
     // The API requires an object with the query content stringified inside
@@ -439,9 +304,9 @@ class Bynder {
    */
   deleteMetaproperty({ id } = {}) {
     if (!id) {
-      return rejectValidation("metaproperty", "id");
+      return rejectValidation('metaproperty', 'id');
     }
-    return this.api.send("DELETE", `v4/metaproperties/${id}/`);
+    return this.api.send('DELETE', `v4/metaproperties/${id}/`);
   }
 
   /**
@@ -455,10 +320,10 @@ class Bynder {
    */
   saveNewMetapropertyOption({ id, ...params } = {}) {
     if (!id || !params.name) {
-      return rejectValidation("metaproperty option", "id or name");
+      return rejectValidation('metaproperty option', 'id or name');
     }
 
-    return this.api.send("POST", `v4/metaproperties/${id}/options/`, {
+    return this.api.send('POST', `v4/metaproperties/${id}/options/`, {
       data: JSON.stringify(params)
     });
   }
@@ -475,11 +340,11 @@ class Bynder {
    */
   editMetapropertyOption({ id, ...params } = {}) {
     if (!id || !params.optionId) {
-      return rejectValidation("metaproperty option", "id or optionId");
+      return rejectValidation('metaproperty option', 'id or optionId');
     }
 
     return this.api.send(
-      "POST",
+      'POST',
       `v4/metaproperties/${id}/options/${params.optionId}/`,
       { data: JSON.stringify(params) }
     );
@@ -497,10 +362,10 @@ class Bynder {
    */
   deleteMetapropertyOption({ id, optionId }) {
     if (!id || !optionId) {
-      return rejectValidation("metaproperty option", "id or optionId");
+      return rejectValidation('metaproperty option', 'id or optionId');
     }
     return this.api.send(
-      "DELETE",
+      'DELETE',
       `v4/metaproperties/${id}/options/${optionId}/`
     );
   }
@@ -515,12 +380,12 @@ class Bynder {
    */
   getAssetUsage({id}) {
     if (!id) {
-      return rejectValidation("asset usage", "id");
+      return rejectValidation('asset usage', 'id');
     }
     const request = new APICall(
       this.baseURL,
-      "media/usage/",
-      "GET",
+      'media/usage/',
+      'GET',
       this.consumerToken,
       this.accessToken,
       { asset_id: id }
@@ -542,15 +407,15 @@ class Bynder {
    */
   saveNewAssetUsage(queryObject) {
     if (!queryObject.id) {
-      return rejectValidation("asset usage", "id");
+      return rejectValidation('asset usage', 'id');
     }
     if (!queryObject.integration_id) {
-      return rejectValidation("asset usage", "integration_id");
+      return rejectValidation('asset usage', 'integration_id');
     }
     const request = new APICall(
       this.baseURL,
-      "media/usage/",
-      "POST",
+      'media/usage/',
+      'POST',
       this.consumerToken,
       this.accessToken,
       {
@@ -576,15 +441,15 @@ class Bynder {
    */
   deleteAssetUsage({id, integration_id, uri}) {
     if (!id) {
-      return rejectValidation("asset usage", "id");
+      return rejectValidation('asset usage', 'id');
     }
     if (!integration_id) {
-      return rejectValidation("asset usage", "integration_id");
+      return rejectValidation('asset usage', 'integration_id');
     }
     const request = new APICall(
       this.baseURL,
-      "media/usage/",
-      "DELETE",
+      'media/usage/',
+      'DELETE',
       this.consumerToken,
       this.accessToken,
       {
@@ -604,7 +469,7 @@ class Bynder {
    * tags or an Error with the problem.
    */
   getTags(params = {}) {
-    return this.api.send("GET", "v4/tags/", params);
+    return this.api.send('GET', 'v4/tags/', params);
   }
 
   /**
@@ -615,7 +480,7 @@ class Bynder {
    * collections or an Error with the problem.
    */
   getCollections(params = {}) {
-    return this.api.send("GET", "v4/collections/", params);
+    return this.api.send('GET', 'v4/collections/', params);
   }
 
   /**
@@ -628,9 +493,9 @@ class Bynder {
    */
   getCollection({ id } = {}) {
     if (!id) {
-      return rejectValidation("collection", "id");
+      return rejectValidation('collection', 'id');
     }
-    return this.api.send("GET", `v4/collections/${id}/`);
+    return this.api.send('GET', `v4/collections/${id}/`);
   }
 
   /**
@@ -644,9 +509,9 @@ class Bynder {
    */
   saveNewCollection(params = {}) {
     if (!params.name) {
-      return rejectValidation("collection", "name");
+      return rejectValidation('collection', 'name');
     }
-    return this.api.send("POST", "v4/collections/", params);
+    return this.api.send('POST', 'v4/collections/', params);
   }
 
   /**
@@ -660,12 +525,12 @@ class Bynder {
    */
   addMediaToCollection({ id, data } = {}) {
     if (!id) {
-      return rejectValidation("collection", "id");
+      return rejectValidation('collection', 'id');
     }
     if (!data) {
-      return rejectValidation("collection", "data");
+      return rejectValidation('collection', 'data');
     }
-    return this.api.send("POST", `v4/collections/${id}/media/`, {
+    return this.api.send('POST', `v4/collections/${id}/media/`, {
       data: JSON.stringify(data)
     });
   }
@@ -681,13 +546,13 @@ class Bynder {
    */
   deleteMediaFromCollection({ id, deleteIds } = {}) {
     if (!id) {
-      return rejectValidation("collection", "id");
+      return rejectValidation('collection', 'id');
     }
     if (!deleteIds) {
-      return rejectValidation("collection", "deleteIds");
+      return rejectValidation('collection', 'deleteIds');
     }
-    return this.api.send("DELETE", `v4/collections/${id}/media/`, {
-      deleteIds: Array.isArray(deleteIds) ? deleteIds.join(",") : deleteIds
+    return this.api.send('DELETE', `v4/collections/${id}/media/`, {
+      deleteIds: Array.isArray(deleteIds) ? deleteIds.join(',') : deleteIds
     });
   }
 
@@ -703,16 +568,16 @@ class Bynder {
    */
   shareCollection({ id, ...params } = {}) {
     if (!id) {
-      return rejectValidation("collection", "id");
+      return rejectValidation('collection', 'id');
     }
     if (!params.recipients) {
-      return rejectValidation("collection", "recipients");
+      return rejectValidation('collection', 'recipients');
     }
     if (!params.collectionOptions) {
-      return rejectValidation("collection", "collectionOptions");
+      return rejectValidation('collection', 'collectionOptions');
     }
 
-    return this.api.send("POST", `v4/collections/${id}/share/`, params);
+    return this.api.send('POST', `v4/collections/${id}/share/`, params);
   }
 
   /**
@@ -721,7 +586,7 @@ class Bynder {
    * @return {Promise}
    */
   getBrands() {
-    return this.api.send("GET", "v4/brands/");
+    return this.api.send('GET', 'v4/brands/');
   }
 
   /**
@@ -730,7 +595,7 @@ class Bynder {
    * @return {Promise} Amazon S3 location url string.
    */
   getClosestUploadEndpoint() {
-    return this.api.send("GET", "upload/endpoint");
+    return this.api.send('GET', 'upload/endpoint');
   }
 
   /**
@@ -742,9 +607,9 @@ class Bynder {
    */
   initUpload(filename) {
     if (!filename) {
-      return rejectValidation("upload", "filename");
+      return rejectValidation('upload', 'filename');
     }
-    return this.api.send("POST", "upload/init", { filename });
+    return this.api.send('POST', 'upload/init', { filename });
   }
 
   /**
@@ -757,7 +622,7 @@ class Bynder {
   registerChunk(init, chunkNumber) {
     const { s3file, s3_filename: filename } = init;
     const { uploadid, targetid } = s3file;
-    return this.api.send("POST", "v4/upload/", {
+    return this.api.send('POST', 'v4/upload/', {
       id: uploadid,
       targetid,
       filename: `${filename}/p${chunkNumber}`,
@@ -768,32 +633,28 @@ class Bynder {
   /**
    * Finalises the file upload when all chunks finished uploading and registers it in Bynder.
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/finalise-a-completely-uploaded-file}
-   * @param {Object} init - Result from init upload
+   * @param {String} fileId - Unique file identifier
    * @param {String} fileName - Original file name
-   * @param {Number} chunks - Number of chunks
+   * @param {Number} chunksCount - Number of chunks
+   * * @param {Number} fileSize - File byte size
    * @return {Promise}
    */
-  finaliseUpload(init, filename, chunks) {
-    const { s3file, s3_filename: s3filename } = init;
-    const { uploadid, targetid } = s3file;
-    return this.api.send("POST", `v4/upload/${uploadid}/`, {
-      targetid,
-      s3_filename: `${s3filename}/p${chunks}`,
-      original_filename: filename,
-      chunks
-    });
+  finaliseUpload(fileId, fileName, chunksCount, fileSize) {
+    return this.api.send('POST', `v7/file_cmds/upload/${fileId}/finalise`, {
+      chunksCount, fileName, fileSize
+    })
+      .then(response => response.headers['x-api-correlation-id']);
   }
 
   /**
    * Checks if the files have finished uploading.
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/5-poll-processing-state-of-finalised-files/retrieve-entry-point}
-   * @param {String[]} importIds - The import IDs of the files to be checked.
+   * @param {String} fileId - Unique file identifier
+   * @param {String} correlationId - Upload correlation ID
    * @return {Promise}
    */
-  pollUploadStatus(importIds) {
-    return this.api.send("GET", "v4/upload/poll/", {
-      items: importIds.join(",")
-    });
+  pollUploadStatus(fileId, correlationId) {
+    const socket = new WebSocket('wss://api.bynder.com/ws');
   }
 
   /**
@@ -840,17 +701,12 @@ class Bynder {
    * Saves a media asset in Bynder. If media id is specified in the data a new version of the asset will be saved.
    * Otherwise a new asset will be saved.
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/save-as-a-new-asset}
-   * @param {Object} data - Asset data
+   * @param {String} fileId - Unique file identifier
    * @return {Promise}
    */
-  saveAsset(data) {
-    const { brandId, mediaId } = data;
-    if (!brandId) {
-      return rejectValidation("upload", "brandId");
-    }
-    const saveURL = mediaId ? `v4/media/${mediaId}/save/` : "v4/media/save/";
-
-    return this.api.send("POST", saveURL, data);
+  saveAsset(fileId) {
+    const saveURL = fileId ? `v4/media/${fileId}/save/` : 'v4/media/save/';
+    return this.api.send('POST', saveURL, data);
   }
 
   /**
@@ -860,78 +716,28 @@ class Bynder {
    * @param {String} file.filename - The file name of the file to be saved
    * @param {Buffer|Readable} file.body - The file to be uploaded. Can be either buffer or a read stream.
    * @param {Number} file.length - The length of the file to be uploaded
-   * @param {string} endpoint - S3 endpoint url
-   * @param {Object} init - Result from init upload
+   * @param {String} fileId - Unique file identifier
+   * @param {Number} size - File byte size
    * @return {Promise}
    */
-  uploadFileInChunks(file, endpoint, init) {
+  async uploadFileInChunks(file, fileId) {
     const { body } = file;
-    const bodyType = bodyTypes.get(body);
-    const length = getLength(file);
-    const CHUNK_SIZE = 1024 * 1024 * 5;
-    const chunks = Math.ceil(length / CHUNK_SIZE);
+    const { length: size } = body;
+    const chunks = Math.ceil(size / FILE_CHUNK_SIZE);
+    let chunkNumber = 0;
 
-    const registerChunk = this.registerChunk.bind(this);
-    const uploadPath = init.multipart_params.key;
+    // Iterate over the chunks and send them
+    while (chunkNumber <= chunks) {
+      const start = chunkNumber * FILE_CHUNK_SIZE;
+      const end = Math.min(start + FILE_CHUNK_SIZE, size);
+      const chunk = body.slice(start, end);
 
-    const uploadChunkToS3 = (chunkData, chunkNumber) => {
-      const form = new FormData();
-      const params = Object.assign(init.multipart_params, {
-        name: `${basename(uploadPath)}/p${chunkNumber}`,
-        chunk: chunkNumber,
-        chunks,
-        Filename: `${uploadPath}/p${chunkNumber}`,
-        key: `${uploadPath}/p${chunkNumber}`
-      });
-      Object.keys(params).forEach(key => {
-        form.append(key, params[key]);
-      });
-      form.append("file", chunkData);
-      let opts;
-      if (typeof window !== "undefined") {
-        opts = {}; // With browser based FormData headers are taken care of automatically
-      } else {
-        opts = {
-          headers: Object.assign(form.getHeaders(), {
-            "content-length": form.getLengthSync()
-          })
-        };
-      }
-      return axios.post(endpoint, form, opts);
-    };
+      await this.api.send('POST', `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`, { chunk });
 
-    function delay(ms) {
-      return new Promise(resolve => {
-        setTimeout(resolve, ms);
-      });
+      chunkNumber++;
     }
 
-    // sequentially upload chunks to AWS, then register them
-    function nextChunk(chunkNumber) {
-      if (chunkNumber >= chunks) {
-        return Promise.resolve({ init, chunkNumber });
-      }
-      let chunkData;
-      if (bodyType === bodyTypes.STREAM) {
-        // handle stream data
-        chunkData = body.read(CHUNK_SIZE);
-        if (chunkData === null) {
-          // our read stream is not done yet reading
-          // let's wait for a while...
-          return delay(50).then(() => nextChunk(chunkNumber));
-        }
-      } else {
-        // handle buffer/blob data
-        const start = chunkNumber * CHUNK_SIZE;
-        const end = Math.min(start + CHUNK_SIZE, length);
-        chunkData = body.slice(start, end);
-      }
-      const newChunkNumber = chunkNumber + 1;
-      return uploadChunkToS3(chunkData, newChunkNumber)
-        .then(() => registerChunk(init, newChunkNumber))
-        .then(() => nextChunk(newChunkNumber));
-    }
-    return nextChunk(0);
+    return Promise.resolve(chunks);
   }
 
   /**
@@ -942,53 +748,34 @@ class Bynder {
    * @param {Buffer|Readable} file.body - The file to be uploaded. Can be either buffer or a read stream.
    * @param {Number} file.length - The length of the file to be uploaded
    * @param {Object} file.data={} - An object containing the assets' attributes
+   * @param {String} fileId - Optional file UUID.V4 identifier
    * @return {Promise} The information of the uploaded file, including IDs and all final file urls.
    */
-  uploadFile(file) {
+  uploadFile(file, fileId = uuid()) {
     const { body, filename, data } = file;
     const { brandId } = data;
     const bodyType = bodyTypes.get(body);
-    const length = getLength(file);
+    const size = getLength(file);
 
     if (!brandId) {
-      return rejectValidation("upload", "brandId");
+      return rejectValidation('upload', 'brandId');
     }
+
     if (!filename) {
-      return rejectValidation("upload", "filename");
+      return rejectValidation('upload', 'filename');
     }
+
     if (!body || !bodyType) {
-      return rejectValidation("upload", "body");
-    }
-    if (!length || typeof length !== "number") {
-      return rejectValidation("upload", "length");
+      return rejectValidation('upload', 'body');
     }
 
-    const getClosestUploadEndpoint = this.getClosestUploadEndpoint.bind(this);
-    const initUpload = this.initUpload.bind(this);
-    const uploadFileInChunks = this.uploadFileInChunks.bind(this);
-    const finaliseUpload = this.finaliseUpload.bind(this);
-    const saveAsset = this.saveAsset.bind(this);
-    const waitForUploadDone = this.waitForUploadDone.bind(this);
+    if (!size || typeof size !== 'number') {
+      return rejectValidation('upload', 'length');
+    }
 
-    return Promise.all([getClosestUploadEndpoint(), initUpload(filename)])
-      .then(res => {
-        const [endpoint, init] = res;
-        return uploadFileInChunks(file, endpoint, init);
-      })
-      .then(uploadResponse => {
-        const { init, chunkNumber } = uploadResponse;
-        return finaliseUpload(init, filename, chunkNumber);
-      })
-      .then(finalizeResponse => {
-        const { importId } = finalizeResponse;
-        return waitForUploadDone([importId]);
-      })
-      .then(doneResponse => {
-        const { itemsDone } = doneResponse;
-        const importId = itemsDone[0];
-        return saveAsset(Object.assign(data, { importId }));
-      });
+    return this.uploadFileInChunks(file, fileId)
+      .then(chunks => this.finaliseUpload(fileId, filename, chunks, size))
+      // .then(correlationId => this.pollUploadStatus(fileId, correlationId))
+      // .then(() => this.saveAsset(fileId));
   }
 }
-
-export default Bynder;
