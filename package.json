@@ -12,7 +12,7 @@
     "test:watch": "npm run test -- --watch src/ test/ --notify",
     "prestest": "npm run lint",
     "prepublish": "npm run build && npm run docs",
-    "doc": "jsdoc --destination docs --readme README.md src/**/*.js"
+    "docs": "jsdoc --destination docs --readme README.md src/**/*.js"
   },
   "author": "Bynder",
   "license": "MIT",
