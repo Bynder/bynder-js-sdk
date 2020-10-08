@@ -4,11 +4,11 @@ import 'isomorphic-form-data';
 
 import simpleOAuth2 from 'simple-oauth2';
 import {v4 as uuid} from 'uuid';
-import WebSocket from 'ws';
+// import WebSocket from 'ws';
 import url from 'url';
 import APICall from './api';
 import {rejectValidation, bodyTypes, getLength} from './utils';
-import {DEFAULT_ASSETS_NUMBER_PER_PAGE, WEBSOCKET_TOPIC_NAME, FILE_CHUNK_SIZE} from './constants';
+import {DEFAULT_ASSETS_NUMBER_PER_PAGE, FILE_CHUNK_SIZE} from './constants';
 
 /**
  * @classdesc Represents the Bynder SDK. It allows the user to make every call to the API with a single function.
@@ -653,9 +653,9 @@ export default class Bynder {
    * @param {String} correlationId - Upload correlation ID
    * @return {Promise}
    */
-  pollUploadStatus(fileId, correlationId) {
-    const socket = new WebSocket('wss://api.bynder.com/ws');
-  }
+  // pollUploadStatus(fileId, correlationId) {
+  //   const socket = new WebSocket('wss://api.bynder.com/ws');
+  // }
 
   /**
    * Resolves once assets are uploaded, or rejects after 60 attempts with 2000ms between them
@@ -706,7 +706,7 @@ export default class Bynder {
    */
   saveAsset(fileId) {
     const saveURL = fileId ? `v4/media/${fileId}/save/` : 'v4/media/save/';
-    return this.api.send('POST', saveURL, data);
+    return this.api.send('POST', saveURL);
   }
 
   /**
@@ -725,24 +725,22 @@ export default class Bynder {
     const chunks = Math.ceil(size / FILE_CHUNK_SIZE);
     let chunkNumber = 0;
 
-    console.log(`CHUNKS: ${chunks}`)
-
     // Iterate over the chunks and send them
     while (chunkNumber <= chunks) {
       const start = chunkNumber * FILE_CHUNK_SIZE;
       const end = Math.min(start + FILE_CHUNK_SIZE, size);
       const chunk = body.slice(start, end);
 
-      await this.api.send('POST', `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`, { chunk })
+      await this.api
+        .send('POST', `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`, { chunk })
         .catch(error => {
-          console.error(error);
-          throw error;
+          throw new Error(`Chunk ${chunkNumber} not uploaded`, error);
         });
 
       chunkNumber++;
     }
 
-    return Promise.resolve(chunks);
+    return chunks;
   }
 
   /**
@@ -779,8 +777,8 @@ export default class Bynder {
     }
 
     return this.uploadFileInChunks(file, fileId, size)
-      .then(chunks => this.finaliseUpload(fileId, filename, chunks, size))
-      // .then(correlationId => this.pollUploadStatus(fileId, correlationId))
-      // .then(() => this.saveAsset(fileId));
+      .then(chunks => this.finaliseUpload(fileId, filename, chunks, size));
+    // .then(correlationId => this.pollUploadStatus(fileId, correlationId))
+    // .then(() => this.saveAsset(fileId));
   }
 }

@@ -1,9 +1,6 @@
-import axios from 'axios';
 import {v4 as uuid} from 'uuid';
 import Bynder from '../../src/index.js';
-
-// Axios' Jest mock, so we don't hit the real API
-jest.mock('axios');
+import * as helpers from '../helpers';
 
 const config = {
   baseURL: 'https://portal.getbynder.com/api/',
@@ -20,10 +17,6 @@ const file = {
     brandId: 'Bynder'
   }
 };
-
-afterAll(() => {
-  jest.unmock('axios');
-});
 
 describe('.oauth2', () => {
   describe('#makeAuthorizationURL', () => {
@@ -57,7 +50,7 @@ describe('.oauth2', () => {
     expect(() => new Bynder(invalidTokenConfig)).toThrow(/Invalid token format/);
   });
 
-  describe('Initialize Bynder with permanent token', () => {
+  describe('with permanent token', () => {
     it('does not returns an error', () => {
       expect(bynder.api.permanentToken).toEqual('test');
     });
@@ -130,12 +123,15 @@ describe('#uploadFile', () => {
 
   describe('#uploadFileInChunks', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      bynder.uploadFileInChunks = jest.fn(() => Promise.resolve(1));
+      jest.restoreAllMocks();
+      helpers.mockFunctions(bynder, [{
+        name: 'uploadFileInChunks',
+        returnedValue: Promise.resolve(1)
+      }]);
     });
 
     afterEach(() => {
-      bynder.uploadFileInChunks.mockRestore();
+      helpers.restoreMockedFunctions(bynder, [{ name: 'uploadFileInChunks' }]);
     });
 
     it('calls the method with the expected payload', () => {
@@ -151,19 +147,32 @@ describe('#uploadFile', () => {
     const correlationId = uuid();
 
     beforeEach(() => {
-      jest.clearAllMocks();
-      bynder.api.send = jest.fn(() => Promise.resolve({
-        headers: {
-          'X-API-Correlation-Id': correlationId
+      jest.restoreAllMocks();
+      helpers.mockFunctions(bynder, [
+        {
+          name: 'uploadFileInChunks',
+          returnedValue: Promise.resolve(chunks)
+        },
+        {
+          name: 'finaliseUpload',
+          returnedValue: Promise.resolve(correlationId)
         }
-      }));
-      bynder.uploadFileInChunks = jest.fn(() => Promise.resolve(chunks));
-      bynder.finaliseUpload = jest.fn(() => Promise.resolve(correlationId));
+      ]);
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({
+            headers: {
+              'X-API-Correlation-Id': correlationId
+            }
+          })
+        }
+      ]);
     });
 
     afterEach(() => {
-      bynder.uploadFileInChunks.mockRestore();
-      bynder.finaliseUpload.mockRestore();
+      helpers.restoreMockedFunctions(bynder, [{ name: 'uploadFileInChunks' }, { name: 'finaliseUpload' }]);
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
     });
 
     it('calls the method with the expected payload', async () => {
@@ -176,16 +185,124 @@ describe('#uploadFile', () => {
 });
 
 describe('#uploadFileInChunks', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+    helpers.mockFunctions(bynder.api, [
+      {
+        name: 'send',
+        returnedValue: Promise.resolve()
+      }
+    ]);
+  });
+
+  afterEach(() => {
+    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+  });
+
   it('calls the FS upload chunk endpoint', async () => {
     const fileId = uuid();
-    axios.mockImplementation(() => Promise.resolve({}));
+    const expectedChunk = Buffer.from([97, 45, 102, 105, 108, 101]);
 
-    await bynder.uploadFileInChunks(file, fileId, file.body.length)
-          .then(chunks => {
-            expect(chunks).toEqual(1);
+    const chunks = await bynder.uploadFileInChunks(file, fileId, file.body.length);
+    expect(chunks).toEqual(1);
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, {
+      chunk: expectedChunk
+    });
+  });
+
+  describe('on a request error', () => {
+    beforeEach(() => {
+      jest.restoreAllMocks();
+      helpers.mockFunctions(bynder.api.axios, [
+        {
+          name: 'request',
+          returnedValue: Promise.resolve({
+            status: 400
           })
-          .catch(error => {
-            expect(error).toBeUndefined();
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api.axios, [{ name: 'request' }]);
+    });
+
+    it('throws response error', () => {
+      const fileId = uuid();
+
+      bynder.uploadFileInChunks(file, fileId, file.body.length)
+        .catch(error => {
+          expect(error).toEqual({
+            message: 'Chunk 0 not uploaded'
           });
+        });
+    });
+  });
+});
+
+describe('#saveAsset', () => {
+  describe('with a file Id', () => {
+    beforeAll(() => {
+      jest.restoreAllMocks();
+      helpers.mockFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('calls the save media endpoint', async () => {
+      const fileId = uuid();
+
+      await bynder.saveAsset(fileId);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v4/media/${fileId}/save/`);
+    });
+  });
+
+  describe('with no file Id', () => {
+    beforeAll(() => {
+      jest.restoreAllMocks();
+      helpers.mockFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('calls the save media endpoint', async () => {
+      await bynder.saveAsset();
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/save/');
+    });
+  });
+
+  describe('on a request error', () => {
+    beforeEach(() => {
+      jest.restoreAllMocks();
+      helpers.mockFunctions(bynder.api.axios, [
+        {
+          name: 'request',
+          returnedValue: Promise.resolve({
+            status: 400,
+            statusText: 'There was a problem saving the asset'
+          })
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api.axios, [{ name: 'request' }]);
+    });
+
+    it('throws response error', () => {
+      const fileId = uuid();
+
+      bynder.saveAsset(fileId)
+        .catch(error => {
+          expect(error).toEqual({
+            status: 400,
+            statusText: 'There was a problem saving the asset'
+          });
+        });
+    });
   });
 });
