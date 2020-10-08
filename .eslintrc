@@ -9,7 +9,7 @@
     "jest": true
   },
   "parserOptions": {
-    "ecmaVersion": 11,
+    "ecmaVersion": 2021,
     "sourceType": "module"
   },
   "plugins": ["import"],
@@ -28,9 +28,6 @@
       "error",
       "never"
     ],
-    // disallowing space after function name
-    // http://eslint.org/docs/rules/space-before-function-paren
-    "space-before-function-paren": ["error", "never"],
     // allowing unary operators
     // http://eslint.org/docs/rules/no-plusplus
     "no-plusplus": "off",
@@ -41,13 +38,6 @@
       {
         "devDependencies": false
       }
-    ],
-
-    // enforce braces in arrow function bodies
-    // http://eslint.org/docs/rules/arrow-body-style
-    "arrow-body-style": [
-      "error",
-      "always"
     ],
     "quotes": [
       "error",
