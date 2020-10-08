@@ -1,7 +1,6 @@
 'use strict';
 
 import queryString from 'query-string';
-import joinUrl from 'proper-url-join';
 import isUrl from 'is-url';
 import axios from 'axios';
 
@@ -23,10 +22,10 @@ export default class APICall {
   constructor(baseURL, httpsAgent, httpAgent, token) {
     if (!isUrl(baseURL)) throw new Error('The base URL provided is not valid');
 
-    this.baseURL = baseURL;
     this.httpsAgent = httpsAgent;
     this.httpAgent = httpAgent;
     this.token = token;
+    this.axios = axios.create({ baseURL });
   }
 
   /**
@@ -34,9 +33,7 @@ export default class APICall {
    * @return {Promise} - Returns a Promise that, when fulfilled, will either return an JSON Object with the requested
    * data or an Error with the problem.
    */
-  async send(method, url, data = {}) {
-    let callURL = joinUrl(this.baseURL, url, { trailingSlash: true });
-
+  async send(method, url, params = {}) {
     const headers = {};
 
     if (!this.token && !this.permanentToken) {
@@ -58,30 +55,26 @@ export default class APICall {
     if (method === 'POST') {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
 
-      body = queryString.stringify(data);
-    } else if (Object.keys(data).length && data.constructor === Object) {
-      callURL = joinUrl(callURL, { trailingSlash: true, query: data });
+      body = queryString.stringify(params);
     }
 
-    return axios(callURL, {
-      httpsAgent: this.httpsAgent,
-      httpAgent: this.httpAgent,
-      method,
+    return this.axios.request({
+      url, params, method, headers,
       data: body,
-      headers
+      httpsAgent: this.httpsAgent,
+      httpAgent: this.httpAgent
     }).then(response => {
-      const {headers} = response;
+      const {headers, status} = response;
 
-      if (response.status >= 400) {
+      if (status >= 400) {
         // check for 4XX, 5XX, wtv
         return Promise.reject({
-          headers,
-          status: response.status,
+          headers, status,
           message: response.statusText,
           body: response.data
         });
       }
-      if (response.status >= 200 && response.status <= 202) {
+      if (status >= 200 && status <= 202) {
         return { ...response.data, headers };
       }
       return {};
