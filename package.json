@@ -47,7 +47,6 @@
     "is-url": "^1.2.4",
     "isomorphic-form-data": "^1.0.0",
     "node-fetch": "^2.6.1",
-    "proper-url-join": "^1.2.0",
     "query-string": "^6.1.0",
     "simple-oauth2": "^2.5.1",
     "uuid": "^8.3.0"
@@ -80,6 +79,7 @@
       "/coverage/",
       "/samples/",
       "/docs/",
+      "/tests/helpers/",
       "/rollup.config.js"
     ],
     "coverageDirectory": "coverage",
