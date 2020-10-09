@@ -300,7 +300,7 @@ describe('#saveAsset', () => {
         .catch(error => {
           expect(error).toEqual({
             status: 400,
-            statusText: 'There was a problem saving the asset'
+            message: 'There was a problem saving the asset'
           });
         });
     });
