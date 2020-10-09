@@ -3,6 +3,7 @@
 import queryString from 'query-string';
 import isUrl from 'is-url';
 import axios from 'axios';
+import pkg from '../../package.json';
 
 /**
  * @classdesc Represents an API call.
@@ -28,17 +29,10 @@ export default class APICall {
     this.axios = axios.create({ baseURL });
   }
 
-  /**
-   * Fetch the information from the API.
-   * @return {Promise} - Returns a Promise that, when fulfilled, will either return an JSON Object with the requested
-   * data or an Error with the problem.
-   */
-  async send(method, url, params = {}) {
-    const headers = {};
-
-    if (!this.token && !this.permanentToken) {
-      throw new Error('No token found');
-    }
+  async _headers(method) {
+    const headers = {
+      'User-Agent': `${pkg.name}/${pkg.version}`
+    };
 
     if (this.permanentToken) {
       headers['Authorization'] = `Bearer ${this.permanentToken}`;
@@ -50,12 +44,31 @@ export default class APICall {
       headers['Authorization'] = `Bearer ${this.token.token.access_token}`;
     }
 
-    let body = '';
-
     if (method === 'POST') {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    }
 
+    return headers;
+  }
+
+  /**
+   * Fetch the information from the API.
+   * @return {Promise} - Returns a Promise that, when fulfilled, will either return an JSON Object with the requested
+   * data or an Error with the problem.
+   */
+  async send(method, url, params = {}) {
+
+    if (!this.token && !this.permanentToken) {
+      throw new Error('No token found');
+    }
+
+    const headers = await this._headers(method);
+    let body = null;
+
+    if (method === 'POST') {
       body = queryString.stringify(params);
+      // We need to clear the params so they're not sent as QS
+      params = null;
     }
 
     return this.axios.request({
