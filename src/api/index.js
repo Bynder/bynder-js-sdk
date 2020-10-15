@@ -31,7 +31,7 @@ export default class APICall {
 
   async _headers(method) {
     const headers = {
-      'User-Agent': `${pkg.name}/${pkg.version}`
+      'User-Agent': `bynder-js-sdk/${pkg.version}`
     };
 
     if (this.permanentToken) {

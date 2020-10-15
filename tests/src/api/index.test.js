@@ -25,7 +25,7 @@ describe('#_headers', () => {
 
     it('returns headers with Content-Type if is a POST', async () => {
       const expectedHeaders = {
-        'User-Agent': `${pkg.name}/${pkg.version}`,
+        'User-Agent': `bynder-js-sdk/${pkg.version}`,
         'Authorization': 'Bearer token',
         'Content-Type': 'application/x-www-form-urlencoded'
       };
