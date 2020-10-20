@@ -36,7 +36,7 @@ describe('#_headers', () => {
 
     it('returns headers with Content-Type if is not a POST', async () => {
       const expectedHeaders = {
-        'User-Agent': `${pkg.name}/${pkg.version}`,
+        'User-Agent': `bynder-js-sdk/${pkg.version}`,
         'Authorization': 'Bearer token'
       };
       const headers = await api._headers('GET');
@@ -67,7 +67,7 @@ describe('#_headers', () => {
 
     it('returns headers with Content-Type if is a POST', async () => {
       const expectedHeaders = {
-        'User-Agent': `${pkg.name}/${pkg.version}`,
+        'User-Agent': `bynder-js-sdk/${pkg.version}`,
         'Authorization': 'Bearer oauth-access-token',
         'Content-Type': 'application/x-www-form-urlencoded'
       };
@@ -78,7 +78,7 @@ describe('#_headers', () => {
 
     it('returns headers with Content-Type if is not a POST', async () => {
       const expectedHeaders = {
-        'User-Agent': `${pkg.name}/${pkg.version}`,
+        'User-Agent': `bynder-js-sdk/${pkg.version}`,
         'Authorization': 'Bearer oauth-access-token'
       };
       const headers = await api._headers('GET');
@@ -144,7 +144,7 @@ describe('#send', () => {
         method: 'POST',
         data: 'chunk=0&size=100',
         headers: {
-          'User-Agent': `${pkg.name}/${pkg.version}`,
+          'User-Agent': `bynder-js-sdk/${pkg.version}`,
           'Authorization': 'Bearer token',
           'Content-Type': 'application/x-www-form-urlencoded'
         },
@@ -205,7 +205,7 @@ describe('#send', () => {
         },
         data: null,
         headers: {
-          'User-Agent': `${pkg.name}/${pkg.version}`,
+          'User-Agent': `bynder-js-sdk/${pkg.version}`,
           'Authorization': 'Bearer token'
         },
         httpAgent: undefined,
