@@ -43,7 +43,6 @@ class APICall {
     this.httpsAgent = httpsAgent;
     this.httpAgent = httpAgent;
     this.token = token;
-    this._axios = axios;
   }
 
   /**
@@ -82,7 +81,7 @@ class APICall {
       callURL = joinUrl(callURL, { trailingSlash: true, query: data });
     }
 
-    return this._axios(callURL, {
+    return axios(callURL, {
       httpsAgent: this.httpsAgent,
       httpAgent: this.httpAgent,
       method,

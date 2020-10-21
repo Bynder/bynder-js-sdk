@@ -1,7 +1,8 @@
 /* global jest */
 
-const Bynder = require("../src/bynder-js-sdk.js");
+const axios = require('axios');
 const pkg = require("../package.json");
+const Bynder = require("../src/bynder-js-sdk.js");
 
 const configs = {
     "baseURL": "https://portal.getbynder.com/api/",
@@ -9,6 +10,8 @@ const configs = {
     "clientSecret": "test-client-secret",
     "redirectUri": "https://test-redirect-uri.com"
 };
+
+jest.mock('axios');
 
 let bynder;
 
@@ -76,18 +79,14 @@ describe("Initialize Bynder with permanent token", () => {
 
 describe("API call headers", () => {
   describe("with permanent token", () => {
-    let mockedFunction = null;
-
     beforeEach(() => {
       bynder = new Bynder(configs);
+      axios.mockResolvedValue({});
       bynder.api.permanentToken = "token";
-      mockedFunction = bynder.api._axios;
-      bynder.api._axios = jest.fn(() => Promise.resolve({}));
     });
 
     afterEach(() => {
-      bynder.api._axios = mockedFunction;
-      mockedFunction = null;
+      axios.mockRestore();
       bynder = null;
     });
 
@@ -99,7 +98,7 @@ describe("API call headers", () => {
       };
       bynder.editMedia({ id: "dummy-id" });
 
-      expect(bynder.api._axios).toHaveBeenNthCalledWith(1, "https://portal.getbynder.com/api/v4/media/", {
+      expect(axios).toHaveBeenNthCalledWith(1, "https://portal.getbynder.com/api/v4/media/", {
         method: "POST",
         data: "id=dummy-id",
         headers: expectedHeaders
@@ -113,7 +112,7 @@ describe("API call headers", () => {
       };
       bynder.getMediaInfo({ id: "dummy-id" });
 
-      expect(bynder.api._axios).toHaveBeenNthCalledWith(1, "https://portal.getbynder.com/api/v4/media/dummy-id/", {
+      expect(axios).toHaveBeenNthCalledWith(1, "https://portal.getbynder.com/api/v4/media/dummy-id/", {
         method: "GET",
         data: "",
         headers: expectedHeaders
