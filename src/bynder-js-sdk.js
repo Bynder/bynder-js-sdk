@@ -5,6 +5,7 @@ const isUrl = require("is-url");
 const joinUrl = require("proper-url-join");
 const queryString = require("query-string");
 const simpleOAuth2 = require("simple-oauth2");
+const pkg = require("../package.json");
 const url = require("url");
 
 const defaultAssetsNumberPerPage = 50;
@@ -42,6 +43,7 @@ class APICall {
     this.httpsAgent = httpsAgent;
     this.httpAgent = httpAgent;
     this.token = token;
+    this._axios = axios;
   }
 
   /**
@@ -52,11 +54,13 @@ class APICall {
   async send(method, url, data = {}) {
     let callURL = joinUrl(this.baseURL, url, { trailingSlash: true });
 
-    const headers = {};
-
     if (!this.token && !this.permanentToken) {
       throw new Error("No token found");
     }
+
+    const headers = {
+      'User-Agent': "bynder-js-sdk/" + pkg.version
+    };
 
     if (this.permanentToken) {
       headers["Authorization"] = "Bearer " + this.permanentToken;
@@ -78,7 +82,7 @@ class APICall {
       callURL = joinUrl(callURL, { trailingSlash: true, query: data });
     }
 
-    return axios(callURL, {
+    return this._axios(callURL, {
       httpsAgent: this.httpsAgent,
       httpAgent: this.httpAgent,
       method,
@@ -812,7 +816,7 @@ class Bynder {
   waitForUploadDone(importIds) {
     const POLLING_INTERVAL = 2000;
     const MAX_POLLING_ATTEMPTS = typeof process === 'object'
-      ? process.env.BYNDER_MAX_POLLING_ATTEMPTS || 60 
+      ? process.env.BYNDER_MAX_POLLING_ATTEMPTS || 60
       : 60;
     const pollUploadStatus = this.pollUploadStatus.bind(this);
     return new Promise((resolve, reject) => {
