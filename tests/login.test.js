@@ -1,5 +1,8 @@
+/* global jest */
+
+const axios = require('axios');
+const pkg = require("../package.json");
 const Bynder = require("../src/bynder-js-sdk.js");
-const url = require("url");
 
 const configs = {
     "baseURL": "https://portal.getbynder.com/api/",
@@ -7,6 +10,8 @@ const configs = {
     "clientSecret": "test-client-secret",
     "redirectUri": "https://test-redirect-uri.com"
 };
+
+jest.mock('axios');
 
 let bynder;
 
@@ -68,5 +73,50 @@ describe("Initialize Bynder with permanent token", () => {
     const bynder = new Bynder({...configs, permanentToken: "test"});
 
     expect(bynder.api.permanentToken).toEqual("test");
+  });
+});
+
+
+describe("API call headers", () => {
+  describe("with permanent token", () => {
+    beforeEach(() => {
+      bynder = new Bynder(configs);
+      axios.mockResolvedValue({});
+      bynder.api.permanentToken = "token";
+    });
+
+    afterEach(() => {
+      axios.mockRestore();
+      bynder = null;
+    });
+
+    it("returns headers with Content-Type if is a POST", () => {
+      const expectedHeaders = {
+        "User-Agent": "bynder-js-sdk/" + pkg.version,
+        "Authorization": "Bearer token",
+        "Content-Type": "application/x-www-form-urlencoded"
+      };
+      bynder.editMedia({ id: "dummy-id" });
+
+      expect(axios).toHaveBeenNthCalledWith(1, "https://portal.getbynder.com/api/v4/media/", {
+        method: "POST",
+        data: "id=dummy-id",
+        headers: expectedHeaders
+      });
+    });
+
+    it("returns headers with Content-Type if is not a POST", () => {
+      const expectedHeaders = {
+        "User-Agent": `bynder-js-sdk/${pkg.version}`,
+        "Authorization": "Bearer token"
+      };
+      bynder.getMediaInfo({ id: "dummy-id" });
+
+      expect(axios).toHaveBeenNthCalledWith(1, "https://portal.getbynder.com/api/v4/media/dummy-id/", {
+        method: "GET",
+        data: "",
+        headers: expectedHeaders
+      });
+    });
   });
 });
