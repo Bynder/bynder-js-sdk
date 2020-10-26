@@ -1,12 +1,23 @@
 language: node_js
 sudo: false
 node_js:
-  - "8"
-  - "10"
-  - "11"
+  - '8'
+  - '10'
+  - '11'
+
 notifications:
   email:
     recipients:
-      - ajax@bynder.com
+    - ajax@bynder.com
     on_success: never
     on_failure: always
+
+deploy:
+  provider: npm
+  email: $NPM_AUTH_EMAIL
+  api_key:
+    secure: $NPM_AUTH_TOKEN
+  on:
+    tags: true
+    repo: Bynder/bynder-js-sdk
+  skip_cleanup: 'true'
