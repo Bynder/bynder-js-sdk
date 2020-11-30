@@ -14,11 +14,11 @@ export default class APICall {
   /**
    * Create a APICall.
    * @constructor
-   * @param {string} baseURL - A string with the base URL for account.
-   * @param {string} httpsAgent - A https agent.
-   * @param {string} httpAgent - A http agent.
-   * @param {string} token - Optional OAuth2 access token
-   * @param {Object} [data={}] - An object containing the query parameters.
+   * @param {String} baseURL A string with the base URL for account.
+   * @param {String} httpsAgent A https agent.
+   * @param {String} httpAgent A http agent.
+   * @param {String} token Optional OAuth2 access token
+   * @param {Object} [data={}] An object containing the query parameters.
    */
   constructor(baseURL, httpsAgent, httpAgent, token) {
     if (!isUrl(baseURL)) throw new Error('The base URL provided is not valid');
@@ -29,6 +29,13 @@ export default class APICall {
     this.axios = axios.create({ baseURL });
   }
 
+  /**
+   * Generates the request headers
+   * @access private
+   * @async
+   * @param {String} method HTTP Verb of the request
+   * @returns {Promise<object>} ?Request headers to be send
+   */
   async _headers(method) {
     const headers = {
       'User-Agent': `bynder-js-sdk/${pkg.version}`
@@ -44,7 +51,7 @@ export default class APICall {
       headers['Authorization'] = `Bearer ${this.token.token.access_token}`;
     }
 
-    if (method === 'POST') {
+    if (method.toLowerCase() === 'post') {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
     }
 
@@ -53,8 +60,8 @@ export default class APICall {
 
   /**
    * Fetch the information from the API.
-   * @return {Promise} - Returns a Promise that, when fulfilled, will either return an JSON Object with the requested
-   * data or an Error with the problem.
+   * @async
+   * @returns {Promise<object>} Object with response data or an Error with the problem.
    */
   async send(method, url, params = {}) {
 
@@ -76,21 +83,20 @@ export default class APICall {
       data: body,
       httpsAgent: this.httpsAgent,
       httpAgent: this.httpAgent
-    }).then(response => {
-      const {headers, status} = response;
+    })
+      .then(response => {
+        const {headers, status} = response;
 
-      if (status >= 400) {
-        // check for 4XX, 5XX, wtv
-        return Promise.reject({
-          headers, status,
-          message: response.statusText,
-          body: response.data
-        });
-      }
-      if (status >= 200 && status <= 202) {
-        return { ...response.data, headers };
-      }
-      return {};
-    });
+        if (status >= 200 && status <= 202) {
+          return { ...response.data, headers };
+        }
+
+        return {};
+      })
+      .catch(response => {
+        const {headers, status, data: body, statusText: message} = response;
+
+        return Promise.reject({ headers, status, body, message });
+      });
   }
 }

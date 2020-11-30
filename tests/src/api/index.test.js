@@ -224,7 +224,7 @@ describe('#send', () => {
       helpers.mockFunctions(api.axios, [
         {
           name: 'request',
-          returnedValue: Promise.resolve({
+          returnedValue: Promise.reject({
             headers: {
               'X-API-Correlation-Id': correlationId
             },
