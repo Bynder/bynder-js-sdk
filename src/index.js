@@ -1,10 +1,8 @@
 'use strict';
 
 import 'isomorphic-form-data';
-
 import simpleOAuth2 from 'simple-oauth2';
 import {v4 as uuid} from 'uuid';
-// import WebSocket from 'ws';
 import url from 'url';
 import APICall from './api';
 import {rejectValidation, bodyTypes, getLength} from './utils';
