@@ -606,6 +606,21 @@ export default class Bynder {
   }
 
   /**
+   * Get the download url of original file.
+   * @see {@link https://bynder.docs.apiary.io/#reference/download/download-operations/retrieve-asset-download-location|API Call}
+   * @param {Object} params - An object containing the parameters accepted by the API to change in the asset.
+   * @param {String} params.id - The id of the desired asset.
+   * @returns {Promise}
+   */
+  getMediaDownloadUrl({ id, params } = {}) {
+    if (!id) {
+        return rejectValidation('media', 'id');
+    }
+
+    return this.api.send('GET', `v4/media/${id}/download`, { ...params });
+  }
+
+  /**
    * Finalises the file upload when all chunks finished uploading and registers it in Bynder.
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/finalise-a-completely-uploaded-file}
    * @param {String} fileId Unique file identifier
