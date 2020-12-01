@@ -587,6 +587,25 @@ export default class Bynder {
   }
 
   /**
+   * Get options for a metaproperty
+   * @see {@link https://bynder.docs.apiary.io/#reference/metaproperties/metaproperty-option-operations/retrieve-metaproperty-options|API Call}
+   * @param {Object} params={} - An object containing the id of the desired metaproperty and parameters accepted by the
+   * API to narrow the query for options
+   * @param {String} params.id - The id of the desired metaproperty.
+   * @return {Promise<array>} Response - Returns a Promise that, when fulfilled, will either return an Array with the
+   * metaproperties or an Error with the problem.
+   */
+  getMetapropertyOptions({ id, ...params } = {}) {
+    if (!id) {
+      return rejectValidation('metapropertyOption', 'id');
+    }
+
+    return this.api.send('GET', `v4/metaproperties/${id}/options/`, params).then(data => {
+      return Object.keys(data).map(metaproperty => data[metaproperty]);
+    });
+  }
+
+  /**
    * Finalises the file upload when all chunks finished uploading and registers it in Bynder.
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/finalise-a-completely-uploaded-file}
    * @param {String} fileId Unique file identifier
