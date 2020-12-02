@@ -4,16 +4,18 @@ let mockedFunctions = {};
 
 export function mockFunctions(obj = {}, fns = []) {
   for (let fn of fns) {
-    mockedFunctions[fn.name] = obj[fn.name];
+    mockedFunctions[fn.name] = jest.spyOn(obj, fn.name);
+    const value = fn.returnedValue;
 
-    const value = fn.returnedValue || Promise.resolve();
-    obj[fn.name] = jest.fn(() => value);
+    if (value) {
+      mockedFunctions[fn.name].mockImplementation(() => value);
+    }
   }
 }
 
-export function restoreMockedFunctions(obj = {}, fns = []) {
+export function restoreMockedFunctions(obj = {}, fns = []) { // eslint-disable-line no-unused-vars
   for (let fn of fns) {
-    obj[fn.name] = mockedFunctions[fn.name];
-    delete mockedFunctions[fn.name];
+    mockedFunctions[fn.name].mockRestore();
+    delete mockedFunctions?.[fn.name];
   }
 }

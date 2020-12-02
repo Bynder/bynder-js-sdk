@@ -125,7 +125,6 @@ describe('#uploadFile', () => {
     const correlationId = 'it-shall-not-end-until-my-death';
 
     beforeEach(() => {
-      jest.restoreAllMocks();
       helpers.mockFunctions(bynder, [
         {
           name: 'prepareUpload',
@@ -169,7 +168,6 @@ describe('#uploadFile', () => {
     const fileId = 'i-shall-take-no-wife-hold-no-lands-father-no-children';
 
     beforeEach(() => {
-      jest.restoreAllMocks();
       helpers.mockFunctions(bynder, [
         {
           name: 'prepareUpload',
@@ -221,7 +219,6 @@ describe('#uploadFile', () => {
 
 describe('#prepareUpload', () => {
   beforeEach(() => {
-    jest.restoreAllMocks();
     helpers.mockFunctions(bynder.api, [
       {
         name: 'send',
@@ -232,7 +229,7 @@ describe('#prepareUpload', () => {
     ]);
   });
 
-  afterEach(() => {
+  afterAll(() => {
     helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
   });
 
@@ -245,24 +242,23 @@ describe('#prepareUpload', () => {
 
   describe('on a request error', () => {
     beforeEach(() => {
-      jest.restoreAllMocks();
       helpers.mockFunctions(bynder.api, [
         {
           name: 'send',
           returnedValue: Promise.reject({
-            status: 400
+            status: 500,
+            message: 'There was a problem preparing the upload'
           })
         }
       ]);
     });
 
-    afterEach(() => {
-      helpers.restoreMockedFunctions(bynder.api.axios, [{ name: 'request' }]);
-    });
-
     it('throws response error', () => {
       bynder.prepareUpload().catch(error => {
-        expect(error).not.toBeUndefined();
+        expect(error).toEqual({
+          status: 500,
+          message: 'There was a problem preparing the upload'
+        });
       });
     });
   });
@@ -270,7 +266,6 @@ describe('#prepareUpload', () => {
 
 describe('#uploadFileInChunks', () => {
   beforeEach(() => {
-    jest.restoreAllMocks();
     helpers.mockFunctions(bynder.api, [
       {
         name: 'send',
@@ -296,7 +291,6 @@ describe('#uploadFileInChunks', () => {
 
   describe('on a request error', () => {
     beforeEach(() => {
-      jest.restoreAllMocks();
       helpers.mockFunctions(bynder.api.axios, [
         {
           name: 'request',
@@ -328,7 +322,6 @@ describe('#finaliseUpload', () => {
   const correlationId = 'i-am-the-shield-that-guards-the-realms-of-men';
 
   beforeEach(() => {
-    jest.restoreAllMocks();
     helpers.mockFunctions(bynder.api, [
       {
         name: 'send',
@@ -359,7 +352,6 @@ describe('#finaliseUpload', () => {
 
   describe('on a request error', () => {
     beforeEach(() => {
-      jest.restoreAllMocks();
       helpers.mockFunctions(bynder.api.axios, [
         {
           name: 'request',
@@ -392,7 +384,6 @@ describe('#finaliseUpload', () => {
 describe('#saveAsset', () => {
   describe('with a file Id', () => {
     beforeAll(() => {
-      jest.restoreAllMocks();
       helpers.mockFunctions(bynder.api, [
         {
           name: 'send',
@@ -416,8 +407,12 @@ describe('#saveAsset', () => {
 
   describe('with no file Id', () => {
     beforeAll(() => {
-      jest.restoreAllMocks();
-      helpers.mockFunctions(bynder.api, [{ name: 'send' }]);
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve()
+        }
+      ]);
     });
 
     afterAll(() => {
@@ -449,7 +444,6 @@ describe('#saveAsset', () => {
 
   describe('on a request error', () => {
     beforeEach(() => {
-      jest.restoreAllMocks();
       helpers.mockFunctions(bynder.api.axios, [
         {
           name: 'request',
@@ -483,7 +477,6 @@ describe('#saveAsset', () => {
 describe('#getBrands', () => {
   describe('on a successful request', () => {
     beforeAll(() => {
-      jest.restoreAllMocks();
       helpers.mockFunctions(bynder.api, [
         {
           name: 'send',
@@ -504,7 +497,6 @@ describe('#getBrands', () => {
 
   describe('on a request error', () => {
     beforeEach(() => {
-      jest.restoreAllMocks();
       helpers.mockFunctions(bynder.api.axios, [
         {
           name: 'request',
