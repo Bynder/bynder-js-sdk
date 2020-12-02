@@ -6,7 +6,7 @@
   "module": "dist/bynder-js-sdk.esm.js",
   "scripts": {
     "build": "rollup -c",
-    "dev": "rollup -c -w",
+    "dev": "npm run build -- -w",
     "test": "jest --coverage",
     "lint": "eslint --config .eslintrc src/ tests/",
     "test:watch": "npm run test -- --watch src/ test/ --notify",
