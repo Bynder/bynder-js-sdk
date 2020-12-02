@@ -24,10 +24,14 @@ export const bodyTypes = {
     if (Buffer?.isBuffer(body)) {
       return bodyTypes.BUFFER;
     }
+    /* istanbul ignore next */
     if (window?.Blob && body instanceof window?.Blob) {
+      /* istanbul ignore next */
       return bodyTypes.BLOB;
     }
+    /* istanbul ignore next */
     if (typeof body?.read === 'function') {
+      /* istanbul ignore next */
       return bodyTypes.STREAM;
     }
     return null;
@@ -41,10 +45,13 @@ export const bodyTypes = {
 export function getLength(file) {
   const { body, length } = file;
   const bodyType = bodyTypes.get(body);
+  /* istanbul ignore next */
   if (bodyType === bodyTypes.BUFFER) {
     return body.length;
   }
+  /* istanbul ignore next */
   if (bodyType === bodyTypes.BLOB) {
+    /* istanbul ignore next */
     return body.size;
   }
   return length;

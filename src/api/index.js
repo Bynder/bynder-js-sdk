@@ -44,6 +44,7 @@ export default class APICall {
     if (this.permanentToken) {
       headers['Authorization'] = `Bearer ${this.permanentToken}`;
     } else {
+      /* istanbul ignore next */
       this.token = await (this.token.expired()
         ? this.token.refresh()
         : Promise.resolve(this.token));
