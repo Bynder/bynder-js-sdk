@@ -649,12 +649,17 @@ export default class Bynder {
    * Saves a media asset in Bynder. If media id is specified in the data a new version of the asset will be saved.
    * Otherwise a new asset will be saved.
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/save-as-a-new-asset}
-   * @param {String} fileId Unique file identifier
+   * @param {Object} data Asset data
    * @return {Promise<object>}
    */
-  saveAsset(fileId) {
+  saveAsset(data) {
+    if (!data.brandId) {
+      return rejectValidation('upload', 'brandId');
+    }
+
+    const { fileId } = data;
     const url = fileId ? `v4/media/${fileId}/save/` : 'v4/media/save/';
-    return this.api.send('POST', url);
+    return this.api.send('POST', url, data);
   }
 
   /**
@@ -671,25 +676,26 @@ export default class Bynder {
    */
   async uploadFileInChunks(file, fileId, size) {
     const { body } = file;
-    const chunks = Math.ceil(size / FILE_CHUNK_SIZE);
-    let chunkNumber = 0;
+    // Developers can use this to track file upload progress
+    this._chunks = Math.ceil(size / FILE_CHUNK_SIZE);
+    this._chunkNumber = 0;
 
     // Iterate over the chunks and send them
-    while (chunkNumber <= chunks) {
-      const start = chunkNumber * FILE_CHUNK_SIZE;
+    while (this._chunkNumber <= this._chunks) {
+      const start = this._chunkNumber * FILE_CHUNK_SIZE;
       const end = Math.min(start + FILE_CHUNK_SIZE, size);
       const chunk = body.slice(start, end);
 
       await this.api
-        .send('POST', `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`, { chunk })
+        .send('POST', `v7/file_cmds/upload/${fileId}/chunk/${this._chunkNumber}`, { chunk })
         .catch(error => {
           throw new Error(`Chunk ${chunkNumber} not uploaded`, error);
         });
 
-      chunkNumber++;
+        this._chunkNumber++;
     }
 
-    return chunks;
+    return this._chunks;
   }
 
   /**
@@ -726,11 +732,14 @@ export default class Bynder {
       return rejectValidation('upload', 'length');
     }
 
+    this._chunks = undefined;
+    this._chunkNumber = undefined;
+
     try {
       const fileId = await this.prepareUpload();
       const chunks = await this.uploadFileInChunks(file, fileId, size);
       const correlationId = await this.finaliseUpload(fileId, filename, chunks, size);
-      const asset = await this.saveAsset(fileId);
+      const asset = await this.saveAsset({...data, fileId});
 
       return { fileId, correlationId, asset };
     } catch (error) {

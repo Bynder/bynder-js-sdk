@@ -161,7 +161,7 @@ describe('#uploadFile', () => {
       expect(bynder.prepareUpload).toHaveBeenCalledTimes(1);
       expect(bynder.uploadFileInChunks).toHaveBeenNthCalledWith(1, file, fileId, file.body.length);
       expect(bynder.finaliseUpload).toHaveBeenNthCalledWith(1, fileId, file.filename, 1, file.body.length);
-      expect(bynder.saveAsset).toHaveBeenNthCalledWith(1, fileId);
+      expect(bynder.saveAsset).toHaveBeenNthCalledWith(1, { ...file.data, fileId });
     });
   });
 
@@ -407,9 +407,10 @@ describe('#saveAsset', () => {
 
     it('calls the save media endpoint', async () => {
       const fileId = 'i-am-the-shield-that-guards-the-realms-of-men';
+      const asset = { ...file.data, fileId };
 
-      await bynder.saveAsset(fileId);
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v4/media/${fileId}/save/`);
+      await bynder.saveAsset(asset);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v4/media/${fileId}/save/`, asset);
     });
   });
 
@@ -424,8 +425,25 @@ describe('#saveAsset', () => {
     });
 
     it('calls the save media endpoint', async () => {
-      await bynder.saveAsset();
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/save/');
+      const asset = { ...file.data };
+
+      await bynder.saveAsset(asset);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/save/', asset);
+    });
+  });
+
+  describe('with no brand Id', () => {
+    it('throws response error', () => {
+      const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
+      const asset = { fileId };
+
+      bynder.saveAsset(asset)
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The upload brandId is not valid or it was not specified properly'
+          });
+        });
     });
   });
 
@@ -449,8 +467,9 @@ describe('#saveAsset', () => {
 
     it('throws response error', () => {
       const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
+      const asset = { ...file.data, fileId };
 
-      bynder.saveAsset(fileId)
+      bynder.saveAsset(asset)
         .catch(error => {
           expect(error).toEqual({
             status: 400,
