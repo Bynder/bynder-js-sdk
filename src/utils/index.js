@@ -21,18 +21,8 @@ export const bodyTypes = {
    * @return {string} One of bodyTypes.BUFFER, bodyTypes.BLOB, bodyTypes.STREAM
    */
   get: body => {
-    if (Buffer?.isBuffer(body)) {
+    if (Buffer.isBuffer(body)) {
       return bodyTypes.BUFFER;
-    }
-    /* istanbul ignore next */
-    if (window?.Blob && body instanceof window?.Blob) {
-      /* istanbul ignore next */
-      return bodyTypes.BLOB;
-    }
-    /* istanbul ignore next */
-    if (typeof body?.read === 'function') {
-      /* istanbul ignore next */
-      return bodyTypes.STREAM;
     }
     return null;
   }

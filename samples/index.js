@@ -7,9 +7,11 @@ const bynder = new Bynder({
   redirectUri: "<url where user will be redirected after authenticating>"
 });
 
-const authorizationURL = bynder.makeAuthorizationURL();
+// Authorization URL
+bynder.makeAuthorizationURL();
 
-bynder.getToken(code);
+// Authorization token
+bynder.getToken('code');
 
 bynder
   .getMediaList({
