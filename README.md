@@ -116,6 +116,7 @@ bynder
 
 - `makeAuthorizationURL()`
 - `getToken()`
+- `userLogin(queryObject)`
 
 ### Media
 
@@ -125,6 +126,7 @@ bynder
 - `getMediaTotal(queryObject)`
 - `editMedia(object)`
 - `deleteMedia(id)`
+- `getMediaDownloadUrl(queryObject)`
 
 ### Media usage
 
@@ -167,7 +169,10 @@ bynder
 
 ### Upload
 
+- `prepareUpload()`
+- `saveAsset(queryObject)`
 - `uploadFile(fileObject)`
+- `finaliseUpload(fileObject, fileName, chunks, fileSize)`
 
 ## Contribute to the SDK
 
