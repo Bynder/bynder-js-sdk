@@ -10,7 +10,7 @@
     "test": "jest --coverage",
     "lint": "eslint --config .eslintrc src/ tests/",
     "test:watch": "npm run test -- --watch src/ test/ --notify",
-    "prestest": "npm run lint",
+    "pretest": "npm run lint",
     "prepublish": "npm run build && npm run docs",
     "docs": "jsdoc --destination docs --readme README.md src/**/*.js"
   },
