@@ -123,44 +123,45 @@ describe('#uploadFile', () => {
   describe('with no errors', () => {
     const fileId = 'night-gathers-and-now-my-watch-begins';
     const correlationId = 'it-shall-not-end-until-my-death';
+    let spy;
 
     beforeEach(() => {
-      helpers.mockFunctions(bynder, [
-        {
-          name: 'prepareUpload',
-          returnedValue: Promise.resolve(fileId)
-        },
-        {
-          name: 'uploadFileInChunks',
-          returnedValue: Promise.resolve(1)
-        },
-        {
-          name: 'finaliseUpload',
-          returnedValue: Promise.resolve(correlationId)
-        },
-        {
-          name: 'saveAsset',
-          returnedValue: Promise.resolve({})
-        }
-      ]);
+      // We mock the API responses
+      spy = jest.spyOn(bynder.api, 'send')
+        .mockImplementationOnce(() => Promise.resolve({
+          file_id: fileId
+        }))
+        .mockImplementationOnce(() => Promise.resolve({}))
+        .mockImplementationOnce(() => Promise.resolve({
+          headers: {
+            'x-api-correlation-id': correlationId
+          }
+        }))
+        .mockImplementationOnce(() => Promise.resolve({}));
     });
 
     afterEach(() => {
-      helpers.restoreMockedFunctions(bynder, [
-        { name: 'prepareUpload' },
-        { name: 'uploadFileInChunks' },
-        { name: 'finaliseUpload' },
-        { name: 'saveAsset' }
-      ]);
+      spy.mockRestore();
     });
 
     it('calls each upload method with the expected payload', async () => {
       await bynder.uploadFile(file);
 
-      expect(bynder.prepareUpload).toHaveBeenCalledTimes(1);
-      expect(bynder.uploadFileInChunks).toHaveBeenNthCalledWith(1, file, fileId, file.body.length);
-      expect(bynder.finaliseUpload).toHaveBeenNthCalledWith(1, fileId, file.filename, 1, file.body.length);
-      expect(bynder.saveAsset).toHaveBeenNthCalledWith(1, { ...file.data, fileId });
+      const [prepareRequest, uploadChunkRequest, finaliseRequest, saveAssetRequest] = spy.mock.calls;
+
+      expect(prepareRequest).toEqual(['POST', 'v7/file_cmds/upload/prepare']);
+      expect(uploadChunkRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/chunk/0', {
+        chunk: file.body
+      }]);
+      expect(finaliseRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/finalise', {
+        chunksCount: 1,
+        fileName: file.filename,
+        fileSize: 6
+      }]);
+      expect(saveAssetRequest).toEqual(['POST', 'v4/media/night-gathers-and-now-my-watch-begins/save/', {
+        fileId,
+        brandId: 'Bynder'
+      }]);
     });
   });
 

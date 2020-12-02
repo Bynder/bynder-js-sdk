@@ -614,7 +614,7 @@ export default class Bynder {
    */
   getMediaDownloadUrl({ id, params } = {}) {
     if (!id) {
-        return rejectValidation('media', 'id');
+      return rejectValidation('media', 'id');
     }
 
     return this.api.send('GET', `v4/media/${id}/download`, { ...params });
@@ -681,7 +681,7 @@ export default class Bynder {
     this._chunkNumber = 0;
 
     // Iterate over the chunks and send them
-    while (this._chunkNumber <= this._chunks) {
+    while (this._chunkNumber <= (this._chunks - 1)) {
       const start = this._chunkNumber * FILE_CHUNK_SIZE;
       const end = Math.min(start + FILE_CHUNK_SIZE, size);
       const chunk = body.slice(start, end);
@@ -689,10 +689,10 @@ export default class Bynder {
       await this.api
         .send('POST', `v7/file_cmds/upload/${fileId}/chunk/${this._chunkNumber}`, { chunk })
         .catch(error => {
-          throw new Error(`Chunk ${chunkNumber} not uploaded`, error);
+          throw new Error(`Chunk ${this._chunkNumber} not uploaded`, error);
         });
 
-        this._chunkNumber++;
+      this._chunkNumber++;
     }
 
     return this._chunks;
@@ -741,7 +741,7 @@ export default class Bynder {
       const correlationId = await this.finaliseUpload(fileId, filename, chunks, size);
       const asset = await this.saveAsset({...data, fileId});
 
-      return { fileId, correlationId, asset };
+      return { fileId, correlationId, ...asset };
     } catch (error) {
       return Promise.reject({
         status: error.status || 0,
