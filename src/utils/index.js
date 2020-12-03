@@ -13,14 +13,12 @@ export function rejectValidation(module, param) {
 
 export const bodyTypes = {
   BUFFER: 'BUFFER',
-  BLOB: 'BLOB',
-  STREAM: 'STREAM',
 
   /**
    * @param {Object} body - The file body whose type we need to determine
-   * @return {string} One of bodyTypes.BUFFER, bodyTypes.BLOB, bodyTypes.STREAM
+   * @return {string} One of bodyTypes.BUFFER, or null
    */
-  get: body => {
+  get(body) {
     if (Buffer.isBuffer(body)) {
       return bodyTypes.BUFFER;
     }
@@ -29,20 +27,17 @@ export const bodyTypes = {
 };
 
 /**
- * @return {number} length - The amount of data that can be read from the file
+ * Returns file size
+ * @param {Object} file File
+ * @return {Number} The amount of data that can be read from the file
  */
-
 export function getLength(file) {
   const { body, length } = file;
   const bodyType = bodyTypes.get(body);
-  /* istanbul ignore next */
+
   if (bodyType === bodyTypes.BUFFER) {
     return body.length;
   }
-  /* istanbul ignore next */
-  if (bodyType === bodyTypes.BLOB) {
-    /* istanbul ignore next */
-    return body.size;
-  }
+
   return length;
 }
