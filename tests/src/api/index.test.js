@@ -263,7 +263,7 @@ describe('#send', () => {
     });
   });
 
-  describe('with unsopported response status code', () => {
+  describe('with an unsupported response status code', () => {
     beforeAll(() => {
       api = new ApiCall(baseURL);
       api.permanentToken = 'token';
