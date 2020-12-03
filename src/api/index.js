@@ -34,10 +34,12 @@ export default class APICall {
    * @access private
    * @async
    * @param {String} method HTTP Verb of the request
+   * @param {Object} additionalHeaders Addional headers for specific endpoints
    * @returns {Promise<object>} ?Request headers to be send
    */
-  async _headers(method) {
+  async _headers(method, additionalHeaders = {}) {
     const headers = {
+      ...additionalHeaders,
       'User-Agent': `bynder-js-sdk/${pkg.version}`
     };
 
@@ -62,6 +64,10 @@ export default class APICall {
   /**
    * Fetch the information from the API.
    * @async
+   * @param {String} method HTTP method
+   * @param {String} url URL to request
+   * @param {Object} params Params to be sent on the request
+   * @param {Object} params.additionalHeaders Additional headers specific to an endpoint
    * @returns {Promise<object>} Object with response data or an Error with the problem.
    */
   async send(method, url, params = {}) {
@@ -70,7 +76,8 @@ export default class APICall {
       throw new Error('No token found');
     }
 
-    const headers = await this._headers(method);
+    const headers = await this._headers(method, { ...params.additionalHeaders });
+    delete params.additionalHeaders;
     let body = null;
 
     if (method === 'POST') {

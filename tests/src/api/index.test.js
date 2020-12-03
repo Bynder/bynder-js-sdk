@@ -86,6 +86,29 @@ describe('#_headers', () => {
       expect(headers).toEqual(expectedHeaders);
     });
   });
+
+  describe('with addional headers', () => {
+    beforeAll(() => {
+      api = new ApiCall(baseURL);
+      api.permanentToken = 'token';
+    });
+
+    afterAll(() => {
+      api = null;
+    });
+
+    it('returns them', async () => {
+      const headers = await api._headers('GET', {
+        'content-sha256': 'abcd'
+      });
+
+      expect(headers).toEqual({
+        'User-Agent': `bynder-js-sdk/${pkg.version}`,
+        'Authorization': 'Bearer token',
+        'content-sha256': 'abcd'
+      });
+    });
+  });
 });
 
 describe('#send', () => {
@@ -291,6 +314,52 @@ describe('#send', () => {
       });
 
       expect(response).toEqual(expectedResponse);
+    });
+  });
+
+  describe('with additional headers', () => {
+    beforeAll(() => {
+      api = new ApiCall(baseURL);
+      api.permanentToken = 'token';
+
+      helpers.mockFunctions(api.axios, [
+        {
+          name: 'request',
+          returnedValue: Promise.resolve({
+            status: 201
+          })
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(api.axios, [{ name: 'request' }]);
+      api = null;
+    });
+
+    it('returns the expected headers and body', async () => {
+      await api.send('POST', '/', {
+        chunk: 0,
+        size: 100,
+        additionalHeaders: {
+          'content-sha256': 'abcd'
+        }
+      });
+
+      expect(api.axios.request).toHaveBeenNthCalledWith(1, {
+        url: '/',
+        method: 'POST',
+        data: 'chunk=0&size=100',
+        params: null,
+        httpAgent: undefined,
+        httpsAgent: undefined,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': `bynder-js-sdk/${pkg.version}`,
+          'Authorization': 'Bearer token',
+          'content-sha256': 'abcd'
+        }
+      });
     });
   });
 });
