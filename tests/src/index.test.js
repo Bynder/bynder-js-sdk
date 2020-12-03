@@ -151,14 +151,17 @@ describe('#uploadFile', () => {
 
       expect(prepareRequest).toEqual(['POST', 'v7/file_cmds/upload/prepare']);
       expect(uploadChunkRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/chunk/0', {
-        chunk: file.body
+        chunk: file.body,
+        additionalHeaders: {
+          'Content-Sha256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
+        }
       }]);
       expect(finaliseRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/finalise', {
         chunksCount: 1,
         fileName: file.filename,
         fileSize: 6
       }]);
-      expect(saveAssetRequest).toEqual(['POST', 'v4/media/night-gathers-and-now-my-watch-begins/save/', {
+      expect(saveAssetRequest).toEqual(['POST', 'v4/media/save/night-gathers-and-now-my-watch-begins/', {
         fileId,
         brandId: 'Bynder'
       }]);
@@ -286,7 +289,10 @@ describe('#uploadFileInChunks', () => {
     const chunks = await bynder.uploadFileInChunks(file, fileId, file.body.length);
     expect(chunks).toEqual(1);
     expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, {
-      chunk: expectedChunk
+      chunk: expectedChunk,
+      additionalHeaders: {
+        'Content-Sha256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
+      }
     });
   });
 
@@ -383,7 +389,7 @@ describe('#finaliseUpload', () => {
 });
 
 describe('#saveAsset', () => {
-  describe('with a file Id', () => {
+  describe('with a media Id', () => {
     beforeAll(() => {
       helpers.mockFunctions(bynder.api, [
         {
@@ -398,15 +404,15 @@ describe('#saveAsset', () => {
     });
 
     it('calls the save media endpoint', async () => {
-      const fileId = 'i-am-the-shield-that-guards-the-realms-of-men';
-      const asset = { ...file.data, fileId };
+      const mediaId = 'i-am-the-shield-that-guards-the-realms-of-men';
+      const asset = { ...file.data, mediaId };
 
       await bynder.saveAsset(asset);
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v4/media/${fileId}/save/`, asset);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v4/media/${mediaId}/save/`, asset);
     });
   });
 
-  describe('with no file Id', () => {
+  describe('with no media Id', () => {
     beforeAll(() => {
       helpers.mockFunctions(bynder.api, [
         {
@@ -425,6 +431,57 @@ describe('#saveAsset', () => {
 
       await bynder.saveAsset(asset);
       expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/save/', asset);
+    });
+  });
+
+  describe('with a file ID', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('calls the save media endpoint with a media ID', async () => {
+      const asset = {
+        ...file.data,
+        fileId: 'i-am-the-shield-that-guards-the-realms-of-men'
+      };
+
+      await bynder.saveAsset(asset);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/save/i-am-the-shield-that-guards-the-realms-of-men/', asset);
+    });
+  });
+
+  describe('with a file ID and media ID', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('calls the save media endpoint with a media ID', async () => {
+      const asset = {
+        ...file.data,
+        fileId: 'i-am-the-shield-that-guards-the-realms-of-men',
+        mediaId: 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come'
+      };
+
+      await bynder.saveAsset(asset);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come/save/i-am-the-shield-that-guards-the-realms-of-men/', asset);
     });
   });
 
@@ -523,4 +580,252 @@ describe('#getBrands', () => {
         });
     });
   });
+});
+
+describe('#userLogin', () => {
+  describe('when username is missing', () => {
+    it('returns an exception', () => {
+      const payload = {
+        password: 'abc',
+        consumerId: 'imjonsnow'
+      };
+
+      bynder.userLogin(payload)
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The authentication username, password or consumerId is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('when password is missing', () => {
+    it('returns an exception', () => {
+      const payload = {
+        username: 'imjonsnow',
+        consumerId: 'imjonsnow'
+      };
+
+      bynder.userLogin(payload)
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The authentication username, password or consumerId is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('when consumerId is missing', () => {
+    it('returns an exception', () => {
+      const payload = {
+        password: 'abc',
+        username: 'imjonsnow'
+      };
+
+      bynder.userLogin(payload)
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The authentication username, password or consumerId is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with all required params', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('makes a request to the endpoint', async () => {
+      const payload = {
+        password: 'abc',
+        username: 'imjonsnow',
+        consumerId: 'imjonsnow'
+      };
+
+      await bynder.userLogin(payload);
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/users/login/', payload);
+    });
+  });
+});
+
+describe('#getMediaList', () => {
+  beforeEach(() => {
+    helpers.mockFunctions(bynder.api, [
+      {
+        name: 'send',
+        returnedValue: Promise.resolve({})
+      }
+    ]);
+  });
+
+  afterEach(() => {
+    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+  });
+
+  it('sends the request to the expected endpoint', async () => {
+    const params = {
+      param1: 'jorah',
+      propertyOptionId: [1, 2, 3]
+    };
+
+    await bynder.getMediaList(params);
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/', params);
+  });
+});
+
+describe('#getMediaInfo', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.getMediaInfo({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The media id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('returns a rejection with an error message', () => {
+      bynder.getMediaInfo({
+        id: 'abc',
+        count: 1
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/abc/', {
+        count: 1
+      });
+    });
+  });
+});
+
+describe.skip('#getMediaTotal', () => {
+  // Add more test cases
+});
+
+describe.skip('#editMedia', () => {
+  // Add more test cases
+});
+
+describe.skip('#deleteMedia', () => {
+  // Add more test cases
+});
+
+describe.skip('#getMediaDownloadUrl', () => {
+  // Add more test cases
+});
+
+describe.skip('#getAssetUsage', () => {
+  // Add more test cases
+});
+
+describe.skip('#saveNewAssetUsage', () => {
+  // Add more test cases
+});
+
+describe.skip('#deleteAssetUsage', () => {
+  // Add more test cases
+});
+
+describe.skip('#getMetaproperties', () => {
+  // Add more test cases
+});
+
+describe.skip('#getMetaproperty', () => {
+  // Add more test cases
+});
+
+describe.skip('#saveNewMetaproperty', () => {
+  // Add more test cases
+});
+
+describe.skip('#editMetaproperty', () => {
+  // Add more test cases
+});
+
+describe.skip('#deleteMetaproperty', () => {
+  // Add more test cases
+});
+
+describe.skip('#saveNewMetapropertyOption', () => {
+  // Add more test cases
+});
+
+describe.skip('#editMetapropertyOption', () => {
+  // Add more test cases
+});
+
+describe.skip('#deleteMetapropertyOption', () => {
+  // Add more test cases
+});
+
+describe.skip('#getMetapropertyOptions', () => {
+  // Add more test cases
+});
+
+describe.skip('#getCollections', () => {
+  // Add more test cases
+});
+
+describe.skip('#getCollection', () => {
+  // Add more test cases
+});
+
+describe.skip('#saveNewCollection', () => {
+  // Add more test cases
+});
+
+describe.skip('#shareCollection', () => {
+  // Add more test cases
+});
+
+describe.skip('#addMediaToCollection', () => {
+  // Add more test cases
+});
+
+describe.skip('#deleteMediaFromCollection', () => {
+  // Add more test cases
+});
+
+describe.skip('#getTags', () => {
+  // Add more test cases
+});
+
+describe.skip('#getSmartfilters', () => {
+  // Add more test cases
+});
+
+describe.skip('#getBrands', () => {
+  // Add more test cases
 });

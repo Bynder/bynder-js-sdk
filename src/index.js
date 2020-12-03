@@ -133,13 +133,7 @@ export default class Bynder {
    * an Error with the problem.
    */
   getMediaList(params = {}) {
-    return this.api.send('GET', 'v4/media/', {
-      ...params,
-      count: false,
-      ...(Array.isArray(params.propertyOptionId)
-        ? params.propertyOptionId.join(',')
-        : {})
-    });
+    return this.api.send('GET', 'v4/media/', params);
   }
 
   /**
