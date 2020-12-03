@@ -3,6 +3,7 @@
 import 'isomorphic-form-data';
 import simpleOAuth2 from 'simple-oauth2';
 import url from 'url';
+import crypto from 'crypto';
 import APICall from './api';
 import {rejectValidation, bodyTypes, getLength} from './utils';
 import {DEFAULT_ASSETS_NUMBER_PER_PAGE, FILE_CHUNK_SIZE} from './constants';
@@ -78,7 +79,7 @@ export default class Bynder {
   /**
    * Gets OAuth2 access token from authorization code
    * @param {String} code One time authorization code
-   * @return {String} access token
+   * @return {Promise<string>} access token
    */
   getToken(code) {
     const tokenConfig = {
@@ -650,6 +651,9 @@ export default class Bynder {
    * Otherwise a new asset will be saved.
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/save-as-a-new-asset}
    * @param {Object} data Asset data
+   * @param {String} data.brandId Brand ID
+   * @param {String} data.fileId File ID
+   * @param {String} data.mediaId Media ID
    * @return {Promise<object>}
    */
   saveAsset(data) {
@@ -657,8 +661,13 @@ export default class Bynder {
       return rejectValidation('upload', 'brandId');
     }
 
-    const { fileId } = data;
-    const url = fileId ? `v4/media/${fileId}/save/` : 'v4/media/save/';
+    const { fileId, mediaId } = data;
+    let url = mediaId ? `v4/media/${mediaId}/save/` : 'v4/media/save/';
+
+    if (fileId) {
+      url += `${fileId}/`;
+    }
+
     return this.api.send('POST', url, data);
   }
 
@@ -685,9 +694,17 @@ export default class Bynder {
       const start = this._chunkNumber * FILE_CHUNK_SIZE;
       const end = Math.min(start + FILE_CHUNK_SIZE, size);
       const chunk = body.slice(start, end);
+      const sha256 = crypto.createHash('sha256')
+        .update(chunk)
+        .digest('hex');
 
       await this.api
-        .send('POST', `v7/file_cmds/upload/${fileId}/chunk/${this._chunkNumber}`, { chunk })
+        .send('POST', `v7/file_cmds/upload/${fileId}/chunk/${this._chunkNumber}`, {
+          chunk,
+          additionalHeaders: {
+            'Content-Sha256': sha256
+          }
+        })
         .catch(error => {
           throw new Error(`Chunk ${this._chunkNumber} not uploaded`, error);
         });
