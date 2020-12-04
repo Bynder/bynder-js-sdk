@@ -10,7 +10,7 @@ import pkg from '../../package.json';
  * @class
  * @abstract
  */
-export default class APICall {
+export default class BynderApi {
   /**
    * Create a APICall.
    * @constructor

@@ -681,14 +681,28 @@ describe('#getMediaList', () => {
     helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
   });
 
-  it('sends the request to the expected endpoint', async () => {
-    const params = {
-      param1: 'jorah',
-      propertyOptionId: [1, 2, 3]
-    };
+  describe('with no property option IDs', () => {
+    it('sends the expected payload', async () => {
+      await bynder.getMediaList();
 
-    await bynder.getMediaList(params);
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/', params);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/', {
+        count: false
+      });
+    });
+  });
+
+  describe('with property option IDs', () => {
+    it('sends the expected payload', async () => {
+      const payload = {
+        propertyOptionId: ['a', 'b', 'c']
+      };
+      await bynder.getMediaList(payload);
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/', {
+        count: false,
+        propertyOptionId: 'a,b,c'
+      });
+    });
   });
 });
 
@@ -719,7 +733,7 @@ describe('#getMediaInfo', () => {
       helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
     });
 
-    it('returns a rejection with an error message', () => {
+    it('sends the request to the endpoint with the expected payload', () => {
       bynder.getMediaInfo({
         id: 'abc',
         count: 1
@@ -735,102 +749,1277 @@ describe('#getMediaInfo', () => {
   });
 });
 
-describe.skip('#getMediaTotal', () => {
+describe.skip('#getAllMediaItems', () => {
   // Add more test cases
 });
 
-describe.skip('#editMedia', () => {
-  // Add more test cases
+describe('#getMediaTotal', () => {
+  beforeEach(() => {
+    helpers.mockFunctions(bynder.api, [
+      {
+        name: 'send',
+        returnedValue: Promise.resolve({
+          count: {
+            total: 25
+          }
+        })
+      }
+    ]);
+  });
+
+  afterEach(() => {
+    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+  });
+
+  describe('with no property option IDs', () => {
+    it('returns the total count', async () => {
+      const total = await bynder.getMediaTotal();
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/', {
+        count: true
+      });
+      expect(total).toBe(25);
+    });
+  });
+
+  describe('with property option IDs', () => {
+    it('returns the total count', async () => {
+      const payload = {
+        propertyOptionId: ['a', 'b', 'c']
+      };
+      const total = await bynder.getMediaTotal(payload);
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/', {
+        count: true,
+        propertyOptionId: 'a,b,c'
+      });
+      expect(total).toBe(25);
+    });
+  });
 });
 
-describe.skip('#deleteMedia', () => {
-  // Add more test cases
+describe('#editMedia', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.editMedia({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The editMedia id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.editMedia({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/', {
+        id: 'abc'
+      });
+    });
+  });
 });
 
-describe.skip('#getMediaDownloadUrl', () => {
-  // Add more test cases
+describe('#deleteMedia', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.deleteMedia({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The deleteMedia id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.deleteMedia({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'v4/media/abc/');
+    });
+  });
 });
 
-describe.skip('#getAssetUsage', () => {
-  // Add more test cases
+describe('#getMetaproperties', () => {
+  const payload = {
+    Colours: {
+      isMultiselect: 0,
+      isMultifilter: 0,
+      isRequired: 0,
+      isMainfilter: 1,
+      isFilterable: 1,
+      isApiField: 1,
+      isDisplayField: 0,
+      isDrilldown: 0,
+      isSearchable: 1,
+      isEditable: 1,
+      name: 'colours',
+      label: 'Colours',
+      zindex: 16,
+      id: '00000000-0000-0000-0000000000000000',
+      type: 'sidebar',
+      showInListView: 1,
+      showInGridView: 0,
+      showInDuplicateView: 1,
+      useDependencies: 0
+    },
+    Bob_button: {
+      isMultiselect: 0,
+      isMultifilter: 0,
+      isRequired: 0,
+      isMainfilter: 1,
+      isFilterable: 1,
+      isApiField: 1,
+      isDisplayField: 0,
+      isDrilldown: 0,
+      isSearchable: 1,
+      isEditable: 1,
+      name: 'Bob_button',
+      label: 'Bob_button',
+      zindex: 2,
+      id: '00000000-0000-0000-0000000000000001',
+      type: 'button',
+      showInListView: 1,
+      showInGridView: 0,
+      showInDuplicateView: 1,
+      useDependencies: 0,
+      options: []
+    }
+  };
+
+  beforeAll(() => {
+    helpers.mockFunctions(bynder.api, [
+      {
+        name: 'send',
+        returnedValue: Promise.resolve(payload)
+      }
+    ]);
+  });
+
+  afterAll(() => {
+    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+  });
+
+  it('returns an array of metaproperties', async () => {
+    const metaproperties = await bynder.getMetaproperties();
+
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/metaproperties/', {});
+    expect(metaproperties).toEqual([
+      {
+        isMultiselect: 0,
+        isMultifilter: 0,
+        isRequired: 0,
+        isMainfilter: 1,
+        isFilterable: 1,
+        isApiField: 1,
+        isDisplayField: 0,
+        isDrilldown: 0,
+        isSearchable: 1,
+        isEditable: 1,
+        name: 'colours',
+        label: 'Colours',
+        zindex: 16,
+        id: '00000000-0000-0000-0000000000000000',
+        type: 'sidebar',
+        showInListView: 1,
+        showInGridView: 0,
+        showInDuplicateView: 1,
+        useDependencies: 0
+      },
+      {
+        isMultiselect: 0,
+        isMultifilter: 0,
+        isRequired: 0,
+        isMainfilter: 1,
+        isFilterable: 1,
+        isApiField: 1,
+        isDisplayField: 0,
+        isDrilldown: 0,
+        isSearchable: 1,
+        isEditable: 1,
+        name: 'Bob_button',
+        label: 'Bob_button',
+        zindex: 2,
+        id: '00000000-0000-0000-0000000000000001',
+        type: 'button',
+        showInListView: 1,
+        showInGridView: 0,
+        showInDuplicateView: 1,
+        useDependencies: 0,
+        options: []
+      }
+    ]);
+  });
 });
 
-describe.skip('#saveNewAssetUsage', () => {
-  // Add more test cases
+describe('#getMetaproperty', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.getMetaproperty({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The metaproperty id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.getMetaproperty({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/metaproperties/abc/');
+    });
+  });
 });
 
-describe.skip('#deleteAssetUsage', () => {
-  // Add more test cases
+describe('#getMetapropertyOptions', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.getMetapropertyOptions({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The metapropertyOption id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve([])
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.getMetapropertyOptions({
+        id: 'abc',
+        param1: 'param1'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/metaproperties/abc/options/', {
+        param1: 'param1'
+      });
+    });
+  });
 });
 
-describe.skip('#getMetaproperties', () => {
-  // Add more test cases
+describe('#getMediaDownloadUrl', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.getMediaDownloadUrl({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The media id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve([])
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.getMediaDownloadUrl({
+        id: 'abc',
+        param1: 'param1'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/abc/download', {
+        param1: 'param1'
+      });
+    });
+  });
 });
 
-describe.skip('#getMetaproperty', () => {
-  // Add more test cases
+describe('#getAssetUsage', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.getAssetUsage({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The asset usage id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.getAssetUsage({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'media/usage/', { asset_id: 'abc' });
+    });
+  });
 });
 
-describe.skip('#saveNewMetaproperty', () => {
-  // Add more test cases
+describe('#saveNewAssetUsage', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.saveNewAssetUsage({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The asset usage id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with no integration_id param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.saveNewAssetUsage({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The asset usage integration_id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID and integration_id params', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      const payload = {
+        id: 'abc',
+        integration_id: 'nightwatch',
+        timestamp: '2020-12-04T15:08:44.881Z',
+        uri: '/hippo/first_post',
+        additional: 'some-thing'
+      };
+
+      bynder.saveNewAssetUsage(payload)
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'media/usage/', {
+        asset_id: 'abc',
+        integration_id: 'nightwatch',
+        timestamp: '2020-12-04T15:08:44.881Z',
+        uri: '/hippo/first_post',
+        additional: 'some-thing'
+      });
+    });
+  });
 });
 
-describe.skip('#editMetaproperty', () => {
-  // Add more test cases
+describe('#deleteAssetUsage', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.deleteAssetUsage({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The asset usage id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with no integration_id param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.deleteAssetUsage({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The asset usage integration_id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID and integration_id params', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      const payload = {
+        id: 'abc',
+        integration_id: 'nightwatch',
+        uri: '/hippo/first_post'
+      };
+
+      bynder.deleteAssetUsage(payload)
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'media/usage/', {
+        asset_id: 'abc',
+        integration_id: 'nightwatch',
+        uri: '/hippo/first_post'
+      });
+    });
+  });
 });
 
-describe.skip('#deleteMetaproperty', () => {
-  // Add more test cases
+describe('#saveNewMetaproperty', () => {
+  beforeEach(() => {
+    helpers.mockFunctions(bynder.api, [
+      {
+        name: 'send',
+        returnedValue: Promise.resolve({})
+      }
+    ]);
+  });
+
+  afterEach(() => {
+    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+  });
+
+  it('calls the endpoint with the expected payload', () => {
+    bynder.saveNewMetaproperty({
+      param1: 'param1',
+      param2: 'param2',
+      param3: 'param3'
+    });
+
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/metaproperties/', {
+      data: JSON.stringify({
+        param1: 'param1',
+        param2: 'param2',
+        param3: 'param3'
+      })
+    });
+  });
 });
 
-describe.skip('#saveNewMetapropertyOption', () => {
-  // Add more test cases
+describe('#editMetaproperty', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.editMetaproperty({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The metaproperty id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.editMetaproperty({
+        id: 'abc',
+        param1: 'param1',
+        param2: 'param2',
+        param3: 'param3'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/metaproperties/abc/', {
+        data: JSON.stringify({
+          param1: 'param1',
+          param2: 'param2',
+          param3: 'param3'
+        })
+      });
+    });
+  });
 });
 
-describe.skip('#editMetapropertyOption', () => {
-  // Add more test cases
+describe('#deleteMetaproperty', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.deleteMetaproperty({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The metaproperty id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.deleteMetaproperty({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'v4/metaproperties/abc/');
+    });
+  });
 });
 
-describe.skip('#deleteMetapropertyOption', () => {
-  // Add more test cases
+describe('#saveNewMetapropertyOption', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.saveNewMetapropertyOption({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The metaproperty option id or name is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with no name param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.saveNewMetapropertyOption({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The metaproperty option id or name is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID and name param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.saveNewMetapropertyOption({
+        id: 'abc',
+        name: 'sirjamey',
+        param1: 'param1',
+        param2: 'param2',
+        param3: 'param3'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/metaproperties/abc/options/', {
+        data: JSON.stringify({
+          name: 'sirjamey',
+          param1: 'param1',
+          param2: 'param2',
+          param3: 'param3'
+        })
+      });
+    });
+  });
 });
 
-describe.skip('#getMetapropertyOptions', () => {
-  // Add more test cases
+describe('#editMetapropertyOption', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.editMetapropertyOption({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The metaproperty option id or optionId is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with no optionId param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.editMetapropertyOption({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The metaproperty option id or optionId is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID and name param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.editMetapropertyOption({
+        id: 'abc',
+        optionId: 'sirjamey',
+        param1: 'param1',
+        param2: 'param2',
+        param3: 'param3'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/metaproperties/abc/options/sirjamey/', {
+        data: JSON.stringify({
+          optionId: 'sirjamey',
+          param1: 'param1',
+          param2: 'param2',
+          param3: 'param3'
+        })
+      });
+    });
+  });
 });
 
-describe.skip('#getCollections', () => {
-  // Add more test cases
+describe('#deleteMetapropertyOption', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.deleteMetapropertyOption({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The metaproperty option id or optionId is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with no optionId param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.deleteMetapropertyOption({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The metaproperty option id or optionId is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID and name param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.deleteMetapropertyOption({
+        id: 'abc',
+        optionId: 'sirjamey',
+        param1: 'param1',
+        param2: 'param2',
+        param3: 'param3'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'v4/metaproperties/abc/options/sirjamey/');
+    });
+  });
 });
 
-describe.skip('#getCollection', () => {
-  // Add more test cases
+describe('#getCollections', () => {
+  describe('on a successful request', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve([{}])
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('calls the save media endpoint', async () => {
+      await bynder.getCollections();
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/collections/', {});
+    });
+  });
+
+  describe('on a request error', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api.axios, [
+        {
+          name: 'request',
+          returnedValue: Promise.resolve({
+            status: 400,
+            statusText: 'There was a problem saving the asset'
+          })
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api.axios, [{ name: 'request' }]);
+    });
+
+    it('throws response error', () => {
+      bynder.getCollections()
+        .catch(error => {
+          expect(error).toEqual({
+            status: 400,
+            message: 'There was a problem saving the asset'
+          });
+        });
+    });
+  });
 });
 
-describe.skip('#saveNewCollection', () => {
-  // Add more test cases
+describe('#getCollection', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.getCollection({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The collection id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.getCollection({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/collections/abc/');
+    });
+  });
 });
 
-describe.skip('#shareCollection', () => {
-  // Add more test cases
+describe('#saveNewCollection', () => {
+  describe('with no name param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.saveNewCollection({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The collection name is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with a name param', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      bynder.saveNewCollection({
+        name: 'abc'
+      })
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/collections/', {
+        name: 'abc'
+      });
+    });
+  });
 });
 
-describe.skip('#addMediaToCollection', () => {
-  // Add more test cases
+describe('#shareCollection', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.shareCollection({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The collection id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with no recipients param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.shareCollection({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The collection recipients is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with no collectionOptions param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.shareCollection({
+        id: 'abc',
+        recipients: 'jon@snow.fam,daenerys@targerye.fam'
+      })
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The collection collectionOptions is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with all required params', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      const payload = {
+        id: 'abc',
+        recipients: 'jon@snow.fam,daenerys@targerye.fam',
+        collectionOptions: [1, 2, 3]
+      };
+
+      bynder.shareCollection(payload)
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/collections/abc/share/', {
+        recipients: 'jon@snow.fam,daenerys@targerye.fam',
+        collectionOptions: [1, 2, 3]
+      });
+    });
+  });
 });
 
-describe.skip('#deleteMediaFromCollection', () => {
-  // Add more test cases
+describe('#addMediaToCollection', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.addMediaToCollection({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The collection id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with no data param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.addMediaToCollection({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The collection data is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID and data params', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      const payload = {
+        id: 'abc',
+        data: {
+          param1: 'param1'
+        }
+      };
+
+      bynder.addMediaToCollection(payload)
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/collections/abc/media/', {
+        data: JSON.stringify({
+          param1: 'param1'
+        })
+      });
+    });
+  });
 });
 
-describe.skip('#getTags', () => {
-  // Add more test cases
+describe('#deleteMediaFromCollection', () => {
+  describe('with no ID param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.deleteMediaFromCollection({})
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The collection id is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with no deleteIds param', () => {
+    it('returns a rejection with an error message', () => {
+      bynder.deleteMediaFromCollection({
+        id: 'abc'
+      })
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The collection deleteIds is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with an ID and deleteIds params', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the request to the endpoint with the expected payload', () => {
+      const payload = {
+        id: 'abc',
+        deleteIds: ['def', 'ghi']
+      };
+
+      bynder.deleteMediaFromCollection(payload)
+        .catch(error => {
+          expect(error).not.toBeDefined();
+        });
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'v4/collections/abc/media/', {
+        deleteIds:'def,ghi'
+      });
+    });
+  });
 });
 
-describe.skip('#getSmartfilters', () => {
-  // Add more test cases
+describe('#getTags', () => {
+  describe('on a successful request', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve([{}])
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('calls the save media endpoint', async () => {
+      await bynder.getTags();
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/tags/', {});
+    });
+  });
+
+  describe('on a request error', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api.axios, [
+        {
+          name: 'request',
+          returnedValue: Promise.resolve({
+            status: 400,
+            statusText: 'There was a problem saving the asset'
+          })
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api.axios, [{ name: 'request' }]);
+    });
+
+    it('throws response error', () => {
+      bynder.getTags()
+        .catch(error => {
+          expect(error).toEqual({
+            status: 400,
+            message: 'There was a problem saving the asset'
+          });
+        });
+    });
+  });
 });
 
-describe.skip('#getBrands', () => {
-  // Add more test cases
+describe('#getSmartfilters', () => {
+  describe('on a successful request', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve([{}])
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('calls the save media endpoint', async () => {
+      await bynder.getSmartfilters();
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/smartfilters/');
+    });
+  });
+
+  describe('on a request error', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api.axios, [
+        {
+          name: 'request',
+          returnedValue: Promise.resolve({
+            status: 400,
+            statusText: 'There was a problem saving the asset'
+          })
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api.axios, [{ name: 'request' }]);
+    });
+
+    it('throws response error', () => {
+      bynder.getSmartfilters()
+        .catch(error => {
+          expect(error).toEqual({
+            status: 400,
+            message: 'There was a problem saving the asset'
+          });
+        });
+    });
+  });
 });

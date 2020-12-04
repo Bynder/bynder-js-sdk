@@ -3,9 +3,9 @@
 import 'isomorphic-form-data';
 import simpleOAuth2 from 'simple-oauth2';
 import url from 'url';
-import APICall from './api';
+import BynderApi from './api';
 import {rejectValidation, bodyTypes, getLength, create256HexHash} from './utils';
-import {DEFAULT_ASSETS_NUMBER_PER_PAGE, FILE_CHUNK_SIZE} from './constants';
+import {DEFAULT_ASSETS_NUMBER_PER_PAGE, FILE_CHUNK_SIZE, DEFAULT_UPLOAD_INTENT} from './constants';
 
 /**
  * @classdesc Represents the Bynder SDK. It allows the user to make every call to the API with a single function.
@@ -28,7 +28,7 @@ export default class Bynder {
     this.baseURL = options.baseURL;
     this.redirectUri = options.redirectUri;
 
-    this.api = new APICall(
+    this.api = new BynderApi(
       options.baseURL,
       options.httpsAgent,
       options.httpAgent
@@ -132,7 +132,13 @@ export default class Bynder {
    * an Error with the problem.
    */
   getMediaList(params = {}) {
-    return this.api.send('GET', 'v4/media/', params);
+    const payload = { ...params, count: false };
+
+    if (Array.isArray(payload.propertyOptionId)) {
+      payload.propertyOptionId = payload.propertyOptionId.join();
+    }
+
+    return this.api.send('GET', 'v4/media/', payload);
   }
 
   /**
@@ -190,7 +196,7 @@ export default class Bynder {
    * fitting the query or an Error with the problem.
    */
   getMediaTotal(params = {}) {
-    const parametersObject = Object.assign({}, params, { count: true });
+    const parametersObject = { ...params, count: true };
     if (Array.isArray(parametersObject.propertyOptionId)) {
       parametersObject.propertyOptionId = parametersObject.propertyOptionId.join();
     }
@@ -207,7 +213,7 @@ export default class Bynder {
    */
   editMedia(params = {}) {
     if (!params.id) {
-      return rejectValidation('media', 'id');
+      return rejectValidation('editMedia', 'id');
     }
     return this.api.send('POST', 'v4/media/', params);
   }
@@ -222,7 +228,7 @@ export default class Bynder {
    */
   deleteMedia({ id }) {
     if (!id) {
-      return rejectValidation('media', 'id');
+      return rejectValidation('deleteMedia', 'id');
     }
     return this.api.send('DELETE', `v4/media/${id}/`);
   }
@@ -235,7 +241,7 @@ export default class Bynder {
    * metaproperties or an Error with the problem.
    */
   getMetaproperties(params = {}) {
-    return this.api.send('GET', 'v4/metaproperties/', params).then(data => Object.keys(data).map(metaproperty => data[metaproperty]));
+    return this.api.send('GET', 'v4/metaproperties/', params).then(response => Object.keys(response).map(metaproperty => response[metaproperty]));
   }
 
   /**
@@ -364,8 +370,8 @@ export default class Bynder {
   /**
    * Get the assets usage information according to the id provided.
    * @see {@link https://bynder.docs.apiary.io/#reference/asset-usage/asset-usage-operations/retrieve-asset-usage|API Call}
-   * @param {Object} queryObject An object containing the id of the desired asset.
-   * @param {String} queryObject.id The id of the desired asset to retrieve usage for.
+   * @param {Object} params An object containing the id of the desired asset.
+   * @param {String} params.id The id of the desired asset to retrieve usage for.
    * @return {Promise} Asset Usage Returns a Promise that, when fulfilled, will either return an Object with
    * the asset usage or an Error with the problem.
    */
@@ -373,51 +379,38 @@ export default class Bynder {
     if (!id) {
       return rejectValidation('asset usage', 'id');
     }
-    const request = new APICall(
-      this.baseURL,
-      'media/usage/',
-      'GET',
-      this.consumerToken,
-      this.accessToken,
-      { asset_id: id }
-    );
-    return request.send();
+
+    return this.api.send('GET', 'media/usage/', { asset_id: id });
   }
 
   /**
    * Create a usage for an asset according to the provided query object.
    * @see {@link https://bynder.docs.apiary.io/#reference/asset-usage/asset-usage-operations/create-asset-usage|API Call}
-   * @param {Object} queryObject An object containing the properties for the desired asset usage.
-   * @param {String} queryObject.id The id of the desired asset to create a usage for.
-   * @param {String} queryObject.integration_id The id of the desired integration to add.
-   * @param {String} queryObject.timestamp Datetime. ISO8601 format: yyyy-mm-ddThh:mm:ssZ.
-   * @param {String} queryObject.uri Location. Example: /hippo/first_post.
-   * @param {String} queryObject.additional Additional information. Example: Usage description.
+   * @param {Object} params An object containing the properties for the desired asset usage.
+   * @param {String} params.id The id of the desired asset to create a usage for.
+   * @param {String} params.integration_id The id of the desired integration to add.
+   * @param {String} params.timestamp Datetime. ISO8601 format: yyyy-mm-ddThh:mm:ssZ.
+   * @param {String} params.uri Location. Example: /hippo/first_post.
+   * @param {String} query`Object.a`dditional Additional information. Example: Usage description.
    * @return {Promise} Asset usage Returns a Promise that, when fulfilled, will either return an Object with
    * the asset usage or an Error with the problem.
    */
-  saveNewAssetUsage(queryObject) {
-    if (!queryObject.id) {
+  saveNewAssetUsage(params) {
+    if (!params.id) {
       return rejectValidation('asset usage', 'id');
     }
-    if (!queryObject.integration_id) {
+
+    if (!params.integration_id) {
       return rejectValidation('asset usage', 'integration_id');
     }
-    const request = new APICall(
-      this.baseURL,
-      'media/usage/',
-      'POST',
-      this.consumerToken,
-      this.accessToken,
-      {
-        asset_id: queryObject.id,
-        integration_id: queryObject.integration_id,
-        timestamp: queryObject.timestamp || null,
-        uri: queryObject.uri || null,
-        additional: queryObject.additional || null
-      }
-    );
-    return request.send();
+
+    return this.api.send('POST', 'media/usage/', {
+      asset_id: params.id,
+      integration_id: params.integration_id,
+      timestamp: params.timestamp || null,
+      uri: params.uri || null,
+      additional: params.additional || null
+    });
   }
 
   /**
@@ -434,22 +427,16 @@ export default class Bynder {
     if (!id) {
       return rejectValidation('asset usage', 'id');
     }
+
     if (!integration_id) {
       return rejectValidation('asset usage', 'integration_id');
     }
-    const request = new APICall(
-      this.baseURL,
-      'media/usage/',
-      'DELETE',
-      this.consumerToken,
-      this.accessToken,
-      {
-        asset_id: id,
-        integration_id,
-        uri: uri || null
-      }
-    );
-    return request.send();
+
+    return this.api.send('DELETE', 'media/usage/', {
+      integration_id,
+      asset_id: id,
+      uri: uri || null
+    });
   }
 
   /**
@@ -594,9 +581,7 @@ export default class Bynder {
       return rejectValidation('metapropertyOption', 'id');
     }
 
-    return this.api.send('GET', `v4/metaproperties/${id}/options/`, params).then(data => {
-      return Object.keys(data).map(metaproperty => data[metaproperty]);
-    });
+    return this.api.send('GET', `v4/metaproperties/${id}/options/`, params);
   }
 
   /**
@@ -606,7 +591,7 @@ export default class Bynder {
    * @param {String} params.id - The id of the desired asset.
    * @returns {Promise}
    */
-  getMediaDownloadUrl({ id, params } = {}) {
+  getMediaDownloadUrl({ id, ...params } = {}) {
     if (!id) {
       return rejectValidation('media', 'id');
     }
@@ -626,7 +611,7 @@ export default class Bynder {
   finaliseUpload(fileId, fileName, chunksCount, fileSize) {
     return this.api.send('POST', `v7/file_cmds/upload/${fileId}/finalise`, {
       chunksCount, fileName, fileSize,
-      intent: 'upload_main_uploader_asset',
+      intent: DEFAULT_UPLOAD_INTENT,
       sha256: this._sha256
     })
       .then(response => response.headers['x-api-correlation-id']);
