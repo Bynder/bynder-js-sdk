@@ -1,5 +1,7 @@
 'use strict';
 
+import crypto from 'crypto';
+
 /**
  * Rejects the request.
  * @return {Promise} error - Returns a Promise with the details for the wrong request.
@@ -40,4 +42,10 @@ export function getLength(file) {
   }
 
   return length;
+}
+
+export function create256HexHash(bytes) {
+  return crypto.createHash('sha256')
+    .update(bytes)
+    .digest('hex');
 }

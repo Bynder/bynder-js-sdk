@@ -56,3 +56,12 @@ describe('#getLength', () => {
     expect(size).toBe(4);
   });
 });
+
+describe('#create256HexHash', () => {
+  it('generates a HMAC-SHA256 Hex string', () => {
+    const body = Buffer.from('a-file', 'utf-8');
+    const hex = utils.create256HexHash(body);
+
+    expect(hex).toBe('1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d');
+  });
+});
