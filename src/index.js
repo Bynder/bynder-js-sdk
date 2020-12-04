@@ -3,9 +3,8 @@
 import 'isomorphic-form-data';
 import simpleOAuth2 from 'simple-oauth2';
 import url from 'url';
-import crypto from 'crypto';
 import APICall from './api';
-import {rejectValidation, bodyTypes, getLength} from './utils';
+import {rejectValidation, bodyTypes, getLength, create256HexHash} from './utils';
 import {DEFAULT_ASSETS_NUMBER_PER_PAGE, FILE_CHUNK_SIZE} from './constants';
 
 /**
@@ -626,7 +625,9 @@ export default class Bynder {
    */
   finaliseUpload(fileId, fileName, chunksCount, fileSize) {
     return this.api.send('POST', `v7/file_cmds/upload/${fileId}/finalise`, {
-      chunksCount, fileName, fileSize
+      chunksCount, fileName, fileSize,
+      intent: 'upload_main_uploader_asset',
+      sha256: this._sha256
     })
       .then(response => response.headers['x-api-correlation-id']);
   }
@@ -688,9 +689,7 @@ export default class Bynder {
       const start = this._chunkNumber * FILE_CHUNK_SIZE;
       const end = Math.min(start + FILE_CHUNK_SIZE, size);
       const chunk = body.slice(start, end);
-      const sha256 = crypto.createHash('sha256')
-        .update(chunk)
-        .digest('hex');
+      const sha256 = create256HexHash(chunk);
 
       await this.api
         .send('POST', `v7/file_cmds/upload/${fileId}/chunk/${this._chunkNumber}`, {
@@ -745,12 +744,15 @@ export default class Bynder {
 
     this._chunks = undefined;
     this._chunkNumber = undefined;
+    this._sha256 = create256HexHash(file.body);
 
     try {
       const fileId = await this.prepareUpload();
       const chunks = await this.uploadFileInChunks(file, fileId, size);
       const correlationId = await this.finaliseUpload(fileId, filename, chunks, size);
       const asset = await this.saveAsset({...data, fileId});
+
+      this.sha256 = undefined;
 
       return { fileId, correlationId, ...asset };
     } catch (error) {

@@ -1,4 +1,5 @@
 import Bynder from '../../src/index.js';
+import * as utils from '../../src/utils';
 import * as helpers from '../helpers';
 
 const config = {
@@ -159,7 +160,9 @@ describe('#uploadFile', () => {
       expect(finaliseRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/finalise', {
         chunksCount: 1,
         fileName: file.filename,
-        fileSize: 6
+        fileSize: 6,
+        intent: 'upload_main_uploader_asset',
+        sha256: utils.create256HexHash(file.body)
       }]);
       expect(saveAssetRequest).toEqual(['POST', 'v4/media/save/night-gathers-and-now-my-watch-begins/', {
         fileId,
@@ -353,7 +356,9 @@ describe('#finaliseUpload', () => {
     expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/finalise`, {
       chunksCount: 1,
       fileName: file.filename,
-      fileSize: file.body.length
+      fileSize: file.body.length,
+      intent: 'upload_main_uploader_asset',
+      sha256: utils.create256HexHash(file.body)
     });
   });
 
