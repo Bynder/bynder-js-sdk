@@ -95,7 +95,8 @@ export default class BynderApi {
         const {headers, status} = response;
 
         if (status >= 200 && status <= 202) {
-          return { ...response.data, headers };
+          const data = Array.isArray(response.data) ? { data: response.data } : { ...response.data };
+          return { ...data, headers };
         }
 
         return {};
