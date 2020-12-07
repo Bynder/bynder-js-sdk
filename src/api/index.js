@@ -15,10 +15,9 @@ export default class BynderApi {
    * Create a APICall.
    * @constructor
    * @param {String} baseURL A string with the base URL for account.
-   * @param {String} httpsAgent A https agent.
-   * @param {String} httpAgent A http agent.
+   * @param {Object} httpsAgent A https agent.
+   * @param {Object} httpAgent A http agent.
    * @param {String} token Optional OAuth2 access token
-   * @param {Object} [data={}] An object containing the query parameters.
    */
   constructor(baseURL, httpsAgent, httpAgent, token) {
     if (!isUrl(baseURL)) throw new Error('The base URL provided is not valid');
@@ -101,10 +100,21 @@ export default class BynderApi {
 
         return {};
       })
-      .catch(response => {
-        const {headers, status, data: body, statusText: message} = response;
+      .catch(error => {
+        let exception = {};
 
-        return Promise.reject({ headers, status, body, message });
+        if (error.response) {
+          const {headers, status, data: body, statusText: message} = error.response;
+          exception = { headers, status, body, message };
+        } else {
+          exception = {
+            status: 0,
+            message: error.message
+          };
+        }
+
+
+        return Promise.reject(exception);
       });
   }
 }

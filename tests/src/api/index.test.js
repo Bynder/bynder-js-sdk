@@ -248,13 +248,15 @@ describe('#send', () => {
         {
           name: 'request',
           returnedValue: Promise.reject({
-            headers: {
-              'X-API-Correlation-Id': correlationId
-            },
-            status: 500,
-            statusText: 'There was a server side error',
-            data: {
-              success: false
+            response: {
+              headers: {
+                'X-API-Correlation-Id': correlationId
+              },
+              status: 500,
+              statusText: 'There was a server side error',
+              data: {
+                success: false
+              }
             }
           })
         }

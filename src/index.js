@@ -15,36 +15,35 @@ export default class Bynder {
   /**
    * Create Bynder SDK.
    * @constructor
-   * @param {String} options.baseURL The URL with the account domain.
-   * @param {String} options.httpsAgent The https agent.
-   * @param {String} options.httpAgent The http agent.
+   * @param {String} options.baseURL The URL with the account domain
    * @param {String} options.clientId OAuth2 client id
    * @param {String} options.clientSecret OAuth2 client secret
+   * @param {String} options.redirectUri Redirection URI
+   * @param {String} options.permanentToken Optional permanent token
+   * @param {String} options.token.access_token Optional access token
+   * @param {String} options.httpsAgent Optional https agent
+   * @param {String} options.httpAgent Optional http agent
    * @param
    * @param {Object} options An object containing the consumer keys, access keys and the base URL.
    */
-  constructor(options) {
+  constructor({baseURL, redirectUri, clientId, clientSecret, ...options}) {
+    this.baseURL = baseURL;
+    this.redirectUri = redirectUri;
     this.options = options;
-    this.baseURL = options.baseURL;
-    this.redirectUri = options.redirectUri;
 
-    this.api = new BynderApi(
-      options.baseURL,
-      options.httpsAgent,
-      options.httpAgent
-    );
+    this.api = new BynderApi(baseURL, options.httpsAgent, options.httpAgent);
 
     if (typeof options.permanentToken === 'string') {
       this.api.permanentToken = options.permanentToken;
       return;
     }
 
-    const oauthBaseUrl = url.resolve(options.baseURL, '/v6/authentication/');
+    const oauthBaseUrl = url.resolve(baseURL, '/v6/authentication/');
 
     this.oauth2 = simpleOAuth2.create({
       client: {
-        id: options.clientId,
-        secret: options.clientSecret
+        id: clientId,
+        secret: clientSecret
       },
       auth: {
         tokenHost: oauthBaseUrl,
