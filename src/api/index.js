@@ -53,10 +53,6 @@ export default class BynderApi {
       headers['Authorization'] = `Bearer ${this.token.token.access_token}`;
     }
 
-    if (method.toLowerCase() === 'post') {
-      headers['Content-Type'] = 'application/x-www-form-urlencoded';
-    }
-
     return headers;
   }
 
@@ -77,10 +73,18 @@ export default class BynderApi {
 
     const headers = await this._headers(method, { ...params.additionalHeaders });
     delete params.additionalHeaders;
+    const isV6orV7 = (/v[6|7]/).test(url);
     let body = null;
 
-    if (method === 'POST') {
-      body = queryString.stringify(params);
+    if (method.toLocaleLowerCase() === 'post') {
+      body = params;
+
+      if (!isV6orV7) {
+        body = queryString.stringify(params);
+        // Some older endpoints require this
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      }
+
       // We need to clear the params so they're not sent as QS
       params = null;
     }

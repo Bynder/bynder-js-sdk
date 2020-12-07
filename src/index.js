@@ -675,13 +675,12 @@ export default class Bynder {
       const chunk = body.slice(start, end);
       const sha256 = create256HexHash(chunk);
 
-      await this.api
-        .send('POST', `v7/file_cmds/upload/${fileId}/chunk/${this._chunkNumber}`, {
-          chunk,
-          additionalHeaders: {
-            'Content-Sha256': sha256
-          }
-        })
+      await this.api.send('POST', `v7/file_cmds/upload/${fileId}/chunk/${this._chunkNumber}`, {
+        chunk,
+        additionalHeaders: {
+          'Content-Sha256': sha256
+        }
+      })
         .catch(error => {
           throw new Error(`Chunk ${this._chunkNumber} not uploaded`, error);
         });
