@@ -168,8 +168,8 @@ export default class Bynder {
     const recursiveGetAssets = (_params, assets) => {
       let queryAssets = assets;
       const params = { ..._params };
-      params.page = !params.page ? 1 : params.page;
-      params.limit = !params.limit ? DEFAULT_ASSETS_NUMBER_PER_PAGE : params.limit;
+      params.page = params.page || 1;
+      params.limit = params.limit || DEFAULT_ASSETS_NUMBER_PER_PAGE;
 
       return this.getMediaList(params)
         .then(data => {

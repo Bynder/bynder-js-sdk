@@ -19,16 +19,6 @@ const file = {
 };
 
 describe('.oauth2', () => {
-  describe('#makeAuthorizationURL', () => {
-    const _bynder = new Bynder(config);
-    const authorizationUrl = _bynder.makeAuthorizationURL('state example', 'offline');
-
-    it('returns correct authorization URL', () => {
-      // Security token is random token so we compare without this
-      expect(authorizationUrl).toMatchSnapshot();
-    });
-  });
-
   it('returns an Error when makes an API call without token', async () => {
     try {
       const _bynder = new Bynder(config);
@@ -54,6 +44,42 @@ describe('.oauth2', () => {
     it('does not returns an error', () => {
       expect(bynder.api.permanentToken).toEqual('test');
     });
+  });
+});
+
+describe('#makeAuthorizationURL', () => {
+  const _bynder = new Bynder(config);
+  const authorizationUrl = _bynder.makeAuthorizationURL('state example', 'offline');
+
+  it('returns correct authorization URL', () => {
+    // Security token is random token so we compare without this
+    expect(authorizationUrl).toMatchSnapshot();
+  });
+});
+
+describe('#getToken', () => {
+  const _bynder = new Bynder(config);
+
+  beforeAll(() => {
+    helpers.mockFunctions(_bynder.oauth2.authorizationCode, [
+      {
+        name: 'getToken',
+        returnedValue: Promise.resolve({
+          access_token: 'i-shall-live-and-die-at-my-post',
+          expires_in: 3600,
+          scope: 'scope'
+        })
+      }
+    ]);
+  });
+
+  afterAll(() => {
+    helpers.restoreMockedFunctions(_bynder.oauth2.authorizationCode, [{ name: 'getToken' }]);
+  });
+
+  it('sets the access token', async () => {
+    const token = await _bynder.getToken('abc');
+    expect(_bynder.api.token).toEqual(token);
   });
 });
 
