@@ -99,7 +99,7 @@ export default class Bynder {
    * smartfilters or an Error with the problem.
    */
   getSmartfilters() {
-    return this.api.send('GET', 'v4/smartfilters/');
+    return this.api.send('GET', 'api/v4/smartfilters/');
   }
 
   /**
@@ -120,7 +120,7 @@ export default class Bynder {
       );
     }
 
-    return this.api.send('POST', 'v4/users/login/', params);
+    return this.api.send('POST', 'api/v4/users/login/', params);
   }
 
   /**
@@ -137,7 +137,7 @@ export default class Bynder {
       payload.propertyOptionId = payload.propertyOptionId.join();
     }
 
-    return this.api.send('GET', 'v4/media/', payload);
+    return this.api.send('GET', 'api/v4/media/', payload);
   }
 
   /**
@@ -154,7 +154,7 @@ export default class Bynder {
       return rejectValidation('media', 'id');
     }
 
-    return this.api.send('GET', `v4/media/${id}/`, options);
+    return this.api.send('GET', `api/v4/media/${id}/`, options);
   }
 
   /**
@@ -199,7 +199,7 @@ export default class Bynder {
     if (Array.isArray(parametersObject.propertyOptionId)) {
       parametersObject.propertyOptionId = parametersObject.propertyOptionId.join();
     }
-    return this.api.send('GET', 'v4/media/', parametersObject).then(({count}) => count.total);
+    return this.api.send('GET', 'api/v4/media/', parametersObject).then(({count}) => count.total);
   }
 
   /**
@@ -214,7 +214,7 @@ export default class Bynder {
     if (!params.id) {
       return rejectValidation('editMedia', 'id');
     }
-    return this.api.send('POST', 'v4/media/', params);
+    return this.api.send('POST', 'api/v4/media/', params);
   }
 
   /**
@@ -229,7 +229,7 @@ export default class Bynder {
     if (!id) {
       return rejectValidation('deleteMedia', 'id');
     }
-    return this.api.send('DELETE', `v4/media/${id}/`);
+    return this.api.send('DELETE', `api/v4/media/${id}/`);
   }
 
   /**
@@ -240,7 +240,7 @@ export default class Bynder {
    * metaproperties or an Error with the problem.
    */
   getMetaproperties(params = {}) {
-    return this.api.send('GET', 'v4/metaproperties/', params).then(response => Object.keys(response).map(metaproperty => response[metaproperty]));
+    return this.api.send('GET', 'api/v4/metaproperties/', params).then(response => Object.keys(response).map(metaproperty => response[metaproperty]));
   }
 
   /**
@@ -255,7 +255,7 @@ export default class Bynder {
     if (!id) {
       return rejectValidation('metaproperty', 'id');
     }
-    return this.api.send('GET', `v4/metaproperties/${id}/`);
+    return this.api.send('GET', `api/v4/metaproperties/${id}/`);
   }
 
   /**
@@ -266,7 +266,7 @@ export default class Bynder {
    * case it's successful or an Error with the problem.
    */
   saveNewMetaproperty(params = {}) {
-    return this.api.send('POST', 'v4/metaproperties/', {
+    return this.api.send('POST', 'api/v4/metaproperties/', {
       data: JSON.stringify(params)
     });
     // The API requires an object with the query content stringified inside
@@ -284,7 +284,7 @@ export default class Bynder {
     if (!id) {
       return rejectValidation('metaproperty', 'id');
     }
-    return this.api.send('POST', `v4/metaproperties/${id}/`, {
+    return this.api.send('POST', `api/v4/metaproperties/${id}/`, {
       data: JSON.stringify(params)
     });
     // The API requires an object with the query content stringified inside
@@ -302,7 +302,7 @@ export default class Bynder {
     if (!id) {
       return rejectValidation('metaproperty', 'id');
     }
-    return this.api.send('DELETE', `v4/metaproperties/${id}/`);
+    return this.api.send('DELETE', `api/v4/metaproperties/${id}/`);
   }
 
   /**
@@ -319,7 +319,7 @@ export default class Bynder {
       return rejectValidation('metaproperty option', 'id or name');
     }
 
-    return this.api.send('POST', `v4/metaproperties/${id}/options/`, {
+    return this.api.send('POST', `api/v4/metaproperties/${id}/options/`, {
       data: JSON.stringify(params)
     });
   }
@@ -341,7 +341,7 @@ export default class Bynder {
 
     return this.api.send(
       'POST',
-      `v4/metaproperties/${id}/options/${params.optionId}/`,
+      `api/v4/metaproperties/${id}/options/${params.optionId}/`,
       { data: JSON.stringify(params) }
     );
   }
@@ -362,7 +362,7 @@ export default class Bynder {
     }
     return this.api.send(
       'DELETE',
-      `v4/metaproperties/${id}/options/${optionId}/`
+      `api/v4/metaproperties/${id}/options/${optionId}/`
     );
   }
 
@@ -379,7 +379,7 @@ export default class Bynder {
       return rejectValidation('asset usage', 'id');
     }
 
-    return this.api.send('GET', 'media/usage/', { asset_id: id });
+    return this.api.send('GET', 'api/media/usage/', { asset_id: id });
   }
 
   /**
@@ -403,7 +403,7 @@ export default class Bynder {
       return rejectValidation('asset usage', 'integration_id');
     }
 
-    return this.api.send('POST', 'media/usage/', {
+    return this.api.send('POST', 'api/media/usage/', {
       asset_id: params.id,
       integration_id: params.integration_id,
       timestamp: params.timestamp || null,
@@ -431,7 +431,7 @@ export default class Bynder {
       return rejectValidation('asset usage', 'integration_id');
     }
 
-    return this.api.send('DELETE', 'media/usage/', {
+    return this.api.send('DELETE', 'api/media/usage/', {
       integration_id,
       asset_id: id,
       uri: uri || null
@@ -446,7 +446,7 @@ export default class Bynder {
    * tags or an Error with the problem.
    */
   getTags(params = {}) {
-    return this.api.send('GET', 'v4/tags/', params);
+    return this.api.send('GET', 'api/v4/tags/', params);
   }
 
   /**
@@ -457,7 +457,7 @@ export default class Bynder {
    * collections or an Error with the problem.
    */
   getCollections(params = {}) {
-    return this.api.send('GET', 'v4/collections/', params);
+    return this.api.send('GET', 'api/v4/collections/', params);
   }
 
   /**
@@ -472,7 +472,7 @@ export default class Bynder {
     if (!id) {
       return rejectValidation('collection', 'id');
     }
-    return this.api.send('GET', `v4/collections/${id}/`);
+    return this.api.send('GET', `api/v4/collections/${id}/`);
   }
 
   /**
@@ -488,7 +488,7 @@ export default class Bynder {
     if (!params.name) {
       return rejectValidation('collection', 'name');
     }
-    return this.api.send('POST', 'v4/collections/', params);
+    return this.api.send('POST', 'api/v4/collections/', params);
   }
 
   /**
@@ -507,7 +507,7 @@ export default class Bynder {
     if (!data) {
       return rejectValidation('collection', 'data');
     }
-    return this.api.send('POST', `v4/collections/${id}/media/`, {
+    return this.api.send('POST', `api/v4/collections/${id}/media/`, {
       data: JSON.stringify(data)
     });
   }
@@ -528,7 +528,7 @@ export default class Bynder {
     if (!deleteIds) {
       return rejectValidation('collection', 'deleteIds');
     }
-    return this.api.send('DELETE', `v4/collections/${id}/media/`, {
+    return this.api.send('DELETE', `api/v4/collections/${id}/media/`, {
       deleteIds: Array.isArray(deleteIds) ? deleteIds.join(',') : deleteIds
     });
   }
@@ -554,7 +554,7 @@ export default class Bynder {
       return rejectValidation('collection', 'collectionOptions');
     }
 
-    return this.api.send('POST', `v4/collections/${id}/share/`, params);
+    return this.api.send('POST', `api/v4/collections/${id}/share/`, params);
   }
 
   /**
@@ -563,7 +563,7 @@ export default class Bynder {
    * @return {Promise}
    */
   getBrands() {
-    return this.api.send('GET', 'v4/brands/');
+    return this.api.send('GET', 'api/v4/brands/');
   }
 
   /**
@@ -580,7 +580,7 @@ export default class Bynder {
       return rejectValidation('metapropertyOption', 'id');
     }
 
-    return this.api.send('GET', `v4/metaproperties/${id}/options/`, params);
+    return this.api.send('GET', `api/v4/metaproperties/${id}/options/`, params);
   }
 
   /**
@@ -595,7 +595,7 @@ export default class Bynder {
       return rejectValidation('media', 'id');
     }
 
-    return this.api.send('GET', `v4/media/${id}/download`, { ...params });
+    return this.api.send('GET', `api/v4/media/${id}/download`, { ...params });
   }
 
   /**
@@ -641,7 +641,7 @@ export default class Bynder {
     }
 
     const { fileId, mediaId } = data;
-    let url = mediaId ? `v4/media/${mediaId}/save/` : 'v4/media/save/';
+    let url = mediaId ? `api/v4/media/${mediaId}/save/` : 'api/v4/media/save/';
 
     if (fileId) {
       url += `${fileId}/`;

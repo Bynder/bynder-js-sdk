@@ -3,7 +3,7 @@ import * as utils from '../../src/utils';
 import * as helpers from '../helpers';
 
 const config = {
-  baseURL: 'https://portal.getbynder.com/api/',
+  baseURL: 'https://portal.getbynder.com/',
   clientId: 'test-client-id',
   clientSecret: 'test-client-secret',
   redirectUri: 'https://test-redirect-uri.com'
@@ -164,7 +164,7 @@ describe('#uploadFile', () => {
         intent: 'upload_main_uploader_asset',
         sha256: utils.create256HexHash(file.body)
       }]);
-      expect(saveAssetRequest).toEqual(['POST', 'v4/media/save/night-gathers-and-now-my-watch-begins/', {
+      expect(saveAssetRequest).toEqual(['POST', 'api/v4/media/save/night-gathers-and-now-my-watch-begins/', {
         fileId,
         brandId: 'Bynder'
       }]);
@@ -413,7 +413,7 @@ describe('#saveAsset', () => {
       const asset = { ...file.data, mediaId };
 
       await bynder.saveAsset(asset);
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v4/media/${mediaId}/save/`, asset);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `api/v4/media/${mediaId}/save/`, asset);
     });
   });
 
@@ -435,7 +435,7 @@ describe('#saveAsset', () => {
       const asset = { ...file.data };
 
       await bynder.saveAsset(asset);
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/save/', asset);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/media/save/', asset);
     });
   });
 
@@ -460,7 +460,7 @@ describe('#saveAsset', () => {
       };
 
       await bynder.saveAsset(asset);
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/save/i-am-the-shield-that-guards-the-realms-of-men/', asset);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/media/save/i-am-the-shield-that-guards-the-realms-of-men/', asset);
     });
   });
 
@@ -486,7 +486,7 @@ describe('#saveAsset', () => {
       };
 
       await bynder.saveAsset(asset);
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come/save/i-am-the-shield-that-guards-the-realms-of-men/', asset);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/media/i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come/save/i-am-the-shield-that-guards-the-realms-of-men/', asset);
     });
   });
 
@@ -554,7 +554,7 @@ describe('#getBrands', () => {
 
     it('calls the save media endpoint', async () => {
       await bynder.getBrands();
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/brands/');
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/brands/');
     });
   });
 
@@ -662,7 +662,7 @@ describe('#userLogin', () => {
 
       await bynder.userLogin(payload);
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/users/login/', payload);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/users/login/', payload);
     });
   });
 });
@@ -685,7 +685,7 @@ describe('#getMediaList', () => {
     it('sends the expected payload', async () => {
       await bynder.getMediaList();
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/', {
         count: false
       });
     });
@@ -698,7 +698,7 @@ describe('#getMediaList', () => {
       };
       await bynder.getMediaList(payload);
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/', {
         count: false,
         propertyOptionId: 'a,b,c'
       });
@@ -742,7 +742,7 @@ describe('#getMediaInfo', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/abc/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/abc/', {
         count: 1
       });
     });
@@ -775,7 +775,7 @@ describe('#getMediaTotal', () => {
     it('returns the total count', async () => {
       const total = await bynder.getMediaTotal();
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/', {
         count: true
       });
       expect(total).toBe(25);
@@ -789,7 +789,7 @@ describe('#getMediaTotal', () => {
       };
       const total = await bynder.getMediaTotal(payload);
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/', {
         count: true,
         propertyOptionId: 'a,b,c'
       });
@@ -833,7 +833,7 @@ describe('#editMedia', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/media/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/media/', {
         id: 'abc'
       });
     });
@@ -875,7 +875,7 @@ describe('#deleteMedia', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'v4/media/abc/');
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'api/v4/media/abc/');
     });
   });
 });
@@ -943,7 +943,7 @@ describe('#getMetaproperties', () => {
   it('returns an array of metaproperties', async () => {
     const metaproperties = await bynder.getMetaproperties();
 
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/metaproperties/', {});
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/metaproperties/', {});
     expect(metaproperties).toEqual([
       {
         isMultiselect: 0,
@@ -1027,7 +1027,7 @@ describe('#getMetaproperty', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/metaproperties/abc/');
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/metaproperties/abc/');
     });
   });
 });
@@ -1068,7 +1068,7 @@ describe('#getMetapropertyOptions', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/metaproperties/abc/options/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/metaproperties/abc/options/', {
         param1: 'param1'
       });
     });
@@ -1111,7 +1111,7 @@ describe('#getMediaDownloadUrl', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/media/abc/download', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/abc/download', {
         param1: 'param1'
       });
     });
@@ -1153,7 +1153,7 @@ describe('#getAssetUsage', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'media/usage/', { asset_id: 'abc' });
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/media/usage/', { asset_id: 'abc' });
     });
   });
 });
@@ -1213,7 +1213,7 @@ describe('#saveNewAssetUsage', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'media/usage/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/media/usage/', {
         asset_id: 'abc',
         integration_id: 'nightwatch',
         timestamp: '2020-12-04T15:08:44.881Z',
@@ -1277,7 +1277,7 @@ describe('#deleteAssetUsage', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'media/usage/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'api/media/usage/', {
         asset_id: 'abc',
         integration_id: 'nightwatch',
         uri: '/hippo/first_post'
@@ -1307,7 +1307,7 @@ describe('#saveNewMetaproperty', () => {
       param3: 'param3'
     });
 
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/metaproperties/', {
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/metaproperties/', {
       data: JSON.stringify({
         param1: 'param1',
         param2: 'param2',
@@ -1355,7 +1355,7 @@ describe('#editMetaproperty', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/metaproperties/abc/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/metaproperties/abc/', {
         data: JSON.stringify({
           param1: 'param1',
           param2: 'param2',
@@ -1401,7 +1401,7 @@ describe('#deleteMetaproperty', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'v4/metaproperties/abc/');
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'api/v4/metaproperties/abc/');
     });
   });
 });
@@ -1459,7 +1459,7 @@ describe('#saveNewMetapropertyOption', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/metaproperties/abc/options/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/metaproperties/abc/options/', {
         data: JSON.stringify({
           name: 'sirjamey',
           param1: 'param1',
@@ -1524,7 +1524,7 @@ describe('#editMetapropertyOption', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/metaproperties/abc/options/sirjamey/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/metaproperties/abc/options/sirjamey/', {
         data: JSON.stringify({
           optionId: 'sirjamey',
           param1: 'param1',
@@ -1589,7 +1589,7 @@ describe('#deleteMetapropertyOption', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'v4/metaproperties/abc/options/sirjamey/');
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'api/v4/metaproperties/abc/options/sirjamey/');
     });
   });
 });
@@ -1611,7 +1611,7 @@ describe('#getCollections', () => {
 
     it('calls the save media endpoint', async () => {
       await bynder.getCollections();
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/collections/', {});
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/collections/', {});
     });
   });
 
@@ -1679,7 +1679,7 @@ describe('#getCollection', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/collections/abc/');
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/collections/abc/');
     });
   });
 });
@@ -1719,7 +1719,7 @@ describe('#saveNewCollection', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/collections/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/collections/', {
         name: 'abc'
       });
     });
@@ -1794,7 +1794,7 @@ describe('#shareCollection', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/collections/abc/share/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/collections/abc/share/', {
         recipients: 'jon@snow.fam,daenerys@targerye.fam',
         collectionOptions: [1, 2, 3]
       });
@@ -1856,7 +1856,7 @@ describe('#addMediaToCollection', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v4/collections/abc/media/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/collections/abc/media/', {
         data: JSON.stringify({
           param1: 'param1'
         })
@@ -1917,7 +1917,7 @@ describe('#deleteMediaFromCollection', () => {
           expect(error).not.toBeDefined();
         });
 
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'v4/collections/abc/media/', {
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'DELETE', 'api/v4/collections/abc/media/', {
         deleteIds:'def,ghi'
       });
     });
@@ -1941,7 +1941,7 @@ describe('#getTags', () => {
 
     it('calls the save media endpoint', async () => {
       await bynder.getTags();
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/tags/', {});
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/tags/', {});
     });
   });
 
@@ -1991,7 +1991,7 @@ describe('#getSmartfilters', () => {
 
     it('calls the save media endpoint', async () => {
       await bynder.getSmartfilters();
-      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'v4/smartfilters/');
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/smartfilters/');
     });
   });
 
