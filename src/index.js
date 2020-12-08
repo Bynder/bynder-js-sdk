@@ -608,7 +608,7 @@ export default class Bynder {
    * @return {Promise<object>} Object containing the correlation ID (`correlationId`) and file ID (`fileId`) of the upload
    */
   finaliseUpload(fileId, fileName, chunksCount, fileSize) {
-    return this.api.send('POST', `v7/file_cmds/upload/${fileId}/finalise`, {
+    return this.api.send('POST', `v7/file_cmds/upload/${fileId}/finalise_api`, {
       chunksCount, fileName, fileSize,
       intent: DEFAULT_UPLOAD_INTENT,
       sha256: this._sha256
@@ -675,14 +675,13 @@ export default class Bynder {
       const chunk = body.slice(start, end);
       const sha256 = create256HexHash(chunk);
 
-      await this.api.send('POST', `v7/file_cmds/upload/${fileId}/chunk/${this._chunkNumber}`, {
-        chunk,
+      await this.api.send('POST', `v7/file_cmds/upload/${fileId}/chunk/${this._chunkNumber}`, chunk, {
         additionalHeaders: {
-          'Content-Sha256': sha256
+          'Content-SHA256': sha256
         }
       })
         .catch(error => {
-          throw new Error(`Chunk ${this._chunkNumber} not uploaded`, error);
+          throw new Error(`[${error.message} - ${error.status}] Chunk ${this._chunkNumber} not uploaded: ${error.body}`, error);
         });
 
       this._chunkNumber++;

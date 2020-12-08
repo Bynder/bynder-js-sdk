@@ -177,13 +177,12 @@ describe('#uploadFile', () => {
       const [prepareRequest, uploadChunkRequest, finaliseRequest, saveAssetRequest] = spy.mock.calls;
 
       expect(prepareRequest).toEqual(['POST', 'v7/file_cmds/upload/prepare']);
-      expect(uploadChunkRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/chunk/0', {
-        chunk: file.body,
+      expect(uploadChunkRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/chunk/0', file.body, {
         additionalHeaders: {
-          'Content-Sha256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
+          'Content-SHA256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
         }
       }]);
-      expect(finaliseRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/finalise', {
+      expect(finaliseRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/finalise_api', {
         chunksCount: 1,
         fileName: file.filename,
         fileSize: 6,
@@ -317,10 +316,9 @@ describe('#uploadFileInChunks', () => {
 
     const chunks = await bynder.uploadFileInChunks(file, fileId, file.body.length);
     expect(chunks).toEqual(1);
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, {
-      chunk: expectedChunk,
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
       additionalHeaders: {
-        'Content-Sha256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
+        'Content-SHA256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
       }
     });
   });
@@ -379,7 +377,7 @@ describe('#finaliseUpload', () => {
 
     const correlation = await bynder.finaliseUpload(fileId, file.filename, 1, file.body.length);
     expect(correlation).toBeDefined();
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/finalise`, {
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/finalise_api`, {
       chunksCount: 1,
       fileName: file.filename,
       fileSize: file.body.length,
