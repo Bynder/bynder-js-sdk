@@ -340,9 +340,10 @@ describe('#send', () => {
     it('returns the expected headers and body', async () => {
       await api.send('POST', '/', {
         chunk: 0,
-        size: 100,
+        size: 100
+      }, {
         additionalHeaders: {
-          'content-sha256': 'abcd'
+          'Content-SHA256': 'abcd'
         }
       });
 
@@ -357,7 +358,7 @@ describe('#send', () => {
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': `bynder-js-sdk/${pkg.version}`,
           'Authorization': 'Bearer token',
-          'content-sha256': 'abcd'
+          'Content-SHA256': 'abcd'
         }
       });
     });

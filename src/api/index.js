@@ -61,18 +61,17 @@ export default class BynderApi {
    * @async
    * @param {String} method HTTP method
    * @param {String} url URL to request
-   * @param {Object} params Params to be sent on the request
-   * @param {Object} params.additionalHeaders Additional headers specific to an endpoint
+   * @param {Object} params Body or querystring params to be sent on the request
+   * @param {Object} options Optional elements for the request
+   * @param {Object} options.additionalHeaders Additional headers specific to an endpoint
    * @returns {Promise<object>} Object with response data or an Error with the problem.
    */
-  async send(method, url, params = {}) {
+  async send(method, url, params = {}, options = {}) {
 
     if (!this.token && !this.permanentToken) {
       throw new Error('No token found');
     }
 
-    const headers = await this._headers(method, { ...params.additionalHeaders });
-    delete params.additionalHeaders;
     const isV6orV7 = (/v[6|7]/).test(url);
     let body = null;
 
@@ -82,12 +81,17 @@ export default class BynderApi {
       if (!isV6orV7) {
         body = queryString.stringify(params);
         // Some older endpoints require this
-        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        options.additionalHeaders = {
+          ...options.additionalHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        };
       }
 
       // We need to clear the params so they're not sent as QS
       params = null;
     }
+
+    const headers = await this._headers(method, { ...options.additionalHeaders });
 
     return this.axios.request({
       url, params, method, headers,
@@ -117,7 +121,6 @@ export default class BynderApi {
             message: error.message
           };
         }
-
 
         return Promise.reject(exception);
       });
