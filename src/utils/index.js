@@ -4,7 +4,7 @@ import crypto from 'crypto';
 
 /**
  * Rejects the request.
- * @return {Promise} error - Returns a Promise with the details for the wrong request.
+ * @returns {Promise} error - Returns a Promise with the details for the wrong request.
  */
 export function rejectValidation(module, param) {
   return Promise.reject({
@@ -31,7 +31,7 @@ export const bodyTypes = {
 /**
  * Returns file size
  * @param {Object} file File
- * @return {Number} The amount of data that can be read from the file
+ * @returns {Number} The amount of data that can be read from the file
  */
 export function getLength(file) {
   const { body, length } = file;
@@ -44,8 +44,13 @@ export function getLength(file) {
   return length;
 }
 
-export function create256HexHash(bytes) {
+/**
+ * Returns a SHA256 hex string of the param file/chunk
+ * @param {Buffer} file File buffer
+ * @returns {String}
+ */
+export function create256HexHash(file) {
   return crypto.createHash('sha256')
-    .update(bytes)
+    .update(file)
     .digest('hex');
 }
