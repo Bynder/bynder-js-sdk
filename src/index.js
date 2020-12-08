@@ -165,26 +165,27 @@ export default class Bynder {
    * assets or an Error with the problem.
    */
   getAllMediaItems(params = {}) {
-    const recursiveGetAssets = (_params, assets) => {
+    const recursiveGetAssets = (_params, assets = []) => {
       let queryAssets = assets;
       const params = { ..._params };
       params.page = params.page || 1;
       params.limit = params.limit || DEFAULT_ASSETS_NUMBER_PER_PAGE;
 
       return this.getMediaList(params)
-        .then(data => {
+        .then(({data}) => {
           queryAssets = assets.concat(data);
+
           if (data && data.length === params.limit) {
             // If the results page is full it means another one might exist
             params.page += 1;
             return recursiveGetAssets(params, queryAssets);
           }
+
           return queryAssets;
-        })
-        .catch(error => error);
+        });
     };
 
-    return recursiveGetAssets(params, []);
+    return recursiveGetAssets(params);
   }
 
   /**

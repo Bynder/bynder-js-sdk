@@ -773,8 +773,29 @@ describe('#getMediaInfo', () => {
   });
 });
 
-describe.skip('#getAllMediaItems', () => {
-  // Add more test cases
+describe('#getAllMediaItems', () => {
+  beforeEach(() => {
+    helpers.mockFunctions(bynder.api, [
+      {
+        name: 'send',
+        returnedValue: Promise.resolve({})
+      }
+    ]);
+  });
+
+  afterEach(() => {
+    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+  });
+
+  it('sends the expected payload', async () => {
+    await bynder.getAllMediaItems();
+
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/', {
+      count: false,
+      limit: 50,
+      page: 1
+    });
+  });
 });
 
 describe('#getMediaTotal', () => {
