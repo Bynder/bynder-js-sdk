@@ -45,5 +45,9 @@
     "query-string": "^6.1.0",
     "simple-oauth2": "^2.5.1"
   },
+  // Your current package.json contents
+  "resolutions": {
+    "graceful-fs": "^4.2.4"
+  },
   "repository": "git@github.com:Bynder/bynder-js-sdk.git"
 }
