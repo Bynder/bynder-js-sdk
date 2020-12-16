@@ -1,4 +1,6 @@
-name: Publish
+# This workflow will upload a js package to npm registry when a release is created
+
+name: Publish SDK to npm
 
 on:
   release:
