@@ -4,7 +4,7 @@ name: Publish SDK to npm
 
 on:
   release:
-    types: [published]
+    types: [ published ]
 
 jobs:
   build:
