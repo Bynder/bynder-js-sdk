@@ -1,7 +1,5 @@
 # Bynder JavaScript SDK
 
-[![Build Status](https://travis-ci.org/Bynder/bynder-js-sdk.svg?branch=master)](https://travis-ci.org/Bynder/bynder-js-sdk)
-
 This SDK aims to help the development of integrations with
 [Bynder](https://www.bynder.com/en/) that use JavaScript, providing an easy
 interface to communicate with
