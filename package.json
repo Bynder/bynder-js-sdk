@@ -1,6 +1,6 @@
 {
   "name": "@bynder-test/bynder-js-sdk",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Bynder Javascript SDK",
   "main": "./dist/bynder-js-sdk.js",
   "scripts": {
