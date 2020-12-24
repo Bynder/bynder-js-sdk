@@ -174,7 +174,7 @@ describe('#uploadFile', () => {
     it('calls each upload method with the expected payload', async () => {
       await bynder.uploadFile(file);
 
-      const [prepareRequest, uploadChunkRequest, finaliseRequest, saveAssetRequest] = spy.mock.calls;
+      const [prepareRequest, uploadChunkRequest, finaliseRequest, _saveAssetRequest] = spy.mock.calls;
 
       expect(prepareRequest).toEqual(['POST', 'v7/file_cmds/upload/prepare']);
       expect(uploadChunkRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/chunk/0', file.body, {
@@ -189,7 +189,7 @@ describe('#uploadFile', () => {
         intent: 'upload_main_uploader_asset',
         sha256: utils.create256HexHash(file.body)
       }]);
-      expect(saveAssetRequest).toEqual(['POST', 'api/v4/media/save/night-gathers-and-now-my-watch-begins/', {
+      expect(_saveAssetRequest).toEqual(['POST', 'api/v4/media/save/night-gathers-and-now-my-watch-begins/', {
         fileId,
         brandId: 'Bynder'
       }]);
@@ -202,25 +202,25 @@ describe('#uploadFile', () => {
     beforeEach(() => {
       helpers.mockFunctions(bynder, [
         {
-          name: 'prepareUpload',
+          name: '_prepareUpload',
           returnedValue: Promise.resolve(fileId)
         },
         {
-          name: 'uploadFileInChunks',
+          name: '_uploadFileInChunks',
           returnedValue: Promise.resolve(1)
         },
         // The error could be on any module,
         // but we will simulate one on the
         // middle of the workflow.
         {
-          name: 'finaliseUpload',
+          name: '_finaliseUpload',
           returnedValue: Promise.reject({
             status: 400,
             message: 'File not processed'
           })
         },
         {
-          name: 'saveAsset',
+          name: '_saveAsset',
           returnedValue: Promise.resolve({})
         }
       ]);
@@ -228,10 +228,10 @@ describe('#uploadFile', () => {
 
     afterEach(() => {
       helpers.restoreMockedFunctions(bynder, [
-        { name: 'prepareUpload' },
-        { name: 'uploadFileInChunks' },
-        { name: 'finaliseUpload' },
-        { name: 'saveAsset' }
+        { name: '_prepareUpload' },
+        { name: '_uploadFileInChunks' },
+        { name: '_finaliseUpload' },
+        { name: '_saveAsset' }
       ]);
     });
 
@@ -244,12 +244,12 @@ describe('#uploadFile', () => {
           });
         });
 
-      expect(bynder.prepareUpload).toHaveBeenCalledTimes(1);
+      expect(bynder._prepareUpload).toHaveBeenCalledTimes(1);
     });
   });
 });
 
-describe('#prepareUpload', () => {
+describe('#_prepareUpload', () => {
   beforeEach(() => {
     helpers.mockFunctions(bynder.api, [
       {
@@ -266,7 +266,7 @@ describe('#prepareUpload', () => {
   });
 
   it('calls the FS upload prepare endpoint', async () => {
-    const fileId = await bynder.prepareUpload();
+    const fileId = await bynder._prepareUpload();
 
     expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'v7/file_cmds/upload/prepare');
     expect(fileId).toBeDefined();
@@ -286,7 +286,7 @@ describe('#prepareUpload', () => {
     });
 
     it('throws response error', () => {
-      bynder.prepareUpload().catch(error => {
+      bynder._prepareUpload().catch(error => {
         expect(error).toEqual({
           status: 500,
           message: 'There was a problem preparing the upload'
@@ -296,7 +296,7 @@ describe('#prepareUpload', () => {
   });
 });
 
-describe('#uploadFileInChunks', () => {
+describe('#_uploadFileInChunks', () => {
   beforeEach(() => {
     helpers.mockFunctions(bynder.api, [
       {
@@ -314,7 +314,7 @@ describe('#uploadFileInChunks', () => {
     const fileId = 'i-am-the-sword-in-the-darkness';
     const expectedChunk = Buffer.from([97, 45, 102, 105, 108, 101]);
 
-    const chunks = await bynder.uploadFileInChunks(file, fileId, file.body.length);
+    const chunks = await bynder._uploadFileInChunks(file, fileId, file.body.length);
     expect(chunks).toEqual(1);
     expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
       additionalHeaders: {
@@ -342,7 +342,7 @@ describe('#uploadFileInChunks', () => {
     it('throws response error', () => {
       const fileId = 'i-am-the-watcher-on-the-walls';
 
-      bynder.uploadFileInChunks(file, fileId, file.body.length)
+      bynder._uploadFileInChunks(file, fileId, file.body.length)
         .catch(error => {
           expect(error).toEqual({
             message: 'Chunk 0 not uploaded'
@@ -352,7 +352,7 @@ describe('#uploadFileInChunks', () => {
   });
 });
 
-describe('#finaliseUpload', () => {
+describe('#_finaliseUpload', () => {
   const correlationId = 'i-am-the-shield-that-guards-the-realms-of-men';
 
   beforeEach(() => {
@@ -375,7 +375,7 @@ describe('#finaliseUpload', () => {
   it('calls the endpoint', async () => {
     const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
 
-    const correlation = await bynder.finaliseUpload(fileId, file.filename, 1, file.body.length);
+    const correlation = await bynder._finaliseUpload(fileId, file.filename, 1, file.body.length);
     expect(correlation).toBeDefined();
     expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/finalise_api`, {
       chunksCount: 1,
@@ -406,7 +406,7 @@ describe('#finaliseUpload', () => {
     it('throws response error', () => {
       const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
 
-      bynder.finaliseUpload(fileId, file.filename, 1, file.body.length)
+      bynder._finaliseUpload(fileId, file.filename, 1, file.body.length)
         .catch(error => {
           expect(error).toEqual({
             status: 400,
@@ -417,7 +417,7 @@ describe('#finaliseUpload', () => {
   });
 });
 
-describe('#saveAsset', () => {
+describe('#_saveAsset', () => {
   describe('with a media Id', () => {
     beforeAll(() => {
       helpers.mockFunctions(bynder.api, [
@@ -436,7 +436,7 @@ describe('#saveAsset', () => {
       const mediaId = 'i-am-the-shield-that-guards-the-realms-of-men';
       const asset = { ...file.data, mediaId };
 
-      await bynder.saveAsset(asset);
+      await bynder._saveAsset(asset);
       expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `api/v4/media/${mediaId}/save/`, asset);
     });
   });
@@ -458,7 +458,7 @@ describe('#saveAsset', () => {
     it('calls the save media endpoint', async () => {
       const asset = { ...file.data };
 
-      await bynder.saveAsset(asset);
+      await bynder._saveAsset(asset);
       expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/media/save/', asset);
     });
   });
@@ -483,7 +483,7 @@ describe('#saveAsset', () => {
         fileId: 'i-am-the-shield-that-guards-the-realms-of-men'
       };
 
-      await bynder.saveAsset(asset);
+      await bynder._saveAsset(asset);
       expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/media/save/i-am-the-shield-that-guards-the-realms-of-men/', asset);
     });
   });
@@ -509,7 +509,7 @@ describe('#saveAsset', () => {
         mediaId: 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come'
       };
 
-      await bynder.saveAsset(asset);
+      await bynder._saveAsset(asset);
       expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/media/i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come/save/i-am-the-shield-that-guards-the-realms-of-men/', asset);
     });
   });
@@ -519,7 +519,7 @@ describe('#saveAsset', () => {
       const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
       const asset = { fileId };
 
-      bynder.saveAsset(asset)
+      bynder._saveAsset(asset)
         .catch(error => {
           expect(error).toEqual({
             status: 0,
@@ -550,7 +550,7 @@ describe('#saveAsset', () => {
       const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
       const asset = { ...file.data, fileId };
 
-      bynder.saveAsset(asset)
+      bynder._saveAsset(asset)
         .catch(error => {
           expect(error).toEqual({
             status: 400,

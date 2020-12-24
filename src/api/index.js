@@ -32,11 +32,10 @@ export default class BynderApi {
    * Generates the request headers
    * @access private
    * @async
-   * @param {String} method HTTP Verb of the request
    * @param {Object} additionalHeaders Addional headers for specific endpoints
    * @returns {Promise<object>} ?Request headers to be send
    */
-  async _headers(method, additionalHeaders = {}) {
+  async _headers(additionalHeaders = {}) {
     const headers = {
       ...additionalHeaders,
       'User-Agent': `bynder-js-sdk/${pkg.version}`
@@ -91,7 +90,7 @@ export default class BynderApi {
       params = null;
     }
 
-    const headers = await this._headers(method, { ...options.additionalHeaders });
+    const headers = await this._headers({ ...options.additionalHeaders });
 
     return this.axios.request({
       url, params, method, headers,

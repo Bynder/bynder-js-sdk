@@ -169,11 +169,7 @@ bynder
 
 ### Upload
 
-- `prepareUpload()`
-- `uploadFileInChunks(fileObject, fileId, fileSize)`
-- `saveAsset(queryObject)`
 - `uploadFile(fileObject)`
-- `finaliseUpload(fileObject, fileName, chunks, fileSize)`
 
 ## Contribute to the SDK
 

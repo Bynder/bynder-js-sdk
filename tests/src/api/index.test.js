@@ -23,22 +23,12 @@ describe('#_headers', () => {
       api = null;
     });
 
-    it('returns headers with Content-Type if is a POST', async () => {
+    it('returns headers with Content-Type', async () => {
       const expectedHeaders = {
         'User-Agent': `bynder-js-sdk/${pkg.version}`,
         'Authorization': 'Bearer token'
       };
-      const headers = await api._headers('POST');
-
-      expect(headers).toEqual(expectedHeaders);
-    });
-
-    it('returns headers with Content-Type if is not a POST', async () => {
-      const expectedHeaders = {
-        'User-Agent': `bynder-js-sdk/${pkg.version}`,
-        'Authorization': 'Bearer token'
-      };
-      const headers = await api._headers('GET');
+      const headers = await api._headers();
 
       expect(headers).toEqual(expectedHeaders);
     });
@@ -64,22 +54,12 @@ describe('#_headers', () => {
       api = null;
     });
 
-    it('returns headers with Content-Type if is a POST', async () => {
+    it('returns headers with Content-Type', async () => {
       const expectedHeaders = {
         'User-Agent': `bynder-js-sdk/${pkg.version}`,
         'Authorization': 'Bearer oauth-access-token'
       };
-      const headers = await api._headers('POST');
-
-      expect(headers).toEqual(expectedHeaders);
-    });
-
-    it('returns headers with Content-Type if is not a POST', async () => {
-      const expectedHeaders = {
-        'User-Agent': `bynder-js-sdk/${pkg.version}`,
-        'Authorization': 'Bearer oauth-access-token'
-      };
-      const headers = await api._headers('GET');
+      const headers = await api._headers();
 
       expect(headers).toEqual(expectedHeaders);
     });
@@ -96,7 +76,7 @@ describe('#_headers', () => {
     });
 
     it('returns them', async () => {
-      const headers = await api._headers('GET', {
+      const headers = await api._headers({
         'content-sha256': 'abcd'
       });
 

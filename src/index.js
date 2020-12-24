@@ -602,13 +602,14 @@ export default class Bynder {
   /**
    * Finalises the file upload when all chunks finished uploading and registers it in Bynder.
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/finalise-a-completely-uploaded-file}
+   * @access private
    * @param {String} fileId Unique file identifier
    * @param {String} fileName Original file name
    * @param {Number} chunksCount Number of chunks
    * @param {Number} fileSize File byte size
    * @return {Promise<object>} Object containing the correlation ID (`correlationId`) and file ID (`fileId`) of the upload
    */
-  finaliseUpload(fileId, fileName, chunksCount, fileSize) {
+  _finaliseUpload(fileId, fileName, chunksCount, fileSize) {
     return this.api.send('POST', `v7/file_cmds/upload/${fileId}/finalise_api`, {
       chunksCount, fileName, fileSize,
       intent: DEFAULT_UPLOAD_INTENT,
@@ -619,9 +620,10 @@ export default class Bynder {
 
   /**
    * Prepares the remote env to upload a new file
+   * @access private
    * @return {Promise<string>} Unique file identificator
    */
-  prepareUpload() {
+  _prepareUpload() {
     return this.api.send('POST', 'v7/file_cmds/upload/prepare')
       .then(response => response.file_id);
   }
@@ -630,17 +632,14 @@ export default class Bynder {
    * Saves a media asset in Bynder. If media id is specified in the data a new version of the asset will be saved.
    * Otherwise a new asset will be saved.
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets/4-finalise-a-completely-uploaded-file/save-as-a-new-asset}
+   * @access private
    * @param {Object} data Asset data
-   * @param {String} data.brandId Brand ID
    * @param {String} data.fileId File ID
    * @param {String} data.mediaId Media ID
+   * @param {String} data.name Asset name
    * @return {Promise<object>}
    */
-  saveAsset(data) {
-    if (!data.brandId) {
-      return rejectValidation('upload', 'brandId');
-    }
-
+  _saveAsset(data) {
     const { fileId, mediaId } = data;
     let url = mediaId ? `api/v4/media/${mediaId}/save/` : 'api/v4/media/save/';
 
@@ -655,6 +654,7 @@ export default class Bynder {
    * Uploads arbirtrarily sized buffer or stream file to provided S3 endpoint in chunks and registers each chunk to Bynder.
    * Resolves the passed init result and final chunk number.
    * @async
+   * @access private
    * @param {Object} file An object containing the id of the desired collection.
    * @param {String} file.filename The file name of the file to be saved
    * @param {Buffer|Readable} file.body The file to be uploaded. Can be either buffer or a read stream.
@@ -663,7 +663,7 @@ export default class Bynder {
    * @param {Number} size File byte size
    * @return {Promisee<number>} Total number of chunks uploaded to the upload payload
    */
-  async uploadFileInChunks(file, fileId, size) {
+  async _uploadFileInChunks(file, fileId, size) {
     const { body } = file;
     // Developers can use this to track file upload progress
     this._chunks = Math.ceil(size / FILE_CHUNK_SIZE);
@@ -705,13 +705,8 @@ export default class Bynder {
    */
   async uploadFile(file) {
     const { body, filename, data } = file;
-    const { brandId } = data;
     const bodyType = bodyTypes.get(body);
     const size = getLength(file);
-
-    if (!brandId) {
-      return rejectValidation('upload', 'brandId');
-    }
 
     if (!filename) {
       return rejectValidation('upload', 'filename');
@@ -730,10 +725,10 @@ export default class Bynder {
     this._sha256 = create256HexHash(file.body);
 
     try {
-      const fileId = await this.prepareUpload();
-      const chunks = await this.uploadFileInChunks(file, fileId, size);
-      const correlationId = await this.finaliseUpload(fileId, filename, chunks, size);
-      const asset = await this.saveAsset({...data, fileId});
+      const fileId = await this._prepareUpload();
+      const chunks = await this._uploadFileInChunks(file, fileId, size);
+      const correlationId = await this._finaliseUpload(fileId, filename, chunks, size);
+      const asset = await this._saveAsset({...data, fileId});
 
       this.sha256 = undefined;
 
