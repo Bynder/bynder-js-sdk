@@ -651,7 +651,7 @@ export default class Bynder {
   }
 
   /**
-   * Uploads arbirtrarily sized buffer or stream file to provided S3 endpoint in chunks and registers each chunk to Bynder.
+   * Uploads arbirtrarily sized buffer or stream file to our file service in chunks.
    * Resolves the passed init result and final chunk number.
    * @async
    * @access private

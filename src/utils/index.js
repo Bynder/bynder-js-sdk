@@ -1,6 +1,18 @@
 'use strict';
 
 import crypto from 'crypto';
+import stream from 'stream';
+
+/**
+ * Checks if an object is a readable stream
+ * @param {Object} obj Object to be checked
+ * @returns {Boolean} True if is a stream. False if not.
+ */
+function isReadableStream(obj) {
+  return obj instanceof stream.Stream &&
+    typeof (obj._read === 'function') &&
+    typeof (obj._readableState === 'object');
+}
 
 /**
  * Rejects the request.
@@ -15,6 +27,7 @@ export function rejectValidation(module, param) {
 
 export const bodyTypes = {
   BUFFER: 'BUFFER',
+  STREAM: 'STREAM',
 
   /**
    * @param {Object} body - The file body whose type we need to determine
@@ -24,6 +37,11 @@ export const bodyTypes = {
     if (Buffer.isBuffer(body)) {
       return bodyTypes.BUFFER;
     }
+
+    if (isReadableStream(body)) {
+      return bodyTypes.STREAM;
+    }
+
     return null;
   }
 };
