@@ -20,7 +20,6 @@ export default [
       'http',
       'https',
       'is-url',
-      'isomorphic-form-data',
       'net',
       'path',
       'proper-url-join',
@@ -31,7 +30,8 @@ export default [
       'url',
       'utf-8-validate',
       'uuid',
-      'zlib'
+      'zlib',
+      'fs'
     ],
     output: [
       {
