@@ -189,7 +189,6 @@ describe('#uploadFile', () => {
         chunksCount: 1,
         fileName: file.filename,
         fileSize: 6,
-        intent: 'upload_main_uploader_asset',
         sha256: utils.create256HexHash(file.body)
       }]);
       expect(_saveAssetRequest).toEqual(['POST', 'api/v4/media/save/night-gathers-and-now-my-watch-begins/', {
@@ -512,7 +511,6 @@ describe('#_finaliseUpload', () => {
       chunksCount: 1,
       fileName: file.filename,
       fileSize: file.body.length,
-      intent: 'upload_main_uploader_asset',
       sha256: utils.create256HexHash(file.body)
     });
   });
