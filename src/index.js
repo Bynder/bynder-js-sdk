@@ -667,7 +667,6 @@ export default class Bynder {
         'Content-SHA256': sha256
       }
     }).catch(error => {
-      // console.error(error)
       if (attempt >= 4) {
         throw error;
       }

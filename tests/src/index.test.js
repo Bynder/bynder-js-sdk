@@ -5,8 +5,6 @@ import Bynder from '../../src';
 import * as utils from '../../src/utils';
 import * as helpers from '../helpers';
 
-// process.on('unhandledRejection', console.error)
-
 const config = {
   baseURL: 'https://portal.getbynder.com/',
   clientId: 'test-client-id',
