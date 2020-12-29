@@ -115,6 +115,7 @@ export default class BynderApi {
           const {headers, status, data: body, statusText: message} = error.response;
           exception = { headers, status, body, message };
         } else {
+          console.error(error)
           exception = {
             status: 0,
             message: error.message

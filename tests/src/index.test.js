@@ -1,6 +1,11 @@
-import Bynder from '../../src/index.js';
+'use strict';
+
+import { createReadStream, readFileSync } from 'fs';
+import Bynder from '../../src';
 import * as utils from '../../src/utils';
 import * as helpers from '../helpers';
+
+// process.on('unhandledRejection', console.error)
 
 const config = {
   baseURL: 'https://portal.getbynder.com/',
@@ -314,7 +319,7 @@ describe('#_uploadFileInChunks', () => {
     const fileId = 'i-am-the-sword-in-the-darkness';
     const expectedChunk = Buffer.from([97, 45, 102, 105, 108, 101]);
 
-    const chunks = await bynder._uploadFileInChunks(file, fileId, file.body.length);
+    const chunks = await bynder._uploadFileInChunks(file, fileId, file.body.length, 'BUFFER');
     expect(chunks).toEqual(1);
     expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
       additionalHeaders: {
@@ -325,10 +330,11 @@ describe('#_uploadFileInChunks', () => {
 
   describe('on a request error', () => {
     beforeEach(() => {
-      helpers.mockFunctions(bynder.api.axios, [
+      helpers.mockFunctions(bynder, [
         {
-          name: 'request',
-          returnedValue: Promise.resolve({
+          name: '_uploadChunk',
+          returnedValue: Promise.reject({
+            message: 'Chunk 0 not uploaded',
             status: 400
           })
         }
@@ -336,16 +342,143 @@ describe('#_uploadFileInChunks', () => {
     });
 
     afterEach(() => {
-      helpers.restoreMockedFunctions(bynder.api.axios, [{ name: 'request' }]);
+      helpers.restoreMockedFunctions(bynder, [{ name: '_uploadChunk' }]);
     });
 
     it('throws response error', () => {
       const fileId = 'i-am-the-watcher-on-the-walls';
 
-      bynder._uploadFileInChunks(file, fileId, file.body.length)
+      bynder._uploadFileInChunks(file, fileId, file.body.length, 'BUFFER')
         .catch(error => {
           expect(error).toEqual({
-            message: 'Chunk 0 not uploaded'
+            message: 'Chunk 0 not uploaded',
+            status: 400
+          });
+        });
+    });
+  });
+});
+
+describe('#_uploadBufferFile', () => {
+  beforeEach(() => {
+    helpers.mockFunctions(bynder.api, [
+      {
+        name: 'send',
+        returnedValue: Promise.resolve()
+      }
+    ]);
+  });
+
+  afterEach(() => {
+    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+  });
+
+  it('calls the FS upload chunk endpoint', async () => {
+    const fileId = 'i-am-the-sword-in-the-darkness';
+    const expectedChunk = Buffer.from([97, 45, 102, 105, 108, 101]);
+
+    const chunks = await bynder._uploadBufferFile(file.body, fileId, file.body.length);
+    expect(chunks).toEqual(1);
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
+      additionalHeaders: {
+        'Content-SHA256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
+      }
+    });
+  });
+
+  describe('on a request error', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder, [
+        {
+          name: '_uploadChunk',
+          returnedValue: Promise.reject({
+            message: 'Chunk 0 not uploaded',
+            status: 400
+          })
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder, [{ name: '_uploadChunk' }]);
+    });
+
+    it('throws response error', () => {
+      const fileId = 'i-am-the-watcher-on-the-walls';
+
+      bynder._uploadBufferFile(file.body, fileId, file.body.length)
+        .catch(error => {
+          expect(error).toEqual({
+            message: 'Chunk 0 not uploaded',
+            status: 400
+          });
+        });
+    });
+  });
+});
+
+describe('#_uploadStreamFile', () => {
+  const stream = createReadStream('./samples/testasset.png');
+
+  beforeEach(() => {
+    helpers.mockFunctions(bynder.api, [
+      {
+        name: 'send',
+        returnedValue: Promise.resolve()
+      }
+    ]);
+  });
+
+  afterEach(() => {
+    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+  });
+
+  it('calls the FS upload chunk endpoint', async () => {
+    const fileId = 'i-am-the-sword-in-the-darkness';
+    const expectedChunk = readFileSync('./samples/testasset.png');
+
+    const chunks = await bynder._uploadStreamFile(stream, fileId);
+    expect(chunks).toEqual(1);
+    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
+      additionalHeaders: {
+        'Content-SHA256': 'ece6c2b6d1fc140c52ec6427646252f8cb55d64af73d6766af7df2debd7cd9e8'
+      }
+    });
+  });
+
+  describe.skip('on a request error', () => {
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve()
+        }
+      ]);
+
+      helpers.mockFunctions(bynder, [
+        {
+          name: '_uploadChunk',
+          returnedValue: Promise.reject({
+            message: 'Chunk 0 not uploaded',
+            status: 400
+          })
+        }
+      ]);
+    });
+
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+      helpers.restoreMockedFunctions(bynder, [{ name: '_uploadChunk' }]);
+    });
+
+    it('throws response error', () => {
+      const fileId = 'i-am-the-watcher-on-the-walls';
+
+      bynder._uploadStreamFile(stream, fileId)
+        .catch(error => {
+          expect(error).toEqual({
+            message: 'Chunk 0 not uploaded',
+            status: 0
           });
         });
     });

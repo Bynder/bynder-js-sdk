@@ -1,3 +1,4 @@
+import fs from 'fs';
 import * as utils from '../../../src/utils';
 
 describe('#rejectValidation', () => {
@@ -18,6 +19,13 @@ describe('bodyType#get', () => {
     const result = utils.bodyTypes.get(body);
 
     expect(result).toBe('BUFFER');
+  });
+
+  it('returns a stream when the file is a stream', () => {
+    const body = fs.createReadStream('./samples/testasset.png');
+    const result = utils.bodyTypes.get(body);
+
+    expect(result).toBe('STREAM');
   });
 
   it('returns null when the body type is not known', () => {

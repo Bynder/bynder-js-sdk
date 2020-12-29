@@ -1,6 +1,5 @@
 'use strict';
 
-import 'isomorphic-form-data';
 import simpleOAuth2 from 'simple-oauth2';
 import url from 'url';
 import BynderApi from './api';
@@ -651,6 +650,98 @@ export default class Bynder {
   }
 
   /**
+   * Uploads a file chunk to the FS. It will try to upload again
+   * (up to 4 times) if it fails.
+   *
+   * @access private
+   * @param {Object} chunk Chunk to be uploaded
+   * @param {Number} chunkNumber Chunk number
+   * @param {String} fileId File ID
+   * @param {String} sha256 Chunk SHA256
+   * @param {Number} attempt Upload attempt
+   * @returns {Promise<object>}
+   */
+  _uploadChunk(chunk, chunkNumber, fileId, sha256, attempt = 1) {
+    return this.api.send('POST', `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`, chunk, {
+      additionalHeaders: {
+        'Content-SHA256': sha256
+      }
+    }).catch(error => {
+      // console.error(error)
+      if (attempt >= 4) {
+        throw error;
+      }
+      attempt++;
+      // If the upload fails, we'll call the method again
+      return this._uploadChunk(chunk, chunkNumber, fileId, sha256, attempt);
+    });
+  }
+
+  /**
+   * Cycles through an in-memory buffered file in order to upload it to FS.
+   *
+   * @async
+   * @access private
+   * @param {Object} body File body
+   * @param {String} fileId File ID
+   * @param {Number} size File size
+   * @returns {Promise<number>}
+   */
+  async _uploadBufferFile(body, fileId, size) {
+    // Developers can use this to track file upload progress
+    this._chunks = Math.ceil(size / FILE_CHUNK_SIZE);
+    this._chunkNumber = 0;
+
+    // Iterate over the chunks and send them
+    while (this._chunkNumber <= (this._chunks - 1)) {
+      const start = this._chunkNumber * FILE_CHUNK_SIZE;
+      const end = Math.min(start + FILE_CHUNK_SIZE, size);
+      const chunk = body.slice(start, end);
+      const sha256 = create256HexHash(chunk);
+
+      await this._uploadChunk(chunk, this._chunkNumber, fileId, sha256);
+
+      this._chunkNumber++;
+    }
+
+    return this._chunks;
+  }
+
+  /**
+   * Reads a file stream and uploads it to the FS
+   *
+   * @access private
+   * @param {Object} stream File stream
+   * @param {String} fileId File ID
+   * @returns {Promise<number>}
+   */
+  _uploadStreamFile(stream, fileId) {
+    // We need to force our chunk size on the stream
+    stream._readableState.highWaterMark = FILE_CHUNK_SIZE;
+    // Developers can use this to track file upload progress
+    this._chunkNumber = 0;
+
+    return new Promise((resolve, reject) => {
+      stream.on('data', async chunk => {
+        // Hol' up!
+        stream.pause();
+        const sha256 = create256HexHash(chunk);
+
+        await this._uploadChunk(chunk, this._chunkNumber, fileId, sha256)
+          .catch(reject);
+
+        this._chunkNumber++;
+        // Continue!
+        stream.resume();
+      });
+
+      stream.on('error', reject);
+
+      stream.on('end', () => resolve(this._chunkNumber));
+    });
+  }
+
+  /**
    * Uploads arbirtrarily sized buffer or stream file to our file service in chunks.
    * Resolves the passed init result and final chunk number.
    * @async
@@ -663,29 +754,20 @@ export default class Bynder {
    * @param {Number} size File byte size
    * @return {Promisee<number>} Total number of chunks uploaded to the upload payload
    */
-  async _uploadFileInChunks(file, fileId, size) {
+  async _uploadFileInChunks(file, fileId, size, bodyType) {
     const { body } = file;
-    // Developers can use this to track file upload progress
-    this._chunks = Math.ceil(size / FILE_CHUNK_SIZE);
-    this._chunkNumber = 0;
 
-    // Iterate over the chunks and send them
-    while (this._chunkNumber <= (this._chunks - 1)) {
-      const start = this._chunkNumber * FILE_CHUNK_SIZE;
-      const end = Math.min(start + FILE_CHUNK_SIZE, size);
-      const chunk = body.slice(start, end);
-      const sha256 = create256HexHash(chunk);
+    switch (bodyType) {
+    case bodyTypes.BUFFER:
+      await this._uploadBufferFile(body, fileId, size);
+      break;
 
-      await this.api.send('POST', `v7/file_cmds/upload/${fileId}/chunk/${this._chunkNumber}`, chunk, {
-        additionalHeaders: {
-          'Content-SHA256': sha256
-        }
-      })
-        .catch(error => {
-          throw new Error(`[${error.message} - ${error.status}] Chunk ${this._chunkNumber} not uploaded: ${error.body}`, error);
-        });
+    case bodyTypes.STREAM:
+      this._chunks = await this._uploadStreamFile(body, fileId);
+      break;
 
-      this._chunkNumber++;
+    default:
+      throw rejectValidation('uploadFile', 'bodyType');
     }
 
     return this._chunks;
@@ -726,7 +808,7 @@ export default class Bynder {
 
     try {
       const fileId = await this._prepareUpload();
-      const chunks = await this._uploadFileInChunks(file, fileId, size);
+      const chunks = await this._uploadFileInChunks(file, fileId, size, bodyType);
       const correlationId = await this._finaliseUpload(fileId, filename, chunks, size);
       const asset = await this._saveAsset({...data, fileId});
 
