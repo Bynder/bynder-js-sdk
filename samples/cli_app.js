@@ -47,3 +47,4 @@ bynder.getBrands()
     console.log('Response body: ');
     console.log(data);
   } ;
+  
