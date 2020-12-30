@@ -71,13 +71,13 @@ export default class BynderApi {
       throw new Error('No token found');
     }
 
-    const isV6orV7 = (/v[6|7]/).test(url);
+    const isV4orV5 = (/api(\/v4)?\//).test(url);
     let body = null;
 
     if (method.toLocaleLowerCase() === 'post') {
       body = params;
 
-      if (!isV6orV7) {
+      if (isV4orV5) {
         body = queryString.stringify(params);
         // Some older endpoints require this
         options.additionalHeaders = {

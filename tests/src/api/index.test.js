@@ -134,14 +134,14 @@ describe('#send', () => {
           'X-API-Correlation-Id': correlationId
         }
       };
-      const response = await api.send('POST', '/', {
+      const response = await api.send('POST', '/api/', {
         chunk: 0,
         size: 100
       });
 
       expect(response).toEqual(expectedResponse);
       expect(api.axios.request).toHaveBeenNthCalledWith(1, {
-        url: '/',
+        url: '/api/',
         method: 'POST',
         data: 'chunk=0&size=100',
         headers: {
@@ -318,7 +318,7 @@ describe('#send', () => {
     });
 
     it('returns the expected headers and body', async () => {
-      await api.send('POST', '/', {
+      await api.send('POST', '/api/', {
         chunk: 0,
         size: 100
       }, {
@@ -328,7 +328,7 @@ describe('#send', () => {
       });
 
       expect(api.axios.request).toHaveBeenNthCalledWith(1, {
-        url: '/',
+        url: '/api/',
         method: 'POST',
         data: 'chunk=0&size=100',
         params: null,
