@@ -43,7 +43,7 @@ Before executing any request, you need to authorize the calls to the API:
 #### Using a permanent token
 ```js
 const bynder = new Bynder({
-  baseURL: "https//portal.getbynder.com/api/",
+  baseURL: "https//portal.getbynder.com/",
   permanentToken: "<token>",
 });
 ```
@@ -54,12 +54,14 @@ const bynder = new Bynder({
 
 ```js
 const bynder = new Bynder({
-  baseURL: "https://portal.getbynder.com/api/",
+  baseURL: "https://portal.getbynder.com/",
   clientId: "<your OAuth2 client id>",
   clientSecret: "<your OAuth2 client secret>",
   redirectUri: "<url where user will be redirected after authenticating>"
 });
 ```
+
+  > Make sure the `baseURL` **does not** have the `/api` namespace at the end. The SDK will take care of it for you.
 
 2. Create an authorization URL, login and get one-time authorization code
 
@@ -78,7 +80,7 @@ token directly:
 
 ```js
 const bynder = new Bynder({
-  baseURL: "http://api-url.bynder.io/api/",
+  baseURL: "http://api-url.bynder.io/",
   clientId: "<your OAuth2 client id>",
   clientSecret: "<your OAuth2 client secret>",
   redirectUri: "<url where user will be redirected after authenticating>",
@@ -89,7 +91,7 @@ const bynder = new Bynder({
 #### Making requests
 
 You can now use the various methods from the SDK to fetch media, metaproperties
-and other data. Following the Promises notation, you should use
+and other data. All methods return a promise, so you should use
 `.then()`/`.catch()` to handle the successful and failed requests,
 respectively.
 
@@ -183,7 +185,7 @@ are the steps necessary to prepare your environment:
 
 ```json
 {
-  "baseURL": "http://api-url.bynder.io/api/",
+  "baseURL": "http://api-url.bynder.io/",
   "clientId": "<your OAuth2 client id>",
   "clientSecret": "<your OAuth2 client secret>",
   "redirectUri": "<url where user will be redirected after authenticating>"

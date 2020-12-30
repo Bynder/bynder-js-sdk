@@ -777,7 +777,7 @@ export default class Bynder {
    * @async
    * @param {Object} file An object containing the id of the desired collection.
    * @param {String} file.filename The file name of the file to be saved
-   * @param {Buffer|Readable} file.body The file to be uploaded. Can be either buffer or a read stream.
+   * @param {Buffer|Readable} file.body The file to be uploaded. Can be either buffer or a readable stream.
    * @param {Number} file.length The length of the file to be uploaded
    * @param {Object} file.data An object containing the assets' attributes
    * @param {String} fileId Optional file UUID.V4 identifier
