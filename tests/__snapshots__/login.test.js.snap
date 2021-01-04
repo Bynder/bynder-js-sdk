@@ -1,3 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`Make authorization URL should return correct authorization URL 1`] = `"https://portal.getbynder.com/v6/authentication/oauth2/auth?response_type=code&client_id=test-client-id&redirect_uri=https%3A%2F%2Ftest-redirect-uri.com&scope=offline&state=state%20example"`;
