@@ -5,4 +5,4 @@ secret.json
 docs/
 .idea/
 coverage
-package-lock.json
+.env
