@@ -612,6 +612,10 @@ export default class Bynder {
     return this.api.send('POST', `v7/file_cmds/upload/${fileId}/finalise_api`, {
       chunksCount, fileName, fileSize,
       sha256: this._sha256
+    }, {
+      additionalHeaders: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     })
       .then(response => response.headers['x-api-correlation-id']);
   }

@@ -4,6 +4,7 @@ import queryString from 'query-string';
 import isUrl from 'is-url';
 import axios from 'axios';
 import pkg from '../../package.json';
+import { FORM_ENCODED_HEADER } from '../constants';
 
 /**
  * @classdesc Represents an API call.
@@ -74,23 +75,20 @@ export default class BynderApi {
     const isV4orV5 = (/api(\/v4)?\//).test(url);
     let body = null;
 
-    if (method.toLocaleLowerCase() === 'post') {
-      body = params;
-
-      if (isV4orV5) {
-        body = queryString.stringify(params);
-        // Some older endpoints require this
-        options.additionalHeaders = {
-          ...options.additionalHeaders,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        };
-      }
-
-      // We need to clear the params so they're not sent as QS
-      params = null;
+    if (method.toLocaleLowerCase() === 'post' && isV4orV5) {
+      options.additionalHeaders = {
+        ...options.additionalHeaders,
+        'Content-Type': FORM_ENCODED_HEADER
+      };
     }
 
     const headers = await this._headers({ ...options.additionalHeaders });
+
+    if (headers['Content-Type'] === FORM_ENCODED_HEADER) {
+      body = queryString.stringify(params);
+      // We need to clear the params so they're not sent as QS
+      params = null;
+    }
 
     return this.axios.request({
       url, params, method, headers,
