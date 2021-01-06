@@ -84,7 +84,9 @@ const bynder = new Bynder({
   clientId: "<your OAuth2 client id>",
   clientSecret: "<your OAuth2 client secret>",
   redirectUri: "<url where user will be redirected after authenticating>",
-  token: "<OAuth2 access token>"
+  token: {
+    access_token: "<OAuth2 access token>"
+  }
 });
 ```
 
