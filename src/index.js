@@ -4,7 +4,7 @@ import simpleOAuth2 from 'simple-oauth2';
 import url from 'url';
 import BynderApi from './api';
 import {rejectValidation, bodyTypes, getLength, create256HexHash} from './utils';
-import {DEFAULT_ASSETS_NUMBER_PER_PAGE, FILE_CHUNK_SIZE} from './constants';
+import {DEFAULT_ASSETS_NUMBER_PER_PAGE, FILE_CHUNK_SIZE, FORM_ENCODED_HEADER} from './constants';
 
 /**
  * @classdesc Represents the Bynder SDK. It allows the user to make every call to the API with a single function.
@@ -612,6 +612,10 @@ export default class Bynder {
     return this.api.send('POST', `v7/file_cmds/upload/${fileId}/finalise_api`, {
       chunksCount, fileName, fileSize,
       sha256: this._sha256
+    }, {
+      additionalHeaders: {
+        'Content-Type': FORM_ENCODED_HEADER
+      }
     })
       .then(response => response.headers['x-api-correlation-id']);
   }
