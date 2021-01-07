@@ -3,6 +3,7 @@
 import { createReadStream, readFileSync } from 'fs';
 import Bynder from '../../src';
 import * as utils from '../../src/utils';
+import pkg from '../../package.json';
 import * as helpers from '../helpers';
 
 const config = {
@@ -190,6 +191,10 @@ describe('#uploadFile', () => {
         fileName: file.filename,
         fileSize: 6,
         sha256: utils.create256HexHash(file.body)
+      }, {
+        additionalHeaders: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       }]);
       expect(_saveAssetRequest).toEqual(['POST', 'api/v4/media/save/night-gathers-and-now-my-watch-begins/', {
         fileId,
@@ -483,44 +488,56 @@ describe('#_uploadStreamFile', () => {
 });
 
 describe('#_finaliseUpload', () => {
-  const correlationId = 'i-am-the-shield-that-guards-the-realms-of-men';
+  describe('with no error', () => {
+    const correlationId = 'i-am-the-shield-that-guards-the-realms-of-men';
 
-  beforeEach(() => {
-    helpers.mockFunctions(bynder.api, [
-      {
-        name: 'send',
-        returnedValue: Promise.resolve({
-          headers: {
-            'x-api-correlation-id': correlationId
-          }
-        })
-      }
-    ]);
-  });
-
-  afterEach(() => {
-    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
-  });
-
-  it('calls the endpoint', async () => {
-    const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
-
-    const correlation = await bynder._finaliseUpload(fileId, file.filename, 1, file.body.length);
-    expect(correlation).toBeDefined();
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/finalise_api`, {
-      chunksCount: 1,
-      fileName: file.filename,
-      fileSize: file.body.length,
-      sha256: utils.create256HexHash(file.body)
-    });
-  });
-
-  describe('on a request error', () => {
-    beforeEach(() => {
+    beforeAll(() => {
+      bynder._sha256 = '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d';
       helpers.mockFunctions(bynder.api.axios, [
         {
           name: 'request',
           returnedValue: Promise.resolve({
+            status: 200,
+            headers: {
+              'x-api-correlation-id': correlationId
+            }
+          })
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      bynder._sha256 = undefined;
+      helpers.restoreMockedFunctions(bynder.api.axios, [{ name: 'request' }]);
+    });
+
+    it('calls the endpoint', async () => {
+      const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
+
+      const correlation = await bynder._finaliseUpload(fileId, file.filename, 1, file.body.length);
+      expect(correlation).toBeDefined();
+      expect(bynder.api.axios.request).toHaveBeenNthCalledWith(1, {
+        data: 'chunksCount=1&fileName=a.jpg&fileSize=6&sha256=1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d',
+        headers: {
+          Authorization: 'Bearer test',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': `bynder-js-sdk/${pkg.version}`
+        },
+        httpAgent: undefined,
+        httpsAgent: undefined,
+        method: 'POST',
+        params: null,
+        url: `v7/file_cmds/upload/${fileId}/finalise_api`
+      });
+    });
+  });
+
+  describe('on a request error', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api.axios, [
+        {
+          name: 'request',
+          returnedValue: Promise.reject({
             status: 400,
             message: 'Upload not finalized'
           })
@@ -528,7 +545,7 @@ describe('#_finaliseUpload', () => {
       ]);
     });
 
-    afterEach(() => {
+    afterAll(() => {
       helpers.restoreMockedFunctions(bynder.api.axios, [{ name: 'request' }]);
     });
 
@@ -538,7 +555,7 @@ describe('#_finaliseUpload', () => {
       bynder._finaliseUpload(fileId, file.filename, 1, file.body.length)
         .catch(error => {
           expect(error).toEqual({
-            status: 400,
+            status: 0,
             message: 'Upload not finalized'
           });
         });
