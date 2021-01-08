@@ -670,6 +670,8 @@ export default class Bynder {
         'Content-SHA256': sha256
       }
     }).catch(error => {
+      // TODO: Evaluate the response error so we can filter
+      // upload errors from communication errors
       if (attempt >= 4) {
         throw error;
       }
