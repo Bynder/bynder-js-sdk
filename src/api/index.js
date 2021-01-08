@@ -73,21 +73,26 @@ export default class BynderApi {
     }
 
     const isV4orV5 = (/api(\/v4)?\//).test(url);
+    const isPost = method.toLocaleLowerCase() === 'post';
     let body = null;
 
-    if (method.toLocaleLowerCase() === 'post' && isV4orV5) {
-      options.additionalHeaders = {
-        ...options.additionalHeaders,
-        'Content-Type': FORM_ENCODED_HEADER
-      };
+    if (isPost) {
+      body = params;
+      // We need to clear the params so they're not sent as QS
+      params = null;
+
+      if (isV4orV5) {
+        options.additionalHeaders = {
+          ...options.additionalHeaders,
+          'Content-Type': FORM_ENCODED_HEADER
+        };
+      }
     }
 
     const headers = await this._headers({ ...options.additionalHeaders });
 
     if (headers['Content-Type'] === FORM_ENCODED_HEADER) {
-      body = queryString.stringify(params);
-      // We need to clear the params so they're not sent as QS
-      params = null;
+      body = queryString.stringify(params || body);
     }
 
     return this.axios.request({

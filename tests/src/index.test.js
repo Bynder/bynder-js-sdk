@@ -304,29 +304,31 @@ describe('#_prepareUpload', () => {
 });
 
 describe('#_uploadFileInChunks', () => {
-  beforeEach(() => {
-    helpers.mockFunctions(bynder.api, [
-      {
-        name: 'send',
-        returnedValue: Promise.resolve()
-      }
-    ]);
-  });
+  describe('with no errors', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve()
+        }
+      ]);
+    });
 
-  afterEach(() => {
-    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
-  });
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
 
-  it('calls the FS upload chunk endpoint', async () => {
-    const fileId = 'i-am-the-sword-in-the-darkness';
-    const expectedChunk = Buffer.from([97, 45, 102, 105, 108, 101]);
+    it('calls the FS upload chunk endpoint', async () => {
+      const fileId = 'i-am-the-sword-in-the-darkness';
+      const expectedChunk = Buffer.from([97, 45, 102, 105, 108, 101]);
 
-    const chunks = await bynder._uploadFileInChunks(file, fileId, file.body.length, 'BUFFER');
-    expect(chunks).toEqual(1);
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
-      additionalHeaders: {
-        'Content-SHA256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
-      }
+      const chunks = await bynder._uploadFileInChunks(file, fileId, file.body.length, 'BUFFER');
+      expect(chunks).toEqual(1);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
+        additionalHeaders: {
+          'Content-SHA256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
+        }
+      });
     });
   });
 
@@ -483,6 +485,47 @@ describe('#_uploadStreamFile', () => {
             status: 0
           });
         });
+    });
+  });
+});
+
+describe('#_uploadChunk', () => {
+  describe('the request', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api.axios, [
+        {
+          name: 'request',
+          returnedValue: Promise.resolve({
+            status: 200
+          })
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api.axios, [{ name: 'request' }]);
+    });
+
+    it('sends the expected body', async () => {
+      const sha256 = '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d';
+      const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
+      const chunk = Buffer.from([97, 45, 102, 105, 108, 101]);
+      const chunkNumber = 0;
+
+      await bynder._uploadChunk(chunk, chunkNumber, fileId, sha256);
+      expect(bynder.api.axios.request).toHaveBeenNthCalledWith(1, {
+        data: chunk,
+        headers: {
+          Authorization: 'Bearer test',
+          'Content-SHA256': sha256,
+          'User-Agent': `bynder-js-sdk/${pkg.version}`
+        },
+        httpAgent: undefined,
+        httpsAgent: undefined,
+        method: 'POST',
+        params: null,
+        url: `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`
+      });
     });
   });
 });
