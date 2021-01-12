@@ -74,11 +74,12 @@ class Bynder {
   /**
    * Gets OAuth2 access token from authorization code
    * @param {String} code One time authorization code
+   * @param {String|Array<string>} scope List of scopes
    * @return {Promise<string>} access token
    */
-  getToken(code) {
+  getToken(code, scope) {
     const tokenConfig = {
-      code,
+      code, scope,
       redirect_uri: this.redirectUri
     };
     // If we're provided with client credentials,
