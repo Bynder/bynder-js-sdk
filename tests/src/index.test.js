@@ -5,6 +5,7 @@ import Bynder from '../../src';
 import * as utils from '../../src/utils';
 import pkg from '../../package.json';
 import * as helpers from '../helpers';
+import * as constants from '../../src/constants';
 
 const config = {
   baseURL: 'https://portal.getbynder.com/',
@@ -346,7 +347,19 @@ describe('#_prepareUpload', () => {
 });
 
 describe('#_uploadFileInChunks', () => {
-  describe('with no errors', () => {
+  describe('with a non-supported body type', () => {
+    it('throws a rejection', () => {
+      bynder._uploadFileInChunks({}, 'abc', 0, null)
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The uploadFile bodyType is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with a buffer file', () => {
     beforeAll(() => {
       helpers.mockFunctions(bynder.api, [
         {
@@ -371,6 +384,36 @@ describe('#_uploadFileInChunks', () => {
           'Content-SHA256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
         }
       });
+    });
+  });
+
+  describe.skip('with a stream file', () => {
+    const stream = createReadStream('./samples/testasset.png');
+    let spy;
+
+    beforeAll(() => {
+      spy = jest.spyOn(bynder.api, 'send')
+        .mockImplementationOnce(() => Promise.resolve());
+    });
+
+    afterAll(() => {
+      spy.mockRestore();
+    });
+
+    it('calls the FS upload chunk endpoint', async () => {
+      const fileId = 'i-am-the-sword-in-the-darkness';
+      const expectedChunk = readFileSync('./samples/testasset.png');
+
+      const chunks = await bynder._uploadFileInChunks({ body: stream }, fileId, file.body.length, 'STREAM');
+      const [call] = spy.mock.calls;
+
+      expect(spy.mock.calls.length).toEqual(1);
+      expect(chunks).toEqual(1);
+      expect(call).toEqual(['POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
+        additionalHeaders: {
+          'Content-SHA256': 'ece6c2b6d1fc140c52ec6427646252f8cb55d64af73d6766af7df2debd7cd9e8'
+        }
+      }]);
     });
   });
 
@@ -464,31 +507,33 @@ describe('#_uploadBufferFile', () => {
 });
 
 describe('#_uploadStreamFile', () => {
-  const stream = createReadStream('./samples/testasset.png');
+  describe('with no errors', () => {
+    const stream = createReadStream('./samples/testasset.png');
 
-  beforeEach(() => {
-    helpers.mockFunctions(bynder.api, [
-      {
-        name: 'send',
-        returnedValue: Promise.resolve()
-      }
-    ]);
-  });
+    beforeEach(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve()
+        }
+      ]);
+    });
 
-  afterEach(() => {
-    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
-  });
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
 
-  it('calls the FS upload chunk endpoint', async () => {
-    const fileId = 'i-am-the-sword-in-the-darkness';
-    const expectedChunk = readFileSync('./samples/testasset.png');
+    it('calls the FS upload chunk endpoint', async () => {
+      const fileId = 'i-am-the-sword-in-the-darkness';
+      const expectedChunk = readFileSync('./samples/testasset.png');
 
-    const chunks = await bynder._uploadStreamFile(stream, fileId);
-    expect(chunks).toEqual(1);
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
-      additionalHeaders: {
-        'Content-SHA256': 'ece6c2b6d1fc140c52ec6427646252f8cb55d64af73d6766af7df2debd7cd9e8'
-      }
+      const chunks = await bynder._uploadStreamFile(stream, fileId);
+      expect(chunks).toEqual(1);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
+        additionalHeaders: {
+          'Content-SHA256': 'ece6c2b6d1fc140c52ec6427646252f8cb55d64af73d6766af7df2debd7cd9e8'
+        }
+      });
     });
   });
 
@@ -568,6 +613,43 @@ describe('#_uploadChunk', () => {
         params: null,
         url: `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`
       });
+    });
+  });
+
+  describe('on an error', () => {
+    let spy;
+
+    beforeEach(() => {
+      spy = jest.spyOn(bynder.api, 'send')
+        .mockImplementationOnce(() => Promise.reject(400))
+        .mockImplementationOnce(() => Promise.reject(400))
+        .mockImplementationOnce(() => Promise.reject(400))
+        .mockImplementationOnce(() => Promise.reject(400));
+    });
+
+    afterEach(() => {
+      spy.mockRestore();
+    });
+
+    it('reattemps to upload the failed chunk 4 times', () => {
+      const sha256 = '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d';
+      const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
+      const chunk = Buffer.from([97, 45, 102, 105, 108, 101]);
+      const chunkNumber = 0;
+
+      bynder._uploadChunk(chunk, chunkNumber, fileId, sha256)
+        .catch(error => {
+          expect(error.status).toBe(400);
+          const { calls } = spy.mock.calls;
+
+          for (let call of calls) {
+            expect(call).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`, chunk, {
+              additionalHeaders: {
+                'Content-SHA256': sha256
+              }
+            });
+          }
+        });
     });
   });
 });
@@ -1005,26 +1087,60 @@ describe('#getMediaInfo', () => {
 });
 
 describe('#getAllMediaItems', () => {
-  beforeEach(() => {
-    helpers.mockFunctions(bynder.api, [
-      {
-        name: 'send',
-        returnedValue: Promise.resolve({})
-      }
-    ]);
+  describe('by default', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the expected payload', async () => {
+      await bynder.getAllMediaItems();
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/', {
+        count: false,
+        limit: 50,
+        page: 1
+      });
+    });
   });
 
-  afterEach(() => {
-    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
-  });
+  describe('with more than one page', () => {
+    let spy;
 
-  it('sends the expected payload', async () => {
-    await bynder.getAllMediaItems();
+    beforeAll(() => {
+      spy = jest.spyOn(bynder, 'getMediaList')
+        .mockImplementationOnce(() => Promise.resolve(Array(constants.DEFAULT_ASSETS_NUMBER_PER_PAGE).fill({
+          name: 'an-asset'
+        })))
+        .mockImplementationOnce(() => Promise.resolve([]));
+    });
 
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/', {
-      count: false,
-      limit: 50,
-      page: 1
+    afterAll(() => {
+      spy.mockRestore();
+    });
+
+    it('calls the #getMediaList method multiple times', async () => {
+      await bynder.getAllMediaItems();
+      const {calls} = spy.mock;
+      const [firstCall, secondCall] = calls;
+
+      expect(calls.length).toBe(2);
+      expect(firstCall).toEqual([{
+        limit: 50,
+        page: 2
+      }]);
+      expect(secondCall).toEqual([{
+        limit: 50,
+        page: 2
+      }]);
     });
   });
 });

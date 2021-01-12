@@ -169,18 +169,18 @@ class Bynder {
   getAllMediaItems(params = {}) {
     const recursiveGetAssets = (_params, assets = []) => {
       let queryAssets = assets;
-      const params = { ..._params };
-      params.page = params.page || 1;
-      params.limit = params.limit || DEFAULT_ASSETS_NUMBER_PER_PAGE;
+      const __params = { ..._params };
+      __params.page = __params.page || 1;
+      __params.limit = __params.limit || DEFAULT_ASSETS_NUMBER_PER_PAGE;
 
-      return this.getMediaList(params)
-        .then(({data}) => {
+      return this.getMediaList(__params)
+        .then(data => {
           queryAssets = assets.concat(data);
 
-          if (data && data.length === params.limit) {
+          if (data && data.length === __params.limit) {
             // If the results page is full it means another one might exist
-            params.page += 1;
-            return recursiveGetAssets(params, queryAssets);
+            __params.page += 1;
+            return recursiveGetAssets(__params, queryAssets);
           }
 
           return queryAssets;
@@ -675,9 +675,11 @@ class Bynder {
     }).catch(error => {
       // TODO: Evaluate the response error so we can filter
       // upload errors from communication errors
-      if (attempt >= 4) {
+      if (attempt > 4) {
+        /* istanbul ignore next */
         throw error;
       }
+
       attempt++;
       // If the upload fails, we'll call the method again
       return this._uploadChunk(chunk, chunkNumber, fileId, sha256, attempt);
@@ -774,7 +776,7 @@ class Bynder {
       break;
 
     default:
-      throw rejectValidation('uploadFile', 'bodyType');
+      return rejectValidation('uploadFile', 'bodyType');
     }
 
     return this._chunks;
