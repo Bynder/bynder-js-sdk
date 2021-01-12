@@ -48,7 +48,10 @@ const bynder = new Bynder({
   baseURL: "https://portal.getbynder.com/",
   clientId: "<your OAuth2 client id>",
   clientSecret: "<your OAuth2 client secret>",
-  redirectUri: "<url where user will be redirected after authenticating>"
+  redirectUri: "<url where user will be redirected after authenticating>",
+  // If you're using client credentials grant
+  // you also need to pass the following property
+  clientCredentials: true
 });
 ```
 
@@ -66,8 +69,7 @@ const authorizationURL = bynder.makeAuthorizationURL();
 bynder.getToken(code);
 ```
 
-If you already have an access token, you can also initialize Bynder with the
-token directly:
+If you already have an access token, you can also initialize Bynder with the token directly:
 
 ```js
 const bynder = new Bynder({

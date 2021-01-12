@@ -62,26 +62,62 @@ describe('#makeAuthorizationURL', () => {
 describe('#getToken', () => {
   const _bynder = new Bynder(config);
 
-  beforeAll(() => {
-    helpers.mockFunctions(_bynder.oauth2.authorizationCode, [
-      {
-        name: 'getToken',
-        returnedValue: Promise.resolve({
-          access_token: 'i-shall-live-and-die-at-my-post',
-          expires_in: 3600,
-          scope: 'scope'
-        })
-      }
-    ]);
+  describe('with authorization code', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(_bynder.oauth2.authorizationCode, [
+        {
+          name: 'getToken',
+          returnedValue: Promise.resolve({
+            access_token: 'i-shall-live-and-die-at-my-post',
+            expires_in: 3600,
+            scope: 'scope'
+          })
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(_bynder.oauth2.authorizationCode, [{ name: 'getToken' }]);
+    });
+
+    it('sets the access token', async () => {
+      const token = await _bynder.getToken('abc');
+      expect(_bynder.api.token).toEqual(token);
+      expect(_bynder.oauth2.authorizationCode.getToken).toHaveBeenNthCalledWith(1, {
+        code: 'abc',
+        redirect_uri: 'https://test-redirect-uri.com'
+      });
+    });
   });
 
-  afterAll(() => {
-    helpers.restoreMockedFunctions(_bynder.oauth2.authorizationCode, [{ name: 'getToken' }]);
-  });
+  describe('with client credentials', () => {
+    beforeAll(() => {
+      _bynder._hasClientCredentials = true;
+      helpers.mockFunctions(_bynder.oauth2.clientCredentials, [
+        {
+          name: 'getToken',
+          returnedValue: Promise.resolve({
+            access_token: 'i-shall-live-and-die-at-my-post',
+            expires_in: 3600,
+            scope: 'scope'
+          })
+        }
+      ]);
+    });
 
-  it('sets the access token', async () => {
-    const token = await _bynder.getToken('abc');
-    expect(_bynder.api.token).toEqual(token);
+    afterAll(() => {
+      _bynder._hasClientCredentials = undefined;
+      helpers.restoreMockedFunctions(_bynder.oauth2.clientCredentials, [{ name: 'getToken' }]);
+    });
+
+    it('calls the client credentials object', async () => {
+      const token = await _bynder.getToken('def');
+      expect(_bynder.api.token).toEqual(token);
+      expect(_bynder.oauth2.clientCredentials.getToken).toHaveBeenNthCalledWith(1, {
+        code: 'def',
+        redirect_uri: 'https://test-redirect-uri.com'
+      });
+    });
   });
 });
 
