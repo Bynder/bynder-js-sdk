@@ -32,7 +32,7 @@ it('throws an exception if a permanent token is used', () => {
     new Bynder({
       permanentToken: 'a-token'
     });
-  }).toThrow('Permanent tokens are no longer supported. Please OAuth 2 authorization code or client credentials');
+  }).toThrow('Permanent tokens are no longer supported. Please use OAuth 2 authorization code or client credentials');
 });
 
 describe('.oauth2', () => {
@@ -387,33 +387,28 @@ describe('#_uploadFileInChunks', () => {
     });
   });
 
-  describe.skip('with a stream file', () => {
+  describe('with a stream file', () => {
     const stream = createReadStream('./samples/testasset.png');
-    let spy;
 
     beforeAll(() => {
-      spy = jest.spyOn(bynder.api, 'send')
-        .mockImplementationOnce(() => Promise.resolve());
+      helpers.mockFunctions(bynder, [
+        {
+          name: '_uploadStreamFile',
+          returnedValue: Promise.resolve(1)
+        }
+      ]);
     });
 
     afterAll(() => {
-      spy.mockRestore();
+      helpers.restoreMockedFunctions(bynder, [{ name: '_uploadStreamFile' }]);
     });
 
     it('calls the FS upload chunk endpoint', async () => {
       const fileId = 'i-am-the-sword-in-the-darkness';
-      const expectedChunk = readFileSync('./samples/testasset.png');
 
       const chunks = await bynder._uploadFileInChunks({ body: stream }, fileId, file.body.length, 'STREAM');
-      const [call] = spy.mock.calls;
-
-      expect(spy.mock.calls.length).toEqual(1);
       expect(chunks).toEqual(1);
-      expect(call).toEqual(['POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
-        additionalHeaders: {
-          'Content-SHA256': 'ece6c2b6d1fc140c52ec6427646252f8cb55d64af73d6766af7df2debd7cd9e8'
-        }
-      }]);
+      expect(bynder._uploadStreamFile).toHaveBeenNthCalledWith(1, stream, fileId);
     });
   });
 
@@ -521,10 +516,11 @@ describe('#_uploadStreamFile', () => {
 
     afterEach(() => {
       helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+      stream.destroy();
     });
 
     it('calls the FS upload chunk endpoint', async () => {
-      const fileId = 'i-am-the-sword-in-the-darkness';
+      const fileId = 'i-am-the-sword-in-the-darknesss';
       const expectedChunk = readFileSync('./samples/testasset.png');
 
       const chunks = await bynder._uploadStreamFile(stream, fileId);
@@ -541,13 +537,7 @@ describe('#_uploadStreamFile', () => {
     const stream = createReadStream('./samples/testasset.png');
 
     beforeEach(() => {
-      helpers.mockFunctions(bynder.api, [
-        {
-          name: 'send',
-          returnedValue: Promise.resolve()
-        }
-      ]);
-
+      jest.restoreAllMocks();
       helpers.mockFunctions(bynder, [
         {
           name: '_uploadChunk',
@@ -560,7 +550,6 @@ describe('#_uploadStreamFile', () => {
     });
 
     afterEach(() => {
-      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
       helpers.restoreMockedFunctions(bynder, [{ name: '_uploadChunk' }]);
     });
 

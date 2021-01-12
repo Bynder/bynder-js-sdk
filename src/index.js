@@ -23,7 +23,7 @@ class Bynder {
    */
   constructor({baseURL, redirectUri, clientId, clientSecret, ...options}) {
     if (options.permanentToken) {
-      throw new Error('Permanent tokens are no longer supported. Please OAuth 2 authorization code or client credentials');
+      throw new Error('Permanent tokens are no longer supported. Please use OAuth 2 authorization code or client credentials');
     }
 
     this.baseURL = baseURL;
@@ -677,7 +677,7 @@ class Bynder {
       // upload errors from communication errors
       if (attempt > 4) {
         /* istanbul ignore next */
-        throw error;
+        return Promise.reject(error);
       }
 
       attempt++;
@@ -744,7 +744,10 @@ class Bynder {
         stream.resume();
       });
 
-      stream.on('error', reject);
+      stream.on('error', (error) => {
+        reject(error);
+        stream.destroy();
+      });
 
       stream.on('end', () => resolve(this._chunkNumber));
     });

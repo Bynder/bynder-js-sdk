@@ -48,6 +48,7 @@ const bynder = new Bynder({
   baseURL: "https://portal.getbynder.com/",
   clientId: "<your OAuth2 client id>",
   clientSecret: "<your OAuth2 client secret>",
+  // A redirect URI is required for authorization codes
   redirectUri: "<url where user will be redirected after authenticating>",
   // If you're using client credentials grant
   // you also need to pass the following property
