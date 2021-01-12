@@ -538,6 +538,8 @@ describe('#_uploadStreamFile', () => {
   });
 
   describe.skip('on a request error', () => {
+    const stream = createReadStream('./samples/testasset.png');
+
     beforeEach(() => {
       helpers.mockFunctions(bynder.api, [
         {
