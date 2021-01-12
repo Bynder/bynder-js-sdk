@@ -13,7 +13,11 @@ const config = {
   redirectUri: 'https://test-redirect-uri.com'
 };
 
-const bynder = new Bynder({...config, permanentToken: 'test'});
+const bynder = new Bynder({...config,
+  token: {
+    access_token: 'test'
+  }
+});
 const file = {
   body: Buffer.from('a-file', 'utf-8'),
   filename: 'a.jpg',
@@ -42,12 +46,6 @@ describe('.oauth2', () => {
     };
 
     expect(() => new Bynder(invalidTokenConfig)).toThrow(/Invalid token format/);
-  });
-
-  describe('with permanent token', () => {
-    it('does not returns an error', () => {
-      expect(bynder.api.permanentToken).toEqual('test');
-    });
   });
 });
 

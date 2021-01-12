@@ -12,7 +12,7 @@ interface to communicate with
 
 To use this SDK, you will need:
 
-- [Node.js **v6.3.0 or above**](https://nodejs.org/)
+- [Node.js **v12 or above**](https://nodejs.org/)
 
 Node installation will include [NPM](https://www.npmjs.com/), which is
 responsible for dependency management.
@@ -38,15 +38,6 @@ details for a specific module, refer to the
 [samples folder](https://github.com/Bynder/bynder-js-sdk/tree/master/samples).
 
 Before executing any request, you need to authorize the calls to the API:
-
-
-#### Using a permanent token
-```js
-const bynder = new Bynder({
-  baseURL: "https//portal.getbynder.com/",
-  permanentToken: "<token>",
-});
-```
 
 #### Using OAuth2
 

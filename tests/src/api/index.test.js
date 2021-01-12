@@ -1,22 +1,33 @@
 import {v4 as uuid} from 'uuid';
 import * as helpers from '../../helpers';
-import ApiCall from '../../../src/api';
+import ApiWrapper from '../../../src/api';
 import pkg from '../../../package.json';
 
 const baseURL = 'https://portal.getbynder.com/api/';
+const accessToken = uuid();
+const oauthMock = {
+  expired() {
+    return Promise.resolve(false);
+  },
+  refresh() {
+    return Promise.resolve(this);
+  },
+  token: {
+    access_token: accessToken
+  }
+};
 let api;
 
 it('throws an exception when no base URL is set', () => {
   expect(() => {
-    new ApiCall();
+    new ApiWrapper();
   }).toThrow('The base URL provided is not valid');
 });
 
 describe('#_headers', () => {
-  describe('with permanent token', () => {
+  describe('with an OAuth2 token', () => {
     beforeAll(() => {
-      api = new ApiCall(baseURL);
-      api.permanentToken = 'token';
+      api = new ApiWrapper(baseURL, null, null, oauthMock);
     });
 
     afterAll(() => {
@@ -26,38 +37,7 @@ describe('#_headers', () => {
     it('returns headers with Content-Type', async () => {
       const expectedHeaders = {
         'User-Agent': `bynder-js-sdk/${pkg.version}`,
-        'Authorization': 'Bearer token'
-      };
-      const headers = await api._headers();
-
-      expect(headers).toEqual(expectedHeaders);
-    });
-  });
-
-  describe('with an OAuth token', () => {
-    beforeAll(() => {
-      const oauthMock = {
-        expired() {
-          return Promise.resolve(false);
-        },
-        refresh() {
-          return Promise.resolve(this);
-        },
-        token: {
-          access_token: 'oauth-access-token'
-        }
-      };
-      api = new ApiCall(baseURL, null, null, oauthMock);
-    });
-
-    afterAll(() => {
-      api = null;
-    });
-
-    it('returns headers with Content-Type', async () => {
-      const expectedHeaders = {
-        'User-Agent': `bynder-js-sdk/${pkg.version}`,
-        'Authorization': 'Bearer oauth-access-token'
+        'Authorization': `Bearer ${accessToken}`
       };
       const headers = await api._headers();
 
@@ -67,8 +47,7 @@ describe('#_headers', () => {
 
   describe('with addional headers', () => {
     beforeAll(() => {
-      api = new ApiCall(baseURL);
-      api.permanentToken = 'token';
+      api = new ApiWrapper(baseURL, null, null, oauthMock);
     });
 
     afterAll(() => {
@@ -82,7 +61,7 @@ describe('#_headers', () => {
 
       expect(headers).toEqual({
         'User-Agent': `bynder-js-sdk/${pkg.version}`,
-        'Authorization': 'Bearer token',
+        'Authorization': `Bearer ${accessToken}`,
         'content-sha256': 'abcd'
       });
     });
@@ -91,7 +70,7 @@ describe('#_headers', () => {
 
 describe('#send', () => {
   it('throws an error when no tokens are set', () => {
-    api = new ApiCall(baseURL);
+    api = new ApiWrapper(baseURL);
 
     api.send().catch(error => {
       expect(error.message).toEqual('No token found');
@@ -103,8 +82,7 @@ describe('#send', () => {
     const correlationId = uuid();
 
     beforeAll(() => {
-      api = new ApiCall(baseURL);
-      api.permanentToken = 'token';
+      api = new ApiWrapper(baseURL, null, null, oauthMock);
 
       helpers.mockFunctions(api.axios, [
         {
@@ -146,11 +124,11 @@ describe('#send', () => {
         data: 'chunk=0&size=100',
         headers: {
           'User-Agent': `bynder-js-sdk/${pkg.version}`,
-          'Authorization': 'Bearer token',
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        httpAgent: undefined,
-        httpsAgent: undefined,
+        httpAgent: null,
+        httpsAgent: null,
         params: null
       });
     });
@@ -160,8 +138,7 @@ describe('#send', () => {
     const correlationId = uuid();
 
     beforeAll(() => {
-      api = new ApiCall(baseURL);
-      api.permanentToken = 'token';
+      api = new ApiWrapper(baseURL, null, null, oauthMock);
 
       helpers.mockFunctions(api.axios, [
         {
@@ -207,10 +184,10 @@ describe('#send', () => {
         data: null,
         headers: {
           'User-Agent': `bynder-js-sdk/${pkg.version}`,
-          'Authorization': 'Bearer token'
+          'Authorization': `Bearer ${accessToken}`
         },
-        httpAgent: undefined,
-        httpsAgent: undefined
+        httpAgent: null,
+        httpsAgent: null
       });
     });
   });
@@ -219,8 +196,7 @@ describe('#send', () => {
     const correlationId = uuid();
 
     beforeAll(() => {
-      api = new ApiCall(baseURL);
-      api.permanentToken = 'token';
+      api = new ApiWrapper(baseURL, null, null, oauthMock);
 
       helpers.mockFunctions(api.axios, [
         {
@@ -268,8 +244,7 @@ describe('#send', () => {
 
   describe('with an unsupported response status code', () => {
     beforeAll(() => {
-      api = new ApiCall(baseURL);
-      api.permanentToken = 'token';
+      api = new ApiWrapper(baseURL, null, null, oauthMock);
 
       helpers.mockFunctions(api.axios, [
         {
@@ -297,10 +272,61 @@ describe('#send', () => {
     });
   });
 
+  describe('with an array object response', () => {
+    beforeAll(() => {
+      api = new ApiWrapper(baseURL, null, null, oauthMock);
+
+      helpers.mockFunctions(api.axios, [
+        {
+          name: 'request',
+          returnedValue: Promise.resolve({
+            status: 200,
+            data: [
+              {
+                name: 'an-asset',
+                filename: 'a-file-name',
+                size: 100
+              },
+              {
+                name: 'another-asset',
+                filename: 'another-file-name',
+                size: 200
+              }
+            ]
+          })
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(api.axios, [{ name: 'request' }]);
+      api = null;
+    });
+
+    it('returns the array', async () => {
+      const response = await api.send('POST', '/api/', {
+        chunk: 0,
+        size: 100
+      });
+
+      expect(response).toEqual([
+        {
+          name: 'an-asset',
+          filename: 'a-file-name',
+          size: 100
+        },
+        {
+          name: 'another-asset',
+          filename: 'another-file-name',
+          size: 200
+        }
+      ]);
+    });
+  });
+
   describe('with additional headers', () => {
     beforeAll(() => {
-      api = new ApiCall(baseURL);
-      api.permanentToken = 'token';
+      api = new ApiWrapper(baseURL, null, null, oauthMock);
 
       helpers.mockFunctions(api.axios, [
         {
@@ -332,12 +358,12 @@ describe('#send', () => {
         method: 'POST',
         data: 'chunk=0&size=100',
         params: null,
-        httpAgent: undefined,
-        httpsAgent: undefined,
+        httpAgent: null,
+        httpsAgent: null,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'User-Agent': `bynder-js-sdk/${pkg.version}`,
-          'Authorization': 'Bearer token',
+          'Authorization': `Bearer ${accessToken}`,
           'Content-SHA256': 'abcd'
         }
       });

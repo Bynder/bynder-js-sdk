@@ -6,19 +6,16 @@ import axios from 'axios';
 import pkg from '../../package.json';
 import { FORM_ENCODED_HEADER } from '../constants';
 
-/**
- * @classdesc Represents an API call.
- * @class
- * @abstract
- */
-export default class BynderApi {
+/** Class representing a Bynder API service client */
+class ApiWrapper {
   /**
    * Create a APICall.
    * @constructor
    * @param {String} baseURL A string with the base URL for account.
    * @param {Object} httpsAgent A https agent.
    * @param {Object} httpAgent A http agent.
-   * @param {String} token Optional OAuth2 access token
+   * @param {Object} token Optional OAuth2 token object
+   * @param {String} token.access_token Optional OAuth2 access token
    */
   constructor(baseURL, httpsAgent, httpAgent, token) {
     if (!isUrl(baseURL)) throw new Error('The base URL provided is not valid');
@@ -42,16 +39,11 @@ export default class BynderApi {
       'User-Agent': `bynder-js-sdk/${pkg.version}`
     };
 
-    if (this.permanentToken) {
-      headers['Authorization'] = `Bearer ${this.permanentToken}`;
-    } else {
-      /* istanbul ignore next */
-      this.token = await (this.token.expired()
-        ? this.token.refresh()
-        : Promise.resolve(this.token));
-
-      headers['Authorization'] = `Bearer ${this.token.token.access_token}`;
+    if (this.token && this.token.expired()) {
+      this.token = await this.token.refresh();
     }
+
+    headers['Authorization'] = `Bearer ${this.token.token.access_token}`;
 
     return headers;
   }
@@ -67,8 +59,7 @@ export default class BynderApi {
    * @returns {Promise<object>} Object with response data or an Error with the problem.
    */
   async send(method, url, params = {}, options = {}) {
-
-    if (!this.token && !this.permanentToken) {
+    if (!this.token) {
       throw new Error('No token found');
     }
 
@@ -131,3 +122,5 @@ export default class BynderApi {
       });
   }
 }
+
+export default ApiWrapper;
