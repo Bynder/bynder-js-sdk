@@ -56,6 +56,7 @@ const bynder = new Bynder({
 ```
 
   > Make sure the `baseURL` **does not** have the `/api` namespace at the end. The SDK will take care of it for you.
+  > Permanent tokens are no longer supported. Please request either an authorization code or client credentials.
 
 2. Create an authorization URL, login and get one-time authorization code
 

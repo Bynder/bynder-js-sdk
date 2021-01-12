@@ -22,6 +22,10 @@ class Bynder {
    * @param {Boolean} options.clientCredentials Determines if we should use client credentials
    */
   constructor({baseURL, redirectUri, clientId, clientSecret, ...options}) {
+    if (options.permanentToken) {
+      throw new Error('Permanent tokens are no longer supported. Please OAuth 2 authorization code or client credentials');
+    }
+
     this.baseURL = baseURL;
     this.redirectUri = redirectUri;
     this.options = options;

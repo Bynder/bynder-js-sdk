@@ -26,6 +26,14 @@ const file = {
   }
 };
 
+it('throws an exception if a permanent token is used', () => {
+  expect(() => {
+    new Bynder({
+      permanentToken: 'a-token'
+    });
+  }).toThrow('Permanent tokens are no longer supported. Please OAuth 2 authorization code or client credentials');
+});
+
 describe('.oauth2', () => {
   it('returns an Error when makes an API call without token', async () => {
     try {
