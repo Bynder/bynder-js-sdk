@@ -560,7 +560,7 @@ describe('#_uploadStreamFile', () => {
       } catch (error) {
         expect(error).toEqual({
           message: 'Chunk 0 not uploaded',
-          status: 0
+          status: 400
         });
       }
     });
