@@ -533,11 +533,11 @@ describe('#_uploadStreamFile', () => {
     });
   });
 
-  describe.skip('on a request error', () => {
-    const stream = createReadStream('./samples/testasset.png');
+  describe('on a request error', () => {
+    const stream = createReadStream('./samples/bynder.jpg');
 
-    beforeEach(() => {
-      jest.restoreAllMocks();
+    beforeAll(() => {
+      helpers.clearMockedFunctions();
       helpers.mockFunctions(bynder, [
         {
           name: '_uploadChunk',
@@ -549,20 +549,21 @@ describe('#_uploadStreamFile', () => {
       ]);
     });
 
-    afterEach(() => {
+    afterAll(() => {
       helpers.restoreMockedFunctions(bynder, [{ name: '_uploadChunk' }]);
     });
 
-    it('throws response error', () => {
+    it('throws response error', async () => {
       const fileId = 'i-am-the-watcher-on-the-walls';
 
-      bynder._uploadStreamFile(stream, fileId)
-        .catch(error => {
-          expect(error).toEqual({
-            message: 'Chunk 0 not uploaded',
-            status: 0
-          });
+      try {
+        await bynder._uploadStreamFile(stream, fileId);
+      } catch (error) {
+        expect(error).toEqual({
+          message: 'Chunk 0 not uploaded',
+          status: 0
         });
+      }
     });
   });
 });

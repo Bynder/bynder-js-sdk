@@ -737,16 +737,21 @@ class Bynder {
         const sha256 = create256HexHash(chunk);
 
         await this._uploadChunk(chunk, this._chunkNumber, fileId, sha256)
-          .catch(reject);
+          /* istanbul ignore next */
+          .catch(error => {
+            stream.destroy();
+            return reject(error);
+          });
 
         this._chunkNumber++;
         // Continue!
         stream.resume();
       });
 
+      /* istanbul ignore next */
       stream.on('error', (error) => {
-        reject(error);
         stream.destroy();
+        return reject(error);
       });
 
       stream.on('end', () => resolve(this._chunkNumber));

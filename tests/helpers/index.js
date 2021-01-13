@@ -23,3 +23,7 @@ export function restoreMockedFunctions(obj = {}, fns = []) { // eslint-disable-l
 export function clearMockedFunctions() {
   mockedFunctions = {};
 }
+
+export function mocks() {
+  return mockedFunctions;
+}
