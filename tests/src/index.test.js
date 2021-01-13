@@ -101,7 +101,7 @@ describe('#getToken', () => {
 
   describe('with client credentials', () => {
     beforeAll(() => {
-      _bynder._hasClientCredentials = true;
+      _bynder.redirectUri = undefined;
       helpers.mockFunctions(_bynder.oauth2.clientCredentials, [
         {
           name: 'getToken',
@@ -115,16 +115,15 @@ describe('#getToken', () => {
     });
 
     afterAll(() => {
-      _bynder._hasClientCredentials = undefined;
+      _bynder.redirectUri = config.redirectUri;
       helpers.restoreMockedFunctions(_bynder.oauth2.clientCredentials, [{ name: 'getToken' }]);
     });
 
     it('calls the client credentials object', async () => {
-      const token = await _bynder.getToken('def');
+      const token = await _bynder.getToken(undefined, ['offline', 'read:assets']);
       expect(_bynder.api.token).toEqual(token);
       expect(_bynder.oauth2.clientCredentials.getToken).toHaveBeenNthCalledWith(1, {
-        code: 'def',
-        redirect_uri: 'https://test-redirect-uri.com'
+        scope: ['offline', 'read:assets']
       });
     });
   });

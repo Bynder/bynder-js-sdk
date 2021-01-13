@@ -19,7 +19,6 @@ class Bynder {
    * @param {String} options.token.access_token Optional access token
    * @param {String} options.httpsAgent Optional https agent
    * @param {String} options.httpAgent Optional http agent
-   * @param {Boolean} options.clientCredentials Determines if we should use client credentials
    */
   constructor({baseURL, redirectUri, clientId, clientSecret, ...options}) {
     if (options.permanentToken) {
@@ -29,7 +28,6 @@ class Bynder {
     this.baseURL = baseURL;
     this.redirectUri = redirectUri;
     this.options = options;
-    this._hasClientCredentials = options.clientCredentials;
     this.api = new ApiWrapper(baseURL, options.httpsAgent, options.httpAgent);
 
     const oauthBaseUrl = url.resolve(baseURL, '/v6/authentication/');
@@ -78,14 +76,14 @@ class Bynder {
    * @return {Promise<string>} access token
    */
   getToken(code, scope) {
-    const tokenConfig = {
-      code, scope,
+    const tokenConfig = this.redirectUri ? {
+      code,
       redirect_uri: this.redirectUri
-    };
+    } : { scope };
     // If we're provided with client credentials,
     // then we need to use the correct object
     // to get the token.
-    const authMechanism = this._hasClientCredentials ? this.oauth2.clientCredentials : this.oauth2.authorizationCode;
+    const authMechanism = this.redirectUri ? this.oauth2.authorizationCode : this.oauth2.clientCredentials;
 
     return authMechanism.getToken(tokenConfig).then(result => {
       const token = this.oauth2.accessToken.create(result);
