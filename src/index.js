@@ -2,40 +2,33 @@
 
 import simpleOAuth2 from 'simple-oauth2';
 import url from 'url';
-import BynderApi from './api';
+import ApiWrapper from './api';
 import {rejectValidation, bodyTypes, getLength, create256HexHash} from './utils';
 import {DEFAULT_ASSETS_NUMBER_PER_PAGE, FILE_CHUNK_SIZE, FORM_ENCODED_HEADER} from './constants';
 
-/**
- * @classdesc Represents the Bynder SDK. It allows the user to make every call to the API with a single function.
- * @class
- */
-export default class Bynder {
+/** Represents the Bynder SDK. It allows the user to make every call to the API with a single function */
+class Bynder {
   /**
    * Create Bynder SDK.
    * @constructor
+   * @param {Object} options An object containing the consumer keys, access keys and the base URL.
    * @param {String} options.baseURL The URL with the account domain
    * @param {String} options.clientId OAuth2 client id
    * @param {String} options.clientSecret OAuth2 client secret
    * @param {String} options.redirectUri Redirection URI
-   * @param {String} options.permanentToken Optional permanent token
    * @param {String} options.token.access_token Optional access token
    * @param {String} options.httpsAgent Optional https agent
    * @param {String} options.httpAgent Optional http agent
-   * @param
-   * @param {Object} options An object containing the consumer keys, access keys and the base URL.
    */
   constructor({baseURL, redirectUri, clientId, clientSecret, ...options}) {
+    if (options.permanentToken) {
+      throw new Error('Permanent tokens are no longer supported. Please use OAuth 2 authorization code or client credentials');
+    }
+
     this.baseURL = baseURL;
     this.redirectUri = redirectUri;
     this.options = options;
-
-    this.api = new BynderApi(baseURL, options.httpsAgent, options.httpAgent);
-
-    if (typeof options.permanentToken === 'string') {
-      this.api.permanentToken = options.permanentToken;
-      return;
-    }
+    this.api = new ApiWrapper(baseURL, options.httpsAgent, options.httpAgent);
 
     const oauthBaseUrl = url.resolve(baseURL, '/v6/authentication/');
 
@@ -53,12 +46,15 @@ export default class Bynder {
       }
     });
 
-    if (options.token) {
-      if (typeof options.token.access_token !== 'string') {
-        throw new Error(`Invalid token format: ${JSON.stringify(options.token, null, 2)}`);
-      }
-      this.api.token = this.oauth2.accessToken.create(options.token);
+    if (!options.token) {
+      return;
     }
+
+    if (typeof options.token.access_token !== 'string') {
+      throw new Error(`Invalid token format: ${JSON.stringify(options.token, null, 2)}`);
+    }
+
+    this.api.token = this.oauth2.accessToken.create(options.token);
   }
 
   /**
@@ -76,15 +72,20 @@ export default class Bynder {
   /**
    * Gets OAuth2 access token from authorization code
    * @param {String} code One time authorization code
+   * @param {String|Array<string>} scope List of scopes
    * @return {Promise<string>} access token
    */
-  getToken(code) {
-    const tokenConfig = {
+  getToken(code, scope) {
+    const tokenConfig = this.redirectUri ? {
       code,
       redirect_uri: this.redirectUri
-    };
+    } : { scope };
+    // If we're provided with client credentials,
+    // then we need to use the correct object
+    // to get the token.
+    const authMechanism = this.redirectUri ? this.oauth2.authorizationCode : this.oauth2.clientCredentials;
 
-    return this.oauth2.authorizationCode.getToken(tokenConfig).then(result => {
+    return authMechanism.getToken(tokenConfig).then(result => {
       const token = this.oauth2.accessToken.create(result);
       this.api.token = token;
       return token;
@@ -166,18 +167,18 @@ export default class Bynder {
   getAllMediaItems(params = {}) {
     const recursiveGetAssets = (_params, assets = []) => {
       let queryAssets = assets;
-      const params = { ..._params };
-      params.page = params.page || 1;
-      params.limit = params.limit || DEFAULT_ASSETS_NUMBER_PER_PAGE;
+      const __params = { ..._params };
+      __params.page = __params.page || 1;
+      __params.limit = __params.limit || DEFAULT_ASSETS_NUMBER_PER_PAGE;
 
-      return this.getMediaList(params)
-        .then(({data}) => {
+      return this.getMediaList(__params)
+        .then(data => {
           queryAssets = assets.concat(data);
 
-          if (data && data.length === params.limit) {
+          if (data && data.length === __params.limit) {
             // If the results page is full it means another one might exist
-            params.page += 1;
-            return recursiveGetAssets(params, queryAssets);
+            __params.page += 1;
+            return recursiveGetAssets(__params, queryAssets);
           }
 
           return queryAssets;
@@ -672,9 +673,11 @@ export default class Bynder {
     }).catch(error => {
       // TODO: Evaluate the response error so we can filter
       // upload errors from communication errors
-      if (attempt >= 4) {
-        throw error;
+      if (attempt > 4) {
+        /* istanbul ignore next */
+        return Promise.reject(error);
       }
+
       attempt++;
       // If the upload fails, we'll call the method again
       return this._uploadChunk(chunk, chunkNumber, fileId, sha256, attempt);
@@ -732,14 +735,22 @@ export default class Bynder {
         const sha256 = create256HexHash(chunk);
 
         await this._uploadChunk(chunk, this._chunkNumber, fileId, sha256)
-          .catch(reject);
+          /* istanbul ignore next */
+          .catch(error => {
+            stream.destroy();
+            return reject(error);
+          });
 
         this._chunkNumber++;
         // Continue!
         stream.resume();
       });
 
-      stream.on('error', reject);
+      /* istanbul ignore next */
+      stream.on('error', (error) => {
+        stream.destroy();
+        return reject(error);
+      });
 
       stream.on('end', () => resolve(this._chunkNumber));
     });
@@ -771,7 +782,7 @@ export default class Bynder {
       break;
 
     default:
-      throw rejectValidation('uploadFile', 'bodyType');
+      return rejectValidation('uploadFile', 'bodyType');
     }
 
     return this._chunks;
@@ -827,3 +838,5 @@ export default class Bynder {
     }
   }
 }
+
+export default Bynder;
