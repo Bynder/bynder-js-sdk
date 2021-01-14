@@ -5,6 +5,7 @@ import Bynder from '../../src';
 import * as utils from '../../src/utils';
 import pkg from '../../package.json';
 import * as helpers from '../helpers';
+import * as constants from '../../src/constants';
 
 const config = {
   baseURL: 'https://portal.getbynder.com/',
@@ -13,7 +14,11 @@ const config = {
   redirectUri: 'https://test-redirect-uri.com'
 };
 
-const bynder = new Bynder({...config, permanentToken: 'test'});
+const bynder = new Bynder({...config,
+  token: {
+    access_token: 'test'
+  }
+});
 const file = {
   body: Buffer.from('a-file', 'utf-8'),
   filename: 'a.jpg',
@@ -21,6 +26,14 @@ const file = {
     brandId: 'Bynder'
   }
 };
+
+it('throws an exception if a permanent token is used', () => {
+  expect(() => {
+    new Bynder({
+      permanentToken: 'a-token'
+    });
+  }).toThrow('Permanent tokens are no longer supported. Please use OAuth 2 authorization code or client credentials');
+});
 
 describe('.oauth2', () => {
   it('returns an Error when makes an API call without token', async () => {
@@ -43,12 +56,6 @@ describe('.oauth2', () => {
 
     expect(() => new Bynder(invalidTokenConfig)).toThrow(/Invalid token format/);
   });
-
-  describe('with permanent token', () => {
-    it('does not returns an error', () => {
-      expect(bynder.api.permanentToken).toEqual('test');
-    });
-  });
 });
 
 describe('#makeAuthorizationURL', () => {
@@ -64,26 +71,61 @@ describe('#makeAuthorizationURL', () => {
 describe('#getToken', () => {
   const _bynder = new Bynder(config);
 
-  beforeAll(() => {
-    helpers.mockFunctions(_bynder.oauth2.authorizationCode, [
-      {
-        name: 'getToken',
-        returnedValue: Promise.resolve({
-          access_token: 'i-shall-live-and-die-at-my-post',
-          expires_in: 3600,
-          scope: 'scope'
-        })
-      }
-    ]);
+  describe('with authorization code', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(_bynder.oauth2.authorizationCode, [
+        {
+          name: 'getToken',
+          returnedValue: Promise.resolve({
+            access_token: 'i-shall-live-and-die-at-my-post',
+            expires_in: 3600,
+            scope: 'scope'
+          })
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(_bynder.oauth2.authorizationCode, [{ name: 'getToken' }]);
+    });
+
+    it('sets the access token', async () => {
+      const token = await _bynder.getToken('abc');
+      expect(_bynder.api.token).toEqual(token);
+      expect(_bynder.oauth2.authorizationCode.getToken).toHaveBeenNthCalledWith(1, {
+        code: 'abc',
+        redirect_uri: 'https://test-redirect-uri.com'
+      });
+    });
   });
 
-  afterAll(() => {
-    helpers.restoreMockedFunctions(_bynder.oauth2.authorizationCode, [{ name: 'getToken' }]);
-  });
+  describe('with client credentials', () => {
+    beforeAll(() => {
+      _bynder.redirectUri = undefined;
+      helpers.mockFunctions(_bynder.oauth2.clientCredentials, [
+        {
+          name: 'getToken',
+          returnedValue: Promise.resolve({
+            access_token: 'i-shall-live-and-die-at-my-post',
+            expires_in: 3600,
+            scope: 'scope'
+          })
+        }
+      ]);
+    });
 
-  it('sets the access token', async () => {
-    const token = await _bynder.getToken('abc');
-    expect(_bynder.api.token).toEqual(token);
+    afterAll(() => {
+      _bynder.redirectUri = config.redirectUri;
+      helpers.restoreMockedFunctions(_bynder.oauth2.clientCredentials, [{ name: 'getToken' }]);
+    });
+
+    it('calls the client credentials object', async () => {
+      const token = await _bynder.getToken(undefined, ['offline', 'read:assets']);
+      expect(_bynder.api.token).toEqual(token);
+      expect(_bynder.oauth2.clientCredentials.getToken).toHaveBeenNthCalledWith(1, {
+        scope: ['offline', 'read:assets']
+      });
+    });
   });
 });
 
@@ -304,7 +346,19 @@ describe('#_prepareUpload', () => {
 });
 
 describe('#_uploadFileInChunks', () => {
-  describe('with no errors', () => {
+  describe('with a non-supported body type', () => {
+    it('throws a rejection', () => {
+      bynder._uploadFileInChunks({}, 'abc', 0, null)
+        .catch(error => {
+          expect(error).toEqual({
+            status: 0,
+            message: 'The uploadFile bodyType is not valid or it was not specified properly'
+          });
+        });
+    });
+  });
+
+  describe('with a buffer file', () => {
     beforeAll(() => {
       helpers.mockFunctions(bynder.api, [
         {
@@ -329,6 +383,31 @@ describe('#_uploadFileInChunks', () => {
           'Content-SHA256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
         }
       });
+    });
+  });
+
+  describe('with a stream file', () => {
+    const stream = createReadStream('./samples/testasset.png');
+
+    beforeAll(() => {
+      helpers.mockFunctions(bynder, [
+        {
+          name: '_uploadStreamFile',
+          returnedValue: Promise.resolve(1)
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder, [{ name: '_uploadStreamFile' }]);
+    });
+
+    it('calls the FS upload chunk endpoint', async () => {
+      const fileId = 'i-am-the-sword-in-the-darkness';
+
+      const chunks = await bynder._uploadFileInChunks({ body: stream }, fileId, file.body.length, 'STREAM');
+      expect(chunks).toEqual(1);
+      expect(bynder._uploadStreamFile).toHaveBeenNthCalledWith(1, stream, fileId);
     });
   });
 
@@ -422,35 +501,9 @@ describe('#_uploadBufferFile', () => {
 });
 
 describe('#_uploadStreamFile', () => {
-  const stream = createReadStream('./samples/testasset.png');
+  describe('with no errors', () => {
+    const stream = createReadStream('./samples/testasset.png');
 
-  beforeEach(() => {
-    helpers.mockFunctions(bynder.api, [
-      {
-        name: 'send',
-        returnedValue: Promise.resolve()
-      }
-    ]);
-  });
-
-  afterEach(() => {
-    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
-  });
-
-  it('calls the FS upload chunk endpoint', async () => {
-    const fileId = 'i-am-the-sword-in-the-darkness';
-    const expectedChunk = readFileSync('./samples/testasset.png');
-
-    const chunks = await bynder._uploadStreamFile(stream, fileId);
-    expect(chunks).toEqual(1);
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
-      additionalHeaders: {
-        'Content-SHA256': 'ece6c2b6d1fc140c52ec6427646252f8cb55d64af73d6766af7df2debd7cd9e8'
-      }
-    });
-  });
-
-  describe.skip('on a request error', () => {
     beforeEach(() => {
       helpers.mockFunctions(bynder.api, [
         {
@@ -458,7 +511,32 @@ describe('#_uploadStreamFile', () => {
           returnedValue: Promise.resolve()
         }
       ]);
+    });
 
+    afterEach(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+      stream.destroy();
+    });
+
+    it('calls the FS upload chunk endpoint', async () => {
+      const fileId = 'i-am-the-sword-in-the-darknesss';
+      const expectedChunk = readFileSync('./samples/testasset.png');
+
+      const chunks = await bynder._uploadStreamFile(stream, fileId);
+      expect(chunks).toEqual(1);
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/0`, expectedChunk, {
+        additionalHeaders: {
+          'Content-SHA256': 'ece6c2b6d1fc140c52ec6427646252f8cb55d64af73d6766af7df2debd7cd9e8'
+        }
+      });
+    });
+  });
+
+  describe('on a request error', () => {
+    const stream = createReadStream('./samples/bynder.jpg');
+
+    beforeAll(() => {
+      helpers.clearMockedFunctions();
       helpers.mockFunctions(bynder, [
         {
           name: '_uploadChunk',
@@ -470,21 +548,21 @@ describe('#_uploadStreamFile', () => {
       ]);
     });
 
-    afterEach(() => {
-      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    afterAll(() => {
       helpers.restoreMockedFunctions(bynder, [{ name: '_uploadChunk' }]);
     });
 
-    it('throws response error', () => {
+    it('throws response error', async () => {
       const fileId = 'i-am-the-watcher-on-the-walls';
 
-      bynder._uploadStreamFile(stream, fileId)
-        .catch(error => {
-          expect(error).toEqual({
-            message: 'Chunk 0 not uploaded',
-            status: 0
-          });
+      try {
+        await bynder._uploadStreamFile(stream, fileId);
+      } catch (error) {
+        expect(error).toEqual({
+          message: 'Chunk 0 not uploaded',
+          status: 400
         });
+      }
     });
   });
 });
@@ -526,6 +604,43 @@ describe('#_uploadChunk', () => {
         params: null,
         url: `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`
       });
+    });
+  });
+
+  describe('on an error', () => {
+    let spy;
+
+    beforeEach(() => {
+      spy = jest.spyOn(bynder.api, 'send')
+        .mockImplementationOnce(() => Promise.reject(400))
+        .mockImplementationOnce(() => Promise.reject(400))
+        .mockImplementationOnce(() => Promise.reject(400))
+        .mockImplementationOnce(() => Promise.reject(400));
+    });
+
+    afterEach(() => {
+      spy.mockRestore();
+    });
+
+    it('reattemps to upload the failed chunk 4 times', () => {
+      const sha256 = '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d';
+      const fileId = 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come';
+      const chunk = Buffer.from([97, 45, 102, 105, 108, 101]);
+      const chunkNumber = 0;
+
+      bynder._uploadChunk(chunk, chunkNumber, fileId, sha256)
+        .catch(error => {
+          expect(error.status).toBe(400);
+          const { calls } = spy.mock.calls;
+
+          for (let call of calls) {
+            expect(call).toHaveBeenNthCalledWith(1, 'POST', `v7/file_cmds/upload/${fileId}/chunk/${chunkNumber}`, chunk, {
+              additionalHeaders: {
+                'Content-SHA256': sha256
+              }
+            });
+          }
+        });
     });
   });
 });
@@ -963,26 +1078,60 @@ describe('#getMediaInfo', () => {
 });
 
 describe('#getAllMediaItems', () => {
-  beforeEach(() => {
-    helpers.mockFunctions(bynder.api, [
-      {
-        name: 'send',
-        returnedValue: Promise.resolve({})
-      }
-    ]);
+  describe('by default', () => {
+    beforeAll(() => {
+      helpers.mockFunctions(bynder.api, [
+        {
+          name: 'send',
+          returnedValue: Promise.resolve({})
+        }
+      ]);
+    });
+
+    afterAll(() => {
+      helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
+    });
+
+    it('sends the expected payload', async () => {
+      await bynder.getAllMediaItems();
+
+      expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/', {
+        count: false,
+        limit: 50,
+        page: 1
+      });
+    });
   });
 
-  afterEach(() => {
-    helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
-  });
+  describe('with more than one page', () => {
+    let spy;
 
-  it('sends the expected payload', async () => {
-    await bynder.getAllMediaItems();
+    beforeAll(() => {
+      spy = jest.spyOn(bynder, 'getMediaList')
+        .mockImplementationOnce(() => Promise.resolve(Array(constants.DEFAULT_ASSETS_NUMBER_PER_PAGE).fill({
+          name: 'an-asset'
+        })))
+        .mockImplementationOnce(() => Promise.resolve([]));
+    });
 
-    expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'GET', 'api/v4/media/', {
-      count: false,
-      limit: 50,
-      page: 1
+    afterAll(() => {
+      spy.mockRestore();
+    });
+
+    it('calls the #getMediaList method multiple times', async () => {
+      await bynder.getAllMediaItems();
+      const {calls} = spy.mock;
+      const [firstCall, secondCall] = calls;
+
+      expect(calls.length).toBe(2);
+      expect(firstCall).toEqual([{
+        limit: 50,
+        page: 2
+      }]);
+      expect(secondCall).toEqual([{
+        limit: 50,
+        page: 2
+      }]);
     });
   });
 });

@@ -12,7 +12,7 @@ interface to communicate with
 
 To use this SDK, you will need:
 
-- [Node.js **v6.3.0 or above**](https://nodejs.org/)
+- [Node.js **v12 or above**](https://nodejs.org/)
 
 Node installation will include [NPM](https://www.npmjs.com/), which is
 responsible for dependency management.
@@ -39,15 +39,6 @@ details for a specific module, refer to the
 
 Before executing any request, you need to authorize the calls to the API:
 
-
-#### Using a permanent token
-```js
-const bynder = new Bynder({
-  baseURL: "https//portal.getbynder.com/",
-  permanentToken: "<token>",
-});
-```
-
 #### Using OAuth2
 
 1. Call the constructor with your configuration
@@ -57,11 +48,13 @@ const bynder = new Bynder({
   baseURL: "https://portal.getbynder.com/",
   clientId: "<your OAuth2 client id>",
   clientSecret: "<your OAuth2 client secret>",
-  redirectUri: "<url where user will be redirected after authenticating>"
+  // A redirect URI is required for authorization codes, not client credentials
+  redirectUri: "<url where user will be redirected after authenticating>",
 });
 ```
 
   > Make sure the `baseURL` **does not** have the `/api` namespace at the end. The SDK will take care of it for you.
+  > Permanent tokens are no longer supported. Please request either an authorization code or client credentials.
 
 2. Create an authorization URL, login and get one-time authorization code
 
@@ -75,8 +68,7 @@ const authorizationURL = bynder.makeAuthorizationURL();
 bynder.getToken(code);
 ```
 
-If you already have an access token, you can also initialize Bynder with the
-token directly:
+If you already have an access token, you can also initialize Bynder with the token directly:
 
 ```js
 const bynder = new Bynder({
