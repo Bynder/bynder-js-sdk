@@ -1,52 +1,89 @@
 {
   "name": "@bynder/bynder-js-sdk",
-  "version": "2.3.1",
+  "version": "3.0.0",
   "description": "Bynder Javascript SDK",
-  "main": "./dist/bynder-js-sdk.js",
+  "main": "dist/bynder-js-sdk.cjs.js",
+  "module": "dist/bynder-js-sdk.esm.js",
   "scripts": {
-    "test": "jest",
-    "build": "gulp babel",
-    "prepublish": "gulp babel"
+    "build": "rollup -c",
+    "dev": "npm run build -- -w",
+    "test": "jest --coverage",
+    "lint": "eslint --config .eslintrc src/ tests/",
+    "test:watch": "npm run test -- --watch src/ test/ --notify",
+    "pretest": "npm run lint",
+    "prepublish": "npm run build && npm run docs",
+    "docs": "jsdoc --destination docs --readme README.md src/**/*.js",
+    "coveralls": "coveralls < coverage/lcov.info"
   },
   "author": "Bynder",
   "license": "MIT",
   "files": [
-    "dist/bynder-js-sdk.js"
+    "dist/bynder-js-sdk.cjs.js",
+    "dist/bynder-js-sdk.esm.js"
   ],
   "devDependencies": {
-    "babel": "^6.23.0",
-    "babel-core": "^6.26.3",
-    "babel-loader": "^8.0.6",
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
-    "eslint": "~3.7.1",
-    "eslint-config-airbnb": "^18.0.1",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-jsx-a11y": "^6.2.3",
-    "eslint-plugin-react": "^7.15.1",
-    "gulp": "^3.9.1",
-    "gulp-babel": "^7.0.1",
-    "gulp-connect": "^5.7.0",
-    "gulp-eslint": "^6.0.0",
-    "gulp-jsdoc3": "^2.0.0",
+    "@babel/core": "^7.11.6",
+    "@babel/plugin-proposal-object-rest-spread": "^7.11.0",
+    "@babel/plugin-proposal-optional-chaining": "^7.11.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/plugin-transform-spread": "^7.11.0",
+    "@babel/preset-env": "^7.11.5",
+    "@rollup/plugin-commonjs": "^15.1.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^9.0.0",
+    "babel-jest": "^26.3.0",
+    "eslint": "^7.9.0",
+    "eslint-plugin-import": "^2.22.0",
     "jest": "^24.9.0",
-    "json-loader": "^0.5.7",
-    "path": "^0.12.7",
-    "webpack": "^4.41.0"
+    "jsdoc": "^3.6.6",
+    "rollup": "^2.28.2"
   },
   "dependencies": {
     "axios": "^0.19.0",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-plugin-transform-runtime": "^6.23.0",
     "is-url": "^1.2.4",
-    "isomorphic-form-data": "^1.0.0",
-    "node-fetch": "^1.6.0",
-    "proper-url-join": "^1.2.0",
     "query-string": "^6.1.0",
-    "simple-oauth2": "^2.5.1"
+    "simple-oauth2": "^2.5.1",
+    "uuid": "^8.3.0"
   },
   "resolutions": {
     "graceful-fs": "^4.2.4"
   },
-  "repository": "git@github.com:Bynder/bynder-js-sdk.git"
+  "repository": "git@github.com:Bynder/bynder-js-sdk.git",
+  "jest": {
+    "moduleFileExtensions": [
+      "js"
+    ],
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    },
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "**/*.{js,jsx}",
+      "!**/node_modules/**",
+      "!**/dist/**",
+      "!**/docs/**"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/",
+      "/resources/",
+      "/repl.js",
+      "/coverage/",
+      "/samples/",
+      "/docs/",
+      "/tests/helpers/",
+      "/rollup.config.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "html",
+      "lcov"
+    ]
+  }
 }

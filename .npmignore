@@ -2,3 +2,10 @@ src
 spec
 tests
 samples
+docs
+coverage
+.travis.yml
+.babelrc
+.eslintrc
+jest.config.js
+secret.example.json

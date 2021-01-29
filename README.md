@@ -2,6 +2,7 @@
 
 ![Tests](https://github.com/Bynder/bynder-js-sdk/workflows/Tests/badge.svg)
 ![Publish](https://github.com/Bynder/bynder-js-sdk/workflows/Publish/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/Bynder/bynder-js-sdk/badge.svg?branch=master)](https://coveralls.io/github/Bynder/bynder-js-sdk?branch=master)
 
 This SDK aims to help the development of integrations with
 [Bynder](https://www.bynder.com/en/) that use JavaScript, providing an easy
@@ -12,7 +13,7 @@ interface to communicate with
 
 To use this SDK, you will need:
 
-- [Node.js **v6.3.0 or above**](https://nodejs.org/)
+- [Node.js **v12 or above**](https://nodejs.org/)
 
 Node installation will include [NPM](https://www.npmjs.com/), which is
 responsible for dependency management.
@@ -39,27 +40,22 @@ details for a specific module, refer to the
 
 Before executing any request, you need to authorize the calls to the API:
 
-
-#### Using a permanent token
-```js
-const bynder = new Bynder({
-  baseURL: "https//portal.getbynder.com/api/",
-  permanentToken: "<token>",
-});
-```
-
 #### Using OAuth2
 
 1. Call the constructor with your configuration
 
 ```js
 const bynder = new Bynder({
-  baseURL: "https://portal.getbynder.com/api/",
+  baseURL: "https://portal.getbynder.com/",
   clientId: "<your OAuth2 client id>",
   clientSecret: "<your OAuth2 client secret>",
-  redirectUri: "<url where user will be redirected after authenticating>"
+  // A redirect URI is required for authorization codes, not client credentials
+  redirectUri: "<url where user will be redirected after authenticating>",
 });
 ```
+
+  > Make sure the `baseURL` **does not** have the `/api` namespace at the end. The SDK will take care of it for you.
+  > Permanent tokens are no longer supported. Please request either an authorization code or client credentials.
 
 2. Create an authorization URL, login and get one-time authorization code
 
@@ -73,23 +69,24 @@ const authorizationURL = bynder.makeAuthorizationURL();
 bynder.getToken(code);
 ```
 
-If you already have an access token, you can also initialize Bynder with the
-token directly:
+If you already have an access token, you can also initialize Bynder with the token directly:
 
 ```js
 const bynder = new Bynder({
-  baseURL: "http://api-url.bynder.io/api/",
+  baseURL: "http://api-url.bynder.io/",
   clientId: "<your OAuth2 client id>",
   clientSecret: "<your OAuth2 client secret>",
   redirectUri: "<url where user will be redirected after authenticating>",
-  token: "<OAuth2 access token>"
+  token: {
+    access_token: "<OAuth2 access token>"
+  }
 });
 ```
 
 #### Making requests
 
 You can now use the various methods from the SDK to fetch media, metaproperties
-and other data. Following the Promises notation, you should use
+and other data. All methods return a promise, so you should use
 `.then()`/`.catch()` to handle the successful and failed requests,
 respectively.
 
@@ -117,6 +114,7 @@ bynder
 
 - `makeAuthorizationURL()`
 - `getToken()`
+- `userLogin(queryObject)`
 
 ### Media
 
@@ -126,6 +124,7 @@ bynder
 - `getMediaTotal(queryObject)`
 - `editMedia(object)`
 - `deleteMedia(id)`
+- `getMediaDownloadUrl(queryObject)`
 
 ### Media usage
 
@@ -143,6 +142,7 @@ bynder
 - `saveNewMetapropertyOption(object)`
 - `editMetapropertyOption(object)`
 - `deleteMetapropertyOption(object)`
+- `getMetapropertyOptions(queryObject)`
 
 ### Collections
 
@@ -175,12 +175,12 @@ If you wish to contribute to this repository and further extend the API coverage
 are the steps necessary to prepare your environment:
 
 1. Clone the repository
-2. In the root folder, run `yarn install` to install all of the dependencies.
+2. In the root folder, run `npm install` to install all of the dependencies.
 3. Create a `secret.json` file with the following structure:
 
 ```json
 {
-  "baseURL": "http://api-url.bynder.io/api/",
+  "baseURL": "http://api-url.bynder.io/",
   "clientId": "<your OAuth2 client id>",
   "clientSecret": "<your OAuth2 client secret>",
   "redirectUri": "<url where user will be redirected after authenticating>"
@@ -189,9 +189,7 @@ are the steps necessary to prepare your environment:
 
 4. The following gulp tasks are available:
 
-- `gulp lint` - Run ESlint and check the code.
-- `gulp build` - Run webpack to bundle the code in order to run in a browser.
-- `gulp babel` - Run Babel to create a folder 'dist' with ES2015 compatible code.
-- `gulp doc` - Run JSDoc to create a 'doc' folder with automatically generated documentation for the source code.
-- `gulp webserver` - Deploy a web server from the root folder at
-  `localhost:8080` to run the html samples (in order to avoid CORS problems).
+- `npm run lint` - Run ESlint and check the code.
+- `npm run build` - Run webpack to bundle the code in order to run in a browser.
+- `npm run doc` - Run JSDoc to create a 'doc' folder with automatically generated documentation for the source code.
+- `npm run dev` - Starts a builder in watch mode for development
