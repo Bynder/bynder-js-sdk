@@ -29,10 +29,8 @@ jobs:
           npm install coveralls --save-dev
 
       - name: Run tests && coverage
-        run: npm test
-
-      - name: Coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          coveralls < coverage/lcov.info
+          npm test
+          npm run coveralls
