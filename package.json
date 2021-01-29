@@ -81,7 +81,8 @@
     "coverageDirectory": "coverage",
     "coverageReporters": [
       "text",
-      "html"
+      "html",
+      "lcov"
     ]
   }
 }
