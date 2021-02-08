@@ -3,6 +3,8 @@
 ![Tests](https://github.com/Bynder/bynder-js-sdk/workflows/Tests/badge.svg)
 ![Publish](https://github.com/Bynder/bynder-js-sdk/workflows/Publish/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/Bynder/bynder-js-sdk/badge.svg?branch=master)](https://coveralls.io/github/Bynder/bynder-js-sdk?branch=master)
+![npm](https://img.shields.io/npm/v/@bynder/bynder-js-sdk)
+![npm](https://img.shields.io/npm/dt/@bynder/bynder-js-sdk?color=orange)
 
 This SDK aims to help the development of integrations with
 [Bynder](https://www.bynder.com/en/) that use JavaScript, providing an easy
