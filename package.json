@@ -42,7 +42,7 @@
     "isomorphic-form-data": "^1.0.0",
     "node-fetch": "^1.6.0",
     "proper-url-join": "^1.2.0",
-    "query-string": "^6.1.0",
+    "query-string": "^6.13.8",
     "simple-oauth2": "^2.5.1"
   },
   "resolutions": {
