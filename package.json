@@ -12,7 +12,8 @@
     "test:watch": "npm run test -- --watch src/ test/ --notify",
     "pretest": "npm run lint",
     "prepublish": "npm run build && npm run docs",
-    "docs": "jsdoc --destination docs --readme README.md src/**/*.js"
+    "docs": "jsdoc --destination docs --readme README.md src/**/*.js",
+    "coveralls": "coveralls < coverage/lcov.info"
   },
   "author": "Bynder",
   "license": "MIT",
@@ -39,21 +40,9 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "elliptic": "6.5.4",
-    "handlebars": "4.7.7",
-    "ini": "1.3.7",
     "is-url": "^1.2.4",
-    "isomorphic-form-data": "^1.0.0",
-    "node-fetch": "2.6.1",
-    "proper-url-join": "^1.2.0",
-    "query-string": "6.14.1",
+    "query-string": "^6.1.0",
     "simple-oauth2": "^2.5.1",
-    "ssri": "6.0.2",
-    "websocket-extensions": "0.1.4",
-    "y18n": "4.0.1",
-    "yargs-parser": "13.1.2",
     "uuid": "^8.3.0"
   },
   "resolutions": {
@@ -93,7 +82,8 @@
     "coverageDirectory": "coverage",
     "coverageReporters": [
       "text",
-      "html"
+      "html",
+      "lcov"
     ]
   }
 }
