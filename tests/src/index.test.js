@@ -193,6 +193,18 @@ describe('#uploadFile', () => {
     });
   });
 
+  it('throws an error with additional but no ID', () => {
+    bynder.uploadFile({
+      ...file,
+      additional: true
+    }).catch(error => {
+      expect(error).toEqual({
+        status: 0,
+        message: 'The upload id is not valid or it was not specified properly'
+      });
+    });
+  });
+
   describe('with no errors', () => {
     const fileId = 'night-gathers-and-now-my-watch-begins';
     const correlationId = 'it-shall-not-end-until-my-death';
@@ -793,7 +805,7 @@ describe('#_saveAsset', () => {
   });
 
   describe('with a file ID and media ID', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       helpers.mockFunctions(bynder.api, [
         {
           name: 'send',
@@ -802,7 +814,7 @@ describe('#_saveAsset', () => {
       ]);
     });
 
-    afterAll(() => {
+    afterEach(() => {
       helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
     });
 
@@ -815,6 +827,20 @@ describe('#_saveAsset', () => {
 
       await bynder._saveAsset(asset);
       expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', 'api/v4/media/i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come/save/i-am-the-shield-that-guards-the-realms-of-men/', asset);
+    });
+
+    describe('as an additional asset', () => {
+      it('calls the save media endpoint with a media ID as an additional', async () => {
+        const asset = {
+          ...file.data,
+          fileId: 'i-am-the-shield-that-guards-the-realms-of-men',
+          mediaId: 'i-pledge-my-life-and-honor-to-the-night-s-watch-for-this-night-and-all-the-nights-to-come',
+          additional: true
+        };
+
+        await bynder._saveAsset(asset);
+        expect(bynder.api.send).toHaveBeenNthCalledWith(1, 'POST', `api/v4/media/${asset.mediaId}/save/additional/${asset.fileId}/`, asset);
+      });
     });
   });
 
