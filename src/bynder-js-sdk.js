@@ -782,17 +782,23 @@ class Bynder {
    * @param {Object} init - Result from init upload
    * @param {String} fileName - Original file name
    * @param {Number} chunks - Number of chunks
+   * @param {String} [mediaId] - Media ID of the asset the file will be added to as additional
    * @return {Promise}
    */
-  finaliseUpload(init, filename, chunks) {
+  finaliseUpload(init, filename, chunks, mediaId) {
     const { s3file, s3_filename: s3filename } = init;
     const { uploadid, targetid } = s3file;
-    return this.api.send("POST", `v4/upload/${uploadid}/`, {
+    const payload = {
       targetid,
       s3_filename: `${s3filename}/p${chunks}`,
-      original_filename: filename,
       chunks
-    });
+    }
+    if (mediaId) {
+      const finalizeUrl = `v4/media/${mediaId}/save/additional/${uploadid}`;
+      return this.api.send("POST", finalizeUrl, payload);
+    } else {
+      return this.api.send("POST", `v4/upload/${uploadid}/`, {...payload, original_filename: filename});
+    }
   }
 
   /**
@@ -959,10 +965,11 @@ class Bynder {
    * @param {Buffer|Readable} file.body - The file to be uploaded. Can be either buffer or a read stream.
    * @param {Number} file.length - The length of the file to be uploaded
    * @param {Object} file.data={} - An object containing the assets' attributes
+   * @param {Boolean} file.additional - Boolean that signals if the asset should be added as additional to an existing asset
    * @return {Promise} The information of the uploaded file, including IDs and all final file urls.
    */
   uploadFile(file) {
-    const { body, filename, data } = file;
+    const { body, filename, data, additional } = file;
     const { brandId } = data;
     const bodyType = bodyTypes.get(body);
     const length = getLength(file);
@@ -979,6 +986,9 @@ class Bynder {
     if (!length || typeof length !== "number") {
       return rejectValidation("upload", "length");
     }
+    if (additional && !data.id) {
+      return rejectValidation("upload", "id");
+    }
 
     const getClosestUploadEndpoint = this.getClosestUploadEndpoint.bind(this);
     const initUpload = this.initUpload.bind(this);
@@ -994,13 +1004,18 @@ class Bynder {
       })
       .then(uploadResponse => {
         const { init, chunkNumber } = uploadResponse;
-        return finaliseUpload(init, filename, chunkNumber);
-      })
-      .then(finalizeResponse => {
+        return finaliseUpload(init, filename, chunkNumber, additional ? data.id : null);
+      }).then(finalizeResponse => {
+        if (additional) {
+          return Promise.resolve(finalizeResponse);
+        }
         const { importId } = finalizeResponse;
         return waitForUploadDone([importId]);
       })
       .then(doneResponse => {
+        if (additional) {
+          return Promise.resolve(doneResponse);
+        }
         const { itemsDone } = doneResponse;
         const importId = itemsDone[0];
         return saveAsset(Object.assign(data, { importId }));
