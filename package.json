@@ -53,7 +53,9 @@
     "yargs-parser": "13.1.2"
   },
   "resolutions": {
-    "graceful-fs": "^4.2.4"
+    "graceful-fs": "^4.2.4",
+    "lodash": "^4.17.21",
+    "@hapi/hoek": "8.5.0"
   },
   "repository": "git@github.com:Bynder/bynder-js-sdk.git"
 }
