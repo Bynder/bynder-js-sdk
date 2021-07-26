@@ -442,7 +442,12 @@ class Bynder {
   /**
    * Get all the tags
    * @see {@link http://docs.bynder.apiary.io/#reference/tags/tags-access/retrieve-entry-point|API Call}
-   * @param {Object} [params={}] An object containing the parameters accepted by the API to narrow the query.
+   * @param {Object} params An object containing the parameters accepted by the API to narrow the query.
+   * @param {Number} params.limit Maximum number of results
+   * @param {Number} params.page offset page for results: return the N-th set of limit-results
+   * @param {String} params.orderBy order of the returned list of tags.
+   * @param {String} params.keyword Search on matching names
+   * @param {Number} params.mincount Minimum media count that the returned tags should have.
    * @return {Promise} Tags Returns a Promise that, when fulfilled, will either return an Array with the
    * tags or an Error with the problem.
    */
