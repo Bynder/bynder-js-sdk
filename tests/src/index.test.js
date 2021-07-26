@@ -2309,7 +2309,7 @@ describe('#deleteMediaFromCollection', () => {
 
 describe('#getTags', () => {
   describe('on a successful request', () => {
-    beforeAll(() => {
+    beforeEach(() => {
       helpers.mockFunctions(bynder.api, [
         {
           name: 'send',
@@ -2318,7 +2318,7 @@ describe('#getTags', () => {
       ]);
     });
 
-    afterAll(() => {
+    afterEach(() => {
       helpers.restoreMockedFunctions(bynder.api, [{ name: 'send' }]);
     });
 
