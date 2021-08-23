@@ -648,10 +648,13 @@ class Bynder {
    * @return {Promise<object>}
    */
   _saveAsset(data) {
-    const { fileId, mediaId } = data;
+    const { fileId, mediaId, additional } = data;
     let url = mediaId ? `api/v4/media/${mediaId}/save/` : 'api/v4/media/save/';
 
     if (fileId) {
+      // The asset can be save as an additional
+      if (mediaId && additional) url += 'additional/';
+
       url += `${fileId}/`;
     }
 
@@ -806,7 +809,7 @@ class Bynder {
    * @return {Promise<object>} The information of the uploaded file, including IDs and all final file urls.
    */
   async uploadFile(file) {
-    const { body, filename, data } = file;
+    const { body, filename, data, additional } = file;
     const bodyType = bodyTypes.get(body);
     const size = getLength(file);
 
@@ -822,6 +825,10 @@ class Bynder {
       return rejectValidation('upload', 'length');
     }
 
+    if (additional && !data.id) {
+      return rejectValidation('upload', 'id');
+    }
+
     this._chunks = undefined;
     this._chunkNumber = undefined;
     this._sha256 = create256HexHash(file.body);
@@ -830,7 +837,7 @@ class Bynder {
       const fileId = await this._prepareUpload();
       const chunks = await this._uploadFileInChunks(file, fileId, size, bodyType);
       const correlationId = await this._finaliseUpload(fileId, filename, chunks, size);
-      const asset = await this._saveAsset({...data, fileId});
+      const asset = await this._saveAsset({...data, fileId, additional});
 
       this.sha256 = undefined;
 
