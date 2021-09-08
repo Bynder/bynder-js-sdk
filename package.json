@@ -35,7 +35,7 @@
     "webpack": "^4.41.0"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.21.3",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-runtime": "^6.23.0",
     "elliptic": "6.5.4",
