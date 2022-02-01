@@ -644,11 +644,17 @@ class Bynder {
    * @param {Object} data Asset data
    * @param {String} data.fileId File ID
    * @param {String} data.mediaId Media ID
+   * @param {String} data.brandId Brand ID
    * @param {String} data.name Asset name
    * @return {Promise<object>}
    */
   _saveAsset(data) {
-    const { fileId, mediaId, additional } = data;
+    const { fileId, mediaId, additional, brandId } = data;
+
+    if (!brandId && !mediaId) {
+      return rejectValidation('upload', 'brandId or mediaId');
+    }
+
     let url = mediaId ? `api/v4/media/${mediaId}/save/` : 'api/v4/media/save/';
 
     if (fileId) {
@@ -681,7 +687,7 @@ class Bynder {
     }).catch(error => {
       // TODO: Evaluate the response error so we can filter
       // upload errors from communication errors
-      if (attempt > 4) {
+      if (attempt >= 4) {
         /* istanbul ignore next */
         return Promise.reject(error);
       }
@@ -810,8 +816,13 @@ class Bynder {
    */
   async uploadFile(file) {
     const { body, filename, data, additional } = file;
+    const { brandId, mediaId } = data;
     const bodyType = bodyTypes.get(body);
     const size = getLength(file);
+
+    if (!brandId && !mediaId) {
+      return rejectValidation('upload', 'brandId or mediaId');
+    }
 
     if (!filename) {
       return rejectValidation('upload', 'filename');
