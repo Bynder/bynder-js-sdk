@@ -383,7 +383,7 @@ describe('#_uploadFileInChunks', () => {
   });
 
   describe('with a stream file', () => {
-    const stream = createReadStream('./samples/testasset.png');
+    let stream;
 
     beforeAll(() => {
       helpers.mockFunctions(bynder, [
@@ -400,6 +400,7 @@ describe('#_uploadFileInChunks', () => {
 
     it('calls the FS upload chunk endpoint', async () => {
       const fileId = 'i-am-the-sword-in-the-darkness';
+      stream = createReadStream('./samples/testasset.png');
 
       const chunks = await bynder._uploadFileInChunks({ body: stream }, fileId, file.body.length, 'STREAM');
       expect(chunks).toEqual(1);
@@ -494,8 +495,8 @@ describe('#_uploadBufferFile', () => {
 
 describe('#_uploadStreamFile', () => {
   describe('with no errors', () => {
-    const stream = createReadStream('./samples/testasset.png');
-
+    let stream;
+  
     beforeEach(() => {
       helpers.mockFunctions(bynder.api, [
         {
@@ -512,6 +513,7 @@ describe('#_uploadStreamFile', () => {
 
     it('calls the FS upload chunk endpoint', async () => {
       const fileId = 'i-am-the-sword-in-the-darknesss';
+      stream = createReadStream('./samples/testasset.png');
       const expectedChunk = readFileSync('./samples/testasset.png');
 
       const chunks = await bynder._uploadStreamFile(stream, fileId);
@@ -525,7 +527,7 @@ describe('#_uploadStreamFile', () => {
   });
 
   describe('on a request error', () => {
-    const stream = createReadStream('./samples/bynder.jpg');
+    let stream;
   
     beforeAll(() => {
       jest.spyOn(bynder, '_uploadChunk').mockRejectedValue({
@@ -538,8 +540,10 @@ describe('#_uploadStreamFile', () => {
       jest.restoreAllMocks();
     });
   
-    it('throws response error', () => {
+    it('throws response error', async () => {
       const fileId = 'i-am-the-watcher-on-the-walls';
+      stream = createReadStream('./samples/bynder.jpg');
+
       return expect(bynder._uploadStreamFile(stream, fileId))
         .rejects.toEqual({
           message: 'Chunk 0 not uploaded',
@@ -1941,7 +1945,7 @@ describe('#getCollections', () => {
   });
 
   describe('on a request error', () => {
-    const stream = createReadStream('./samples/bynder.jpg');
+    let stream;
   
     beforeAll(() => {
       jest.spyOn(bynder, '_uploadChunk').mockRejectedValue({
@@ -1956,6 +1960,7 @@ describe('#getCollections', () => {
   
     it('throws response error', () => {    
       const fileId = 'i-am-the-watcher-on-the-walls';
+      stream = createReadStream('./samples/bynder.jpg');
       return expect(bynder._uploadStreamFile(stream, fileId))
         .rejects.toEqual({
           message: 'Chunk 0 not uploaded',
