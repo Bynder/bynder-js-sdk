@@ -37,31 +37,39 @@ gulp.task("babel", () => {
 
 gulp.task("build", () => {
   webpack({
-    entry: ["babel-polyfill", path.join(__dirname, "src/bynder-js-sdk")],
+    entry: ["babel-polyfill", path.join(__dirname, "./src/bynder-js-sdk")],
     output: {
-      path: "./dist/",
+      path: path.join(__dirname, "/dist/"),
       filename: "bundle.js",
       library: "Bynder"
     },
+    node: {
+      net: 'empty'
+    },
     module: {
-      loaders: [
+      rules: [
         {
           test: /\.js$/,
           exclude: /node_modules/,
           loader: "babel-loader",
           query: {
             presets: ["env"],
-            plugins: ["transform-object-rest-spread"]
+            plugins: ["transform-object-rest-spread"],
           }
         },
         {
-          test: /\.json$/,
-          loader: "json-loader"
+          test: /\.js$/,
+          include: /node_modules\/proper-url-join/,
+          loader: "babel-loader",
+          query: {
+            presets: [["env", { "modules": 'commonjs' }]],
+            plugins: ["add-module-exports"]
+          }
         }
       ]
     },
     resolve: {
-      extensions: ["", ".js"]
+      extensions: ["*", ".js"],
     }
   }).run((err, stat) => {
     if (err) {
