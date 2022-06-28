@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const Bynder = require('../dist/bynder-js-sdk.js').default;
+const Bynder = require('../dist/bynder-js-sdk.js');
 const configs = require('../secret.json');
 
 const bynder = new Bynder(configs);
