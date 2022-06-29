@@ -528,15 +528,13 @@ class Bynder {
     if (!queryObject.id) {
       return rejectValidation("asset usage", "id");
     }
-    const request = new APICall(
-      this.baseURL,
-      "media/usage/",
-      "GET",
-      this.consumerToken,
-      this.accessToken,
-      { asset_id: queryObject.id }
+
+    const request = this.api.send(
+      'GET',
+      '/media/usage/',
+      { asset_id: queryObject.id },
     );
-    return request.send();
+    return request;
   }
 
   /**
@@ -558,12 +556,10 @@ class Bynder {
     if (!queryObject.integration_id) {
       return rejectValidation("asset usage", "integration_id");
     }
-    const request = new APICall(
-      this.baseURL,
-      "media/usage/",
-      "POST",
-      this.consumerToken,
-      this.accessToken,
+
+    const request = this.api.send(
+      'POST',
+      '/media/usage/',
       {
         asset_id: queryObject.id,
         integration_id: queryObject.integration_id,
@@ -572,7 +568,7 @@ class Bynder {
         additional: queryObject.additional || null
       }
     );
-    return request.send();
+    return request;
   }
 
   /**
@@ -592,19 +588,18 @@ class Bynder {
     if (!queryObject.integration_id) {
       return rejectValidation("asset usage", "integration_id");
     }
-    const request = new APICall(
-      this.baseURL,
-      "media/usage/",
-      "DELETE",
-      this.consumerToken,
-      this.accessToken,
+
+    const request = this.api.send(
+      'DELETE',
+      '/media/usage/',
       {
         asset_id: queryObject.id,
         integration_id: queryObject.integration_id,
         uri: queryObject.uri || null
       }
     );
-    return request.send();
+
+    return request;
   }
 
   /**
