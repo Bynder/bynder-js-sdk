@@ -224,7 +224,7 @@ describe('#uploadFile', () => {
       expect(mockProgress).toHaveBeenCalledWith({
         action: 'Initializing',
         chunksUploaded: 0
-      })
+      });
       expect(prepareRequest).toEqual(['POST', 'v7/file_cmds/upload/prepare']);
       expect(mockProgress).toHaveBeenCalledWith({
         action: 'Uploading file',
