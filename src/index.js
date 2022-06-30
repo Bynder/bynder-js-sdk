@@ -706,12 +706,20 @@ class Bynder {
    * @param {Object} body File body
    * @param {String} fileId File ID
    * @param {Number} size File size
+   * @param {progressCallback} [progressCallback] - Function which is called anytime there is a progress update
    * @returns {Promise<number>}
    */
-  async _uploadBufferFile(body, fileId, size) {
+  async _uploadBufferFile(body, fileId, size, progressCallback = () => {}) {
     // Developers can use this to track file upload progress
     this._chunks = Math.ceil(size / FILE_CHUNK_SIZE);
     this._chunkNumber = 0;
+
+    progressCallback({
+      action: 'Uploading file',
+      completed: 'Initializing',
+      chunksUploaded: 0,
+      chunks: this._chunks
+    });
 
     // Iterate over the chunks and send them
     while (this._chunkNumber <= (this._chunks - 1)) {
@@ -721,6 +729,12 @@ class Bynder {
       const sha256 = create256HexHash(chunk);
 
       await this._uploadChunk(chunk, this._chunkNumber, fileId, sha256);
+      progressCallback({
+        action: 'Uploading file',
+        completed: 'Initializing',
+        chunksUploaded: this._chunkNumber,
+        chunks: this._chunks
+      });
 
       this._chunkNumber++;
     }
@@ -734,13 +748,16 @@ class Bynder {
    * @access private
    * @param {Object} stream File stream
    * @param {String} fileId File ID
+   * @param {Number} size File size
+   * @param {progressCallback} [progressCallback] - Function which is called anytime there is a progress update
    * @returns {Promise<number>}
    */
-  _uploadStreamFile(stream, fileId) {
+  _uploadStreamFile(stream, fileId, size, progressCallback = () => {}) {
     // We need to force our chunk size on the stream
     stream._readableState.highWaterMark = FILE_CHUNK_SIZE;
     // Developers can use this to track file upload progress
     this._chunkNumber = 0;
+    this._chunks = Math.ceil(size / FILE_CHUNK_SIZE);
 
     return new Promise((resolve, reject) => {
       stream.on('data', async chunk => {
@@ -755,6 +772,12 @@ class Bynder {
             return reject(error);
           });
 
+        progressCallback({
+          action: 'Uploading file',
+          completed: 'Initializing',
+          chunksUploaded: this._chunkNumber,
+          chunks: this._chunks
+        });
         this._chunkNumber++;
         // Continue!
         stream.resume();
@@ -781,18 +804,19 @@ class Bynder {
    * @param {Number} file.length The length of the file to be uploaded
    * @param {String} fileId Unique file identifier
    * @param {Number} size File byte size
+   * @param {progressCallback} [progressCallback] - Function which is called anytime there is a progress update
    * @return {Promisee<number>} Total number of chunks uploaded to the upload payload
    */
-  async _uploadFileInChunks(file, fileId, size, bodyType) {
+  async _uploadFileInChunks(file, fileId, size, bodyType, progressCallback = () => {}) {
     const { body } = file;
 
     switch (bodyType) {
     case bodyTypes.BUFFER:
-      await this._uploadBufferFile(body, fileId, size);
+      await this._uploadBufferFile(body, fileId, size, progressCallback);
       break;
 
     case bodyTypes.STREAM:
-      this._chunks = await this._uploadStreamFile(body, fileId);
+      this._chunks = await this._uploadStreamFile(body, fileId, size, progressCallback);
       break;
 
     default:
@@ -803,6 +827,16 @@ class Bynder {
   }
 
   /**
+   * Callback for adding two numbers.
+   *
+   * @callback progressCallback
+   * @param {Object} state={} - An object containing the progress state
+   * @param {String} state.action - The next action
+   * @param {String} [state.completed] - The last completed action
+   * @param {Number} [state.chunks] - Total amount of chunks
+   * @param {Number} state.chunksUploaded - Amount of chunks already uploaded
+   */
+  /**
    * Uploads an arbitrarily sized buffer or stream file and returns the uploaded asset information
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets}
    * @async
@@ -812,9 +846,10 @@ class Bynder {
    * @param {Number} file.length The length of the file to be uploaded
    * @param {Object} file.data An object containing the assets' attributes
    * @param {String} fileId Optional file UUID.V4 identifier
+   * @param {progressCallback} [progressCallback] - Function which is called anytime there is a progress update
    * @return {Promise<object>} The information of the uploaded file, including IDs and all final file urls.
    */
-  async uploadFile(file) {
+  async uploadFile(file, progressCallback = () => {}) {
     const { body, filename, data, additional } = file;
     const { brandId, mediaId } = data;
     const bodyType = bodyTypes.get(body);
@@ -845,9 +880,26 @@ class Bynder {
     this._sha256 = create256HexHash(file.body);
 
     try {
+      // TODO create test file in samples/abcdef to test this
+      progressCallback({
+        action: 'Initializing',
+        chunksUploaded: 0
+      });
       const fileId = await this._prepareUpload();
-      const chunks = await this._uploadFileInChunks(file, fileId, size, bodyType);
+      const chunks = await this._uploadFileInChunks(file, fileId, size, bodyType, progressCallback);
+      progressCallback({
+        action: 'Finalizing upload',
+        completed: 'Uploading file',
+        chunksUploaded: chunks,
+        chunks
+      });
       const correlationId = await this._finaliseUpload(fileId, filename, chunks, size);
+      progressCallback({
+        action: 'Saving asset',
+        completed: 'Finalizing upload',
+        chunksUploaded: chunks,
+        chunks
+      });
       const asset = await this._saveAsset({...data, fileId, additional});
 
       this.sha256 = undefined;
