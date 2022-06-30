@@ -8,7 +8,7 @@ const bynder = new Bynder(configs);
 bynder.getBrands()
     .then((data) => {
         const brand = data[0];
-        const file = `${__dirname}/testScreenrecording.mov`;
+        const file = `${__dirname}/testasset.png`;
         return bynder.uploadFile({
           filename: path.basename(file),
           body: fs.readFileSync(file),
