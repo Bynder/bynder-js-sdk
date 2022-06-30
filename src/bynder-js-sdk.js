@@ -945,6 +945,12 @@ class Bynder {
           // our read stream is not done yet reading
           // let's wait for a while...
           return delay(50).then(() => {
+            progressCallback({
+              action: 'Uploading file',
+              completed: 'Initializing',
+              chunksUploaded: chunkNumber,
+              chunks,
+            });
             return nextChunk(chunkNumber);
           });
         }
