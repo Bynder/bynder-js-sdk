@@ -879,9 +879,10 @@ class Bynder {
    * @param {Number} file.length - The length of the file to be uploaded
    * @param {string} endpoint - S3 endpoint url
    * @param {Object} init - Result from init upload
+   * @param {progressCallback} [progressCallback] - Function which is called anytime there is a progress update
    * @return {Promise}
    */
-  uploadFileInChunks(file, endpoint, init) {
+  uploadFileInChunks(file, endpoint, init, progressCallback) {
     const { body } = file;
     const bodyType = bodyTypes.get(body);
     const length = getLength(file);
@@ -923,6 +924,14 @@ class Bynder {
       });
     }
 
+    progressCallback({
+      action: 'Uploading file',
+      completed: 'Initializing',
+      chunksUploaded: 0,
+      chunks,
+    });
+
+
     // sequentially upload chunks to AWS, then register them
     function nextChunk(chunkNumber) {
       if (chunkNumber >= chunks) {
@@ -951,12 +960,28 @@ class Bynder {
           return registerChunk(init, newChunkNumber);
         })
         .then(() => {
+          progressCallback({
+            action: 'Uploading file',
+            completed: 'Initializing',
+            chunksUploaded: chunkNumber,
+            chunks,
+          });
           return nextChunk(newChunkNumber);
         });
     }
     return nextChunk(0);
   }
 
+  /**
+ * Callback for adding two numbers.
+ *
+ * @callback progressCallback
+ * @param {Object} state={} - An object containing the progress state
+ * @param {String} state.action - The next action
+ * @param {String} [state.completed] - The last completed action
+ * @param {Number} [state.chunks] - Total amount of chunks
+ * @param {Number} state.chunksUploaded - Amount of chunks already uploaded
+ */
   /**
    * Uploads an arbitrarily sized buffer or stream file and returns the uploaded asset information
    * @see {@link https://bynder.docs.apiary.io/#reference/upload-assets}
@@ -966,9 +991,10 @@ class Bynder {
    * @param {Number} file.length - The length of the file to be uploaded
    * @param {Object} file.data={} - An object containing the assets' attributes
    * @param {Boolean} file.additional - Boolean that signals if the asset should be added as additional to an existing asset
+   * @param {progressCallback} [progressCallback] - Function which is called anytime there is a progress update
    * @return {Promise} The information of the uploaded file, including IDs and all final file urls.
    */
-  uploadFile(file) {
+  uploadFile(file, progressCallback = () => {}) {
     const { body, filename, data, additional } = file;
     const { brandId } = data;
     const bodyType = bodyTypes.get(body);
@@ -996,14 +1022,26 @@ class Bynder {
     const finaliseUpload = this.finaliseUpload.bind(this);
     const saveAsset = this.saveAsset.bind(this);
     const waitForUploadDone = this.waitForUploadDone.bind(this);
+    let totalChunks;
 
+    progressCallback({
+      action: 'Initializing',
+      chunksUploaded: 0,
+    });
     return Promise.all([getClosestUploadEndpoint(), initUpload(filename)])
       .then(res => {
         const [endpoint, init] = res;
-        return uploadFileInChunks(file, endpoint, init);
+        return uploadFileInChunks(file, endpoint, init, progressCallback);
       })
       .then(uploadResponse => {
         const { init, chunkNumber } = uploadResponse;
+        totalChunks = chunkNumber;
+        progressCallback({
+          action: 'Finalizing upload',
+          completed: 'Uploading file',
+          chunksUploaded: chunkNumber,
+          chunks: chunkNumber,
+        });
         return finaliseUpload(init, filename, chunkNumber, additional ? data.id : null);
       }).then(finalizeResponse => {
         if (additional) {
@@ -1018,6 +1056,12 @@ class Bynder {
         }
         const { itemsDone } = doneResponse;
         const importId = itemsDone[0];
+        progressCallback({
+          action: 'Saving asset',
+          completed: 'Finalizing upload',
+          chunksUploaded: totalChunks,
+          chunks: totalChunks,
+        });
         return saveAsset(Object.assign(data, { importId }));
       });
   }
