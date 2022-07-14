@@ -16,7 +16,7 @@ bynder.getBrands()
             brandId: brand.id,
             name: 'test asset'
           }
-        });
+        }, console.log);
     })
     .then(console.log)
     .catch((error) => {
