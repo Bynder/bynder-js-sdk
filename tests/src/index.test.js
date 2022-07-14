@@ -216,16 +216,33 @@ describe('#uploadFile', () => {
     });
 
     it('calls each upload method with the expected payload', async () => {
-      await bynder.uploadFile(file);
+      const mockProgress = jest.fn();
+      await bynder.uploadFile(file, mockProgress);
 
       const [prepareRequest, uploadChunkRequest, finaliseRequest, _saveAssetRequest] = spy.mock.calls;
 
+      expect(mockProgress).toHaveBeenCalledWith({
+        action: 'Initializing',
+        chunksUploaded: 0
+      });
       expect(prepareRequest).toEqual(['POST', 'v7/file_cmds/upload/prepare']);
+      expect(mockProgress).toHaveBeenCalledWith({
+        action: 'Uploading file',
+        completed: 'Initializing',
+        chunksUploaded: 0,
+        chunks: 1
+      });
       expect(uploadChunkRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/chunk/0', file.body, {
         additionalHeaders: {
           'Content-SHA256': '1758358dac0e14837cf8065c306092935b546f72ed2660b0d1f6d0ea55e22b2d'
         }
       }]);
+      expect(mockProgress).toHaveBeenCalledWith({
+        action: 'Finalizing upload',
+        completed: 'Uploading file',
+        chunksUploaded: 1,
+        chunks: 1
+      });
       expect(finaliseRequest).toEqual(['POST', 'v7/file_cmds/upload/night-gathers-and-now-my-watch-begins/finalise_api', {
         chunksCount: 1,
         fileName: file.filename,
@@ -236,10 +253,17 @@ describe('#uploadFile', () => {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       }]);
+      expect(mockProgress).toHaveBeenCalledWith({
+        action: 'Saving asset',
+        completed: 'Finalizing upload',
+        chunksUploaded: 1,
+        chunks: 1
+      });
       expect(_saveAssetRequest).toEqual(['POST', 'api/v4/media/save/night-gathers-and-now-my-watch-begins/', {
         fileId,
         brandId: 'Bynder'
       }]);
+      expect(mockProgress).toHaveBeenCalledTimes(5);
     });
   });
 
@@ -404,7 +428,7 @@ describe('#_uploadFileInChunks', () => {
 
       const chunks = await bynder._uploadFileInChunks({ body: stream }, fileId, file.body.length, 'STREAM');
       expect(chunks).toEqual(1);
-      expect(bynder._uploadStreamFile).toHaveBeenNthCalledWith(1, stream, fileId);
+      expect(bynder._uploadStreamFile).toHaveBeenNthCalledWith(1, stream, fileId, file.body.length, expect.any(Function));
     });
   });
 
