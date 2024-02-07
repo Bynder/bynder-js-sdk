@@ -5,20 +5,23 @@ name: Tests
 
 on: [ push, pull_request ]
 
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
   build:
     name: Build and Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
         node-version: [ 8.x, 10.x, 11.x ]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install
