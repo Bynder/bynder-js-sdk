@@ -19,7 +19,7 @@ responsible for dependency management.
 
 ## Installation
 
-### Node.js
+### Node.js  
 
 `npm install @bynder/bynder-js-sdk`
 
