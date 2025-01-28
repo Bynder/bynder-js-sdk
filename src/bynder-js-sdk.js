@@ -235,6 +235,18 @@ class Bynder {
   }
 
   /**
+   * Gets OAuth2 access token via client credentials grant type
+   * @return {String} access token 
+   */
+  getTokenClientCredentials() {
+    return this.oauth2.clientCredentials.getToken().then(result => {
+      const token = this.oauth2.accessToken.create(result);
+      this.api.token = token;
+      return token;
+    });
+  }
+
+  /**
    * Get all the smartfilters.
    * @see {@link https://bynder.docs.apiary.io/#reference/smartfilters/smartfilters-operations/retrieve-smartfilters|API Call}
    * @return {Promise} Smartfilters - Returns a Promise that, when fulfilled, will either return an Array with the

@@ -86,6 +86,31 @@ const bynder = new Bynder({
 });
 ```
 
+#### OAuth2 Client Credentials
+
+OAuth application within Bynder needs client credentials grant type. Bynder object can be instantiated without redirectUri provided:
+
+```js
+const bynder = new Bynder({
+  baseURL: "http://api-url.bynder.io/api/",
+  clientId: "<your OAuth2 client id>",
+  clientSecret: "<your OAuth2 client secret>"
+});
+```
+
+To get a token via client credentials, make a call to `getTokenClientCredentials()`:
+
+```js
+const bynder = new Bynder({
+  baseURL: "http://api-url.bynder.io/api/",
+  clientId: "<your OAuth2 client id>",
+  clientSecret: "<your OAuth2 client secret>"
+});
+const token = await bynder.getTokenClientCredentials();
+```
+
+Sample call can be found within `samples/oauth_client_credentials.js`.
+
 #### Making requests
 
 You can now use the various methods from the SDK to fetch media, metaproperties
@@ -117,6 +142,7 @@ bynder
 
 - `makeAuthorizationURL()`
 - `getToken()`
+- `getTokenClientCredentials()`
 
 ### Media
 
@@ -195,3 +221,26 @@ are the steps necessary to prepare your environment:
 - `gulp doc` - Run JSDoc to create a 'doc' folder with automatically generated documentation for the source code.
 - `gulp webserver` - Deploy a web server from the root folder at
   `localhost:8080` to run the html samples (in order to avoid CORS problems).
+
+## Docker Setup
+
+
+JavaScript files can be executed within a Docker container with corresponding dependencies installed.
+
+### Initial Setup
+
+From the root directory create a `secret.json` file. 
+
+```json
+{
+  "baseURL": "http://api-url.bynder.io/api/",
+  "clientId": "<your OAuth2 client id>",
+  "clientSecret": "<your OAuth2 client secret>"
+}
+```
+
+Run the command `make run-docker` to start up Docker container.
+
+With the container running, execute the command:
+
+`make executeSdkSample sample-file-name=oauth_client_credentials.js` where sample-file-name is the name of the file within `samples/`. This command will execute the JavaScript file within the container.

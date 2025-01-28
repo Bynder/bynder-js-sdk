@@ -1,0 +1,7 @@
+services:
+  bynder-js-sdk:
+    container_name: bynder-js-sdk
+    build: .
+    command: sh -c "tail -f /dev/null"
+    volumes:
+      - .:/app
