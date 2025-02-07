@@ -46,7 +46,7 @@
     "isomorphic-form-data": "^1.0.0",
     "proper-url-join": "^1.2.0",
     "query-string": "6.14.1",
-    "simple-oauth2": "^2.5.1",
+    "simple-oauth2": "^5.1.0",
     "ssri": "6.0.2",
     "websocket-extensions": "0.1.4",
     "y18n": "4.0.3",
