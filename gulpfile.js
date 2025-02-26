@@ -17,15 +17,15 @@ gulp.task("lint", () => {
     .pipe(eslint.format());
 });
 
-gulp.task("babel", () => {
+gulp.task("babel", async () => {
   gulp
     .src("src/*.js")
     .pipe(
       babel({
-        presets: ["env"],
-        plugins: ["transform-object-rest-spread",
-            ["transform-runtime", {
-                "polyfill": false,
+        presets: ["@babel/preset-env"],
+        plugins: ["@babel/plugin-proposal-object-rest-spread",
+            // polyfill skipped by default
+            ["@babel/plugin-transform-runtime", {
                 "regenerator": true
                 }
             ]
@@ -35,9 +35,9 @@ gulp.task("babel", () => {
     .pipe(gulp.dest("dist"));
 });
 
-gulp.task("build", () => {
+gulp.task("build", async () => {
   webpack({
-    entry: ["babel-polyfill", path.join(__dirname, "./src/bynder-js-sdk")],
+    entry: ["@babel/polyfill", path.join(__dirname, "./src/bynder-js-sdk")],
     output: {
       path: path.join(__dirname, "/dist/"),
       filename: "bundle.js",
@@ -52,17 +52,17 @@ gulp.task("build", () => {
           test: /\.js$/,
           exclude: /node_modules/,
           loader: "babel-loader",
-          query: {
-            presets: ["env"],
-            plugins: ["transform-object-rest-spread"],
+          options: {
+            presets: ["@babel/preset-env"],
+            plugins: ["@babel/plugin-proposal-object-rest-spread"],
           }
         },
         {
           test: /\.js$/,
           include: /node_modules\/proper-url-join/,
           loader: "babel-loader",
-          query: {
-            presets: [["env", { "modules": 'commonjs' }]],
+          options: {
+            presets: [["@babel/preset-env", { "modules": 'commonjs' }]],
             plugins: ["add-module-exports"]
           }
         }
