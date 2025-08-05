@@ -57,6 +57,7 @@
   },
   "resolutions": {
     "braces": "^3.0.3",
+    "form-data": "4.0.4",
     "graceful-fs": "^4.2.4",
     "lodash": "^4.17.21",
     "json5": "2.2.3",
