@@ -1,6 +1,6 @@
 {
   "name": "@bynder/bynder-js-sdk",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "description": "Bynder Javascript SDK",
   "main": "./dist/bynder-js-sdk.js",
   "scripts": {
@@ -46,7 +46,7 @@
     "handlebars": "4.7.7",
     "ini": "1.3.8",
     "is-url": "^1.2.4",
-    "isomorphic-form-data": "^1.0.0",
+    "isomorphic-form-data": "^2.0.0",
     "proper-url-join": "^1.2.0",
     "query-string": "6.14.1",
     "simple-oauth2": "^3.4.0",
@@ -57,7 +57,6 @@
   },
   "resolutions": {
     "braces": "^3.0.3",
-    "form-data": "4.0.4",
     "graceful-fs": "^4.2.4",
     "lodash": "^4.17.21",
     "json5": "2.2.3",
