@@ -1,0 +1,8 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: bynder-js-sdk
+  description: Bynder bynder-js-sdk
+spec:
+  owner: integrations
+  lifecycle: production
