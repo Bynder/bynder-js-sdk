@@ -244,3 +244,26 @@ Run the command `make run-docker` to start up Docker container.
 With the container running, execute the command:
 
 `make executeSdkSample sample-file-name=oauth_client_credentials.js` where sample-file-name is the name of the file within `samples/`. This command will execute the JavaScript file within the container.
+
+### Sample Files
+
+The `samples/` folder contains various example files demonstrating different SDK functionalities:
+
+#### Upload Examples
+- `upload_client_credentials.js` - Upload a new asset
+- `upload_version_client_credentials.js` - Upload a new version to an existing asset (uses `data.mediaId`)
+- `upload_additional_client_credentials.js` - Upload an additional file to an existing asset (uses `additional: true` and `data.id`)
+
+QA - Run in Docker Container
+
+```sh
+# Build the image (only needed once or after code changes outside samples/ and secret.json)
+docker build -t jssdk .
+
+# Run a sample with local samples/ and secret.json mounted into the container
+docker run --rm \
+  --network=host \
+  -v $(pwd)/samples:/app/samples \
+  -v $(pwd)/secret.json:/app/secret.json \
+  jssdk node samples/tags_client_credentials.js
+```
