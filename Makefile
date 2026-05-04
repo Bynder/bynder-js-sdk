@@ -9,4 +9,4 @@ stop-docker:
 # make executeSdkSample sample-file-name=oauth_client_credentials.js
 .PHONY: executeSdkSample
 executeSdkSample:
-	docker-compose exec bynder-js-sdk node /app/samples/$(sample-file-name)
+	docker-compose run --rm bynder-js-sdk node /app/samples/$(sample-file-name)
