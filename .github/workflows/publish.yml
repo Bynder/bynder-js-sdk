@@ -3,7 +3,6 @@
 name: Publish
 
 on:
-  workflow_dispatch:
   release:
     types: [ published ]
 
@@ -41,6 +40,6 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org/
       - run: yarn install
-      - run: NODE_AUTH_TOKEN="" npm publish --access public
+      - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
