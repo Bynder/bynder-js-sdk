@@ -31,7 +31,7 @@ jobs:
 
   deploy:
     name: Release
-    runs-on: bynder-arc
+    runs-on: ubuntu-22.04
     needs: build
 
     steps:
