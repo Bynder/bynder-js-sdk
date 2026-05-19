@@ -6,6 +6,17 @@ run-docker:
 stop-docker:
 	docker-compose down
 
+.PHONY: rebuild-docker
+rebuild-docker:
+	docker-compose down
+	docker-compose build --no-cache
+	docker-compose up -d
+
+.PHONY: clean-dist
+clean-dist:
+	docker-compose exec bynder-js-sdk rm -rf /app/dist
+	docker-compose exec bynder-js-sdk gulp babel
+
 # make executeSdkSample sample-file-name=oauth_client_credentials.js
 .PHONY: executeSdkSample
 executeSdkSample:

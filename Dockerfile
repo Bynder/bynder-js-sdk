@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY . /app/
 
-RUN npm install
+RUN yarn install
 
 RUN npm install -g gulp
 
