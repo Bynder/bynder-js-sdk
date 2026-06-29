@@ -12,7 +12,7 @@ interface to communicate with
 
 To use this SDK, you will need:
 
-- [Node.js **v12 or above**](https://nodejs.org/) (SDK Version 2.5.0 and above)
+- [Node.js **v14.14 or above**](https://nodejs.org/) (SDK Version 2.5.6 and above)
 
 Node installation will include [NPM](https://www.npmjs.com/), which is
 responsible for dependency management.
