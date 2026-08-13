@@ -1,6 +1,6 @@
 {
   "name": "@bynder/bynder-js-sdk",
-  "version": "2.5.6",
+  "version": "2.5.7",
   "description": "Bynder Javascript SDK",
   "main": "./dist/bynder-js-sdk.js",
   "scripts": {
@@ -57,11 +57,14 @@
   },
   "resolutions": {
     "braces": "^3.0.3",
+    "brace-expansion": "^1.1.18",
     "graceful-fs": "^4.2.4",
     "lodash": "^4.18.0",
     "json5": "2.2.3",
+    "js-yaml": "3.15.0",
+    "linkify-it": "5.0.1",
     "micromatch": "4.0.8",
-    "postcss": "8.4.31",
+    "postcss": "8.5.12",
     "sanitize-html": "2.12.1",
     "send": "0.19.0",
     "serialize-javascript": "6.0.2",
