@@ -1,6 +1,6 @@
 {
   "name": "@bynder/bynder-js-sdk",
-  "version": "2.5.6",
+  "version": "2.5.8",
   "description": "Bynder Javascript SDK",
   "main": "./dist/bynder-js-sdk.js",
   "scripts": {
@@ -43,7 +43,7 @@
     "@babel/plugin-transform-runtime": "^7.0.0",
     "axios": "0.34.0",
     "elliptic": "6.6.1",
-    "handlebars": "4.7.9",
+    "handlebars": "4.7.10",
     "ini": "1.3.8",
     "is-url": "^1.2.4",
     "isomorphic-form-data": "^2.0.0",
@@ -56,12 +56,16 @@
     "yargs-parser": "13.1.2"
   },
   "resolutions": {
+    "browserslist": "4.28.7",
     "braces": "^3.0.3",
+    "brace-expansion": "^1.1.18",
     "graceful-fs": "^4.2.4",
     "lodash": "^4.18.0",
     "json5": "2.2.3",
+    "js-yaml": "3.15.2",
+    "linkify-it": "5.0.2",
     "micromatch": "4.0.8",
-    "postcss": "8.4.31",
+    "postcss": "8.5.18",
     "sanitize-html": "2.12.1",
     "send": "0.19.0",
     "serialize-javascript": "6.0.2",

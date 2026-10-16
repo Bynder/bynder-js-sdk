@@ -1044,6 +1044,13 @@ class Bynder {
     return Promise.all([getClosestUploadEndpoint(), initUpload(filename)])
       .then(res => {
         const [endpoint, init] = res;
+        if (!init || !init.multipart_params || !init.s3file || !init.s3_filename) {
+          return Promise.reject({
+            status: 0,
+            message: "Upload init returned an unexpected response: missing S3 upload information (multipart_params, s3file, s3_filename). This can happen when the upload/init API call returns an empty or invalid response.",
+            body: init
+          });
+        }
         return uploadFileInChunks(file, endpoint, init, progressCallback);
       })
       .then(uploadResponse => {
