@@ -2,13 +2,47 @@ require("isomorphic-form-data");
 const axios = require("axios");
 const { basename } = require("path");
 const isUrl = require("is-url");
-const joinUrl = require("proper-url-join");
-const queryString = require("query-string");
 const simpleOAuth2 = require("simple-oauth2");
 const pkg = require("../package.json");
 const url = require("url");
 
 const defaultAssetsNumberPerPage = 50;
+
+/**
+ * Serialises an object into a sorted, URL-encoded query string.
+ * Arrays repeat the key, undefined values are skipped and null values are written as a bare key.
+ * @param {Object} data - The values to serialise.
+ * @return {string} - The query string without a leading "?".
+ */
+function stringifyQuery(data) {
+  return Object.keys(data)
+    .sort()
+    .reduce((pairs, key) => {
+      const value = data[key];
+      if (value === undefined) return pairs;
+
+      const encodedKey = encodeURIComponent(key);
+
+      (Array.isArray(value) ? value : [value]).forEach(item => {
+        pairs.push(item === null ? encodedKey : `${encodedKey}=${encodeURIComponent(item)}`);
+      });
+      return pairs;
+    }, [])
+    .join("&");
+}
+
+/**
+ * Joins the base URL and a path, with a trailing slash and an optional query string.
+ * @param {string} base - The base URL.
+ * @param {string} path - The path to append.
+ * @param {string} [query] - An optional query string without a leading "?".
+ * @return {string} - The joined URL.
+ */
+function buildURL(base, path, query) {
+  const joined = `${base.replace(/\/+$/, "")}/${path.replace(/^\/+/, "").replace(/\/+$/, "")}/`;
+
+  return query ? `${joined}?${query}` : joined;
+}
 
 /**
  * Rejects the request.
@@ -51,7 +85,7 @@ class APICall {
    * data or an Error with the problem.
    */
   async send(method, url, data = {}) {
-    let callURL = joinUrl(this.baseURL, url, { trailingSlash: true });
+    let callURL = buildURL(this.baseURL, url);
 
     if (!this.token && !this.permanentToken) {
       throw new Error("No token found");
@@ -76,9 +110,9 @@ class APICall {
     if (method === "POST") {
       headers["Content-Type"] = "application/x-www-form-urlencoded";
 
-      body = queryString.stringify(data);
+      body = stringifyQuery(data);
     } else if (Object.keys(data).length && data.constructor === Object) {
-      callURL = joinUrl(callURL, { trailingSlash: true, query: data });
+      callURL = buildURL(this.baseURL, url, stringifyQuery(data));
     }
 
     return axios(callURL, {
